@@ -189,7 +189,7 @@ describe("microstore", function () {
   it("rejects array modification outside setter", async function () {
     const raw = [100, 20, 32, 5];
     const [store, _setStore] = observe(raw);
-    expect(() => store.sort((a, b) => a - b)).toThrow((/^microstore: cannot write to property \d+ outside a writing context$/));
+    expect(() => store.sort((a, b) => a - b)).toThrow((/^cannot write to property \d+ outside a writing context$/));
   });
 
   it("can watch multiple stores", async function () {
