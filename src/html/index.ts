@@ -7,24 +7,24 @@ export interface Attributes {
   [key: string]: any;
 }
 
-const $hSym = Symbol("ficco-h");
+// Symbol to distinguish JSXElement (objects created by h()) from any other objects.
+const $h = Symbol("ficco-h");
 
-export interface HLit {
-  [$hSym]: number;
-  el: Node | null;
-  val: AccessorOr<string | number>;
-}
-
-export interface HElement {
-  [$hSym]: 1;
+export interface JSXElement {
+  [$h]: 1;
   el: Node | null;
   name: string | Component<any, any>;
   attrs: Attributes;
-  children: (HLit | HElement)[];
+  children: JSXNode[];
 }
 
-export type HNode = HLit | HElement;
-export type JSXElement = AccessorOr<string | number> | HElement;
+export type JSXNode = AccessorOr<string | number> | JSXElement;
+
+function isJSXElement(v: any): v is JSXElement {
+  return v?.[$h];
+}
+
+export type Component<P, C extends any[]> = (props: P & { children: C }) => JSXNode | Backing;
 
 export namespace Backing {
   export type InsertLocation = {
@@ -35,56 +35,48 @@ export namespace Backing {
 
 export interface Backing {
   lastNode(): Node | null;
-  insert(loc: Backing.InsertLocation | null): void;
-  // attach(parent: Node, prev: Backing | null): void;
-  // detach(): void;
+  insert(loc: Backing.InsertLocation | null | undefined): void;
+  name: Node | string;
 }
 
-export type Component<P, C extends any[]> = (props: P & { children: C }) => HNode | Backing;
-
-export function toHNode(e: JSXElement): HNode {
-  return (typeof e === "object") ? e : { [$hSym]: 1, val: e, el: null };
-}
-
-export function h(name: string, attrs?: Attributes | null, ...children: JSXElement[]): HElement;
-export function h<P, C extends any[]>(name: Component<P, C>, attrs?: P, ...children: C): HElement;
-export function h<P, C extends any[]>(name: string | Component<P, C>, attrs?: Attributes | P | null, ...children: C): HElement {
-  return {
-    [$hSym]: 1,
-    name,
-    attrs: attrs ?? {},
-    el: null,
-    children: children.map(toHNode),
-  };
+export function h(name: string, attrs?: Attributes | null, ...children: JSXNode[]): JSXElement;
+export function h<P, C extends any[]>(name: Component<P, C>, attrs?: P, ...children: C): JSXElement;
+export function h<P, C extends any[]>(name: string | Component<P, C>, attrs?: Attributes | P | null, ...children: C): JSXElement {
+  return { [$h]: 1, name, attrs: attrs ?? {}, el: null, children };
 }
 
 function isStrOrNum(v: any): v is number | string {
   return typeof v === "string" || typeof v === "number";
 }
 
-function collectSkeletons(hnode: HNode, parent: Node | null, result: Node[]): Node[] {
-  if (hnode.el) // already assigned a skeleton, which means this hnode belongs an ancestor component in the tree.
-    return result;
+interface Skeleton {
+  el: Node;
+  path: (number | string)[];
+}
 
-  if ("val" in hnode) {
-    const e = document.createTextNode(typeof hnode.val === "function" ? "" : hnode.val + "");
-    parent?.appendChild(e) ?? result.push(e);
-    return result;
+/**
+ * Collect the skeletons for the given JSXNode.
+ * IMPORTANT This must be coresspondent with how assemble() consumes skeletons.
+ */
+function collectSkeletonsImpl(acc: Skeleton[], jnode: JSXNode, parent: Node | null, path: (number | string)[]): void {
+  if (typeof jnode === "string" && parent) {
+    parent.appendChild(document.createTextNode(""));
+    return;
   }
 
-  const { name, attrs, children } = hnode;
+  if (!isJSXElement(jnode) || jnode.el)
+    return;
+  const { name, attrs, children } = jnode;
   if (typeof name !== "string") {
-    for (const v of Object.values(attrs)) {
-      if (v?.[$hSym])
-        collectSkeletons(v, null, result);
-    }
+    for (const [k, v] of Object.entries(attrs))
+      collectSkeletonsImpl(acc, v, null, path.concat(k));
     for (let i = 0; i < children.length; ++i)
-      collectSkeletons(children[i], null, result);
-    return result;
+      collectSkeletonsImpl(acc, children[i], null, path.concat(i));
+    return;
   }
-
+  
   const e = document.createElement(name);
-  parent?.appendChild(e) ?? result.push(e);
+  parent?.appendChild(e) ?? acc.push({ el: e, path });
   for (const [k, v] of Object.entries(attrs)) {
     if (isStrOrNum(v)) {
       (e as any)[k] = v;
@@ -95,135 +87,121 @@ function collectSkeletons(hnode: HNode, parent: Node | null, result: Node[]): No
       }
     }
   }
-
   for (let i = 0; i < children.length; ++i)
-    collectSkeletons(children[i], e, result);
-  return result;
+    collectSkeletonsImpl(acc, children[i], e, path.concat(i));
 }
 
-function setSkeletons(hnode: HNode, skels: Node[], top: boolean = true, index: number = 0): number {
-  // NOTE this function must assign skeltons in **the same order** as collectSkeletons().
-  // This process can only depend on order because skeletons are reused for multiple HNodes...
-  if (top && !("name" in hnode && typeof hnode.name === "function"))
-    hnode.el = skels[index++];
-  if ("val" in hnode)
-    return index;
+function collectSkeletons(jnode: JSXNode): Skeleton[] {
+  const ret: Skeleton[] = [];
+  collectSkeletonsImpl(ret, jnode, null, []);
+  return ret;
+}
 
-  const { name, attrs, children } = hnode;
-  if (typeof name !== "string") {
-    for (const v of Object.values(attrs)) {
-      if (v?.[$hSym])
-        index = setSkeletons(v, skels, true, index);
+function assignSkeletons(skels: Skeleton[], jnode: JSXNode): void {
+  for (let i = 0; i < skels.length; ++i) {
+    const { el, path } = skels[i];
+    let node = jnode as JSXElement;
+    for (let j = 0; j < path.length; ++j) {
+      const p = path[j];
+      node = (typeof p === "number") ? node.children[p] : node.attrs[p];
     }
-    for (let i = 0; i < children.length; ++i)
-      index = setSkeletons(children[i], skels, true, index);
-    return index;
+    node.el = el;
   }
-
-  for (let i = 0; i < children.length; ++i)
-    index = setSkeletons(children[i], skels, false, index);
-  return index;
-} 
-
-const reOn = /^on/;
-const skelTable: WeakMap<object, Node[]> = new WeakMap();
-
-function skeletonsOf(hnode: HNode, key: object): Node[] {
-  return skelTable.get(key) ?? skelTable.set(key, collectSkeletons(hnode, null, [])).get(key)!;
 }
 
-function assignSkeletons(hnode: HNode, key?: object | null): HNode {
-  const skels = key ? skeletonsOf(hnode, key) : collectSkeletons(hnode, null, []);
-  setSkeletons(hnode, skels);
-  return hnode;
+const skelTable: WeakMap<object, Skeleton[]> = new WeakMap();
+
+function allocateSkeletons(jnode: JSXNode, key?: object | null): JSXNode {
+  const skels = key
+    ? (skelTable.get(key) ?? skelTable.set(key, collectSkeletons(jnode)).get(key)!)
+    : collectSkeletons(jnode);
+  assignSkeletons(skels, jnode);
+  return jnode;
+}
+
+function insertAfter(node: Node, parent: Node, prev: Backing | null): void {
+  const rawPrev = prev?.lastNode();
+  const after = rawPrev ? rawPrev.nextSibling : parent.firstChild;
+  parent.insertBefore(node, after);
 }
 
 function createSimpleBacking(node: Node): Backing {
-  // const detach = () => node.parentNode?.removeChild(node);
-  // const attach = (parent: Node, prev: Backing | null) => parent.insertBefore(node, prev?.lastNode()?.nextSibling ?? null);
-  const insert = (pos: Backing.InsertLocation | null) => {
-    const { parent, prev } = pos ?? { parent: null, prev: null };
-    if (parent) {
-      parent.insertBefore(node, prev?.lastNode()?.nextSibling ?? null);
+  const insert = (pos: Backing.InsertLocation | null | undefined) => {
+    if (pos?.parent) {
+      insertAfter(node, pos.parent, pos.prev)
     } else {
       node.parentNode?.removeChild(node);
     }
   };
-  return { insert, lastNode: () => node! };
+  return { insert, lastNode: () => node!, name: node };
 }
 
-export function assemble(hnode: HNode, skeleton?: Node | null, parent?: Node | null, prev: Backing | null = null): Backing {
-  const skel =
-    // skel, the actual node for this hnode, is given when it's a non-root element of a skeleton,
-    skeleton ??
-    // created (by cloning) here when it's the root element of a skeleton,
-    hnode.el?.cloneNode(true) ??
-    (!("val" in hnode) ?
-      // nothing when it's a Component which has no node itself, or
-      null :
-      // created here when it's an uncached HNode originated to JSXElement props of MetaComponent.
-      // Because non-HNode props can't be (and unnecessary to be) detected by collectSkeletons().
-      // Since here hnode is always string, number or function returns them (i.e. not an HElement
-      // by the definition of JSXElement), just a text node is required here.
-      document.createTextNode((typeof hnode.val === "function") ? "" : (hnode.val + "")));
+const reOn = /^on/;
 
-  if (skel && !skel.parentNode)
-    parent?.insertBefore(skel, prev?.lastNode()?.nextSibling ?? null);
+function assemble(jnode: JSXNode, node?: Node | null, loc?: Backing.InsertLocation | null): Backing {
+  const el =
+    node ??
+    ((typeof jnode === "object")
+      ? jnode.el?.cloneNode(true)
+      : (console.log("UNCACHED", jnode), document.createTextNode((typeof jnode === "function") ? "" : (jnode + ""))));
 
-  if ("val" in hnode) {
-    const { val } = hnode;
-    if (typeof val === "function")
-      autorun(() => { skel!.nodeValue = val() + "" });
-    return createSimpleBacking(skel!);
+  if (el && !el.parentNode && loc?.parent)
+    insertAfter(el, loc.parent, loc.prev);
+  
+  if (typeof jnode !== "object") {
+    if (typeof jnode === "function") {
+      autorun(() => { el!.nodeValue = jnode() + ""; });
+    } else {
+      el!.nodeValue = jnode + "";
+    }
+    return createSimpleBacking(el!);
   }
 
-  const { name, attrs, children } = hnode;
+  const { name, attrs, children } = jnode;
   if (typeof name === "string") {
     for (const [k, v] of Object.entries(attrs)) {
       if (typeof v === "function") {
         if (reOn.test(k)) {
-          (skel as any)[k] = v;
+          (el as any)[k] = v;
         } else {
-          autorun(() => { (skel as any)[k] = v(); });
+          autorun(() => { (el as any)[k] = v(); });
         }
       } else if (typeof v === "object" && v) {
         for (const [vk, vv] of Object.entries(v)) {
           if (typeof vv === "function") {
-            autorun(() => { (skel as any)[k][vk] = vv(); });
+            autorun(() => { (el as any)[k][vk] = vv(); });
           }
         }
       }
     }
 
-    let skelCh: Node | null = skel!.firstChild;
+    let ch: Node | null = el!.firstChild;
+    let chLoc: Backing.InsertLocation = { parent: el!, prev: null };
     for (const v of children) {
-      if ("val" in v || typeof v.name === "string") {
-        prev = assemble(v, skelCh);
-        skelCh = skelCh?.nextSibling ?? null;
+      // IMPORTANT This condition, for consuming the skeleton, must be correspondent with collectSkeletons().
+      if (typeof v === "string" || (isJSXElement(v) && typeof v.name === "string")) {
+        chLoc.prev = assemble(v, ch);
+        ch = ch?.nextSibling ?? null;
       } else {
-        prev = assemble(v, null, skel!, prev);
+        chLoc.prev = assemble(v, null, chLoc);
       }
     }
-    return createSimpleBacking(skel!);
+    return createSimpleBacking(el!);
 
   } else {
-    const hnodeOrBacking = name({ ...attrs, children });
-    if (!($hSym in hnodeOrBacking)) {
-      const backing = hnodeOrBacking;
-      if (parent)
-        backing.insert({ parent, prev });
+    const jnodeOrBacking = name({ ...attrs, children });
+    if (typeof jnodeOrBacking === "object" && !isJSXElement(jnodeOrBacking)) {
+      const backing = jnodeOrBacking;
+      backing.insert(loc);
       return backing;
     }
-
-    const hn = hnodeOrBacking;
-    return assemble(assignSkeletons(hn, name), null, parent, prev);
+    const jnode = jnodeOrBacking;
+    return assemble(allocateSkeletons(jnode, name), null, loc);
   }
 }
 
-export function attach(parent: Element, e: JSXElement): void {
-  const hnode = toHNode(e);
-  setSkeletons(hnode, collectSkeletons(hnode, null, []));
-  assemble(hnode, null, parent, null);
+export function attach(parent: Element, jnode: JSXElement): void {
+  assemble(allocateSkeletons(jnode), null, { parent, prev: null });
 }
 
 function lastNodeOfBackings(bs: Backing[]): Node | null {
@@ -235,7 +213,7 @@ function lastNodeOfBackings(bs: Backing[]): Node | null {
   return null;
 }
 
-function insertBackings(bs: Backing[] | null, loc: Backing.InsertLocation | null): void {
+function insertBackings(bs: Backing[] | null, loc: Backing.InsertLocation | null | undefined): void {
   if (!bs) return;
   if (!loc?.parent) {
     bs.forEach(b => b.insert(null));
@@ -251,8 +229,8 @@ function insertBackings(bs: Backing[] | null, loc: Backing.InsertLocation | null
 export namespace Show {
   export interface Props {
     when: () => boolean;
-    fallback?: JSXElement;
-    children: JSXElement[];
+    fallback?: JSXNode;
+    children: JSXNode[];
   }
 }
 
@@ -273,14 +251,14 @@ export function Show(props: Show.Props): Backing {
       fallbackBacking?.insert(null);
       if (!thenBackings) {
         thenBackings = [];
-        children.forEach(c => { thenBackings!.push(assemble(toHNode(c), null));});
+        children.forEach(c => { thenBackings!.push(assemble(c));});
       }
       insertBackings(thenBackings, loc);
     } else {
       insertBackings(thenBackings, null);
       if (fallback) {
         if (!fallbackBacking)
-          fallbackBacking = assemble(toHNode(fallback), null);
+          fallbackBacking = assemble(fallback);
         fallbackBacking.insert(loc);
       }
     }
@@ -295,12 +273,12 @@ export function Show(props: Show.Props): Backing {
   }
 
   function insert(l: Backing.InsertLocation): void {
-    loc = l;
+    loc = { ...l };
     toggle(!!l.parent);
   }
 
   reaction(when, toggle);
-  return { insert, lastNode };
+  return { insert, lastNode, name: "Show" };
 }
 
 export namespace For {
@@ -313,7 +291,7 @@ export namespace For {
 }
 
 export function For<E>(props: For.Props<E>): Backing {
-  const { each, key, noCache, children: [fun] } = props;
+   const { each, key, noCache, children: [fun] } = props;
 
   let backings: Backing[] = [];
   let backingTable: Map<any, Backing> = new Map();
@@ -329,8 +307,8 @@ export function For<E>(props: For.Props<E>): Backing {
         backingTable.delete(k);
       } else {
         const ixSignal = signal(i);
-        const hn = toHNode(fun(e as E, ixSignal[0]));
-        b = assemble(assignSkeletons(hn, noCache ? null : fun));
+        const jnode = fun(e as E, ixSignal[0]);
+        b = assemble(allocateSkeletons(jnode, noCache ? null : fun));
         ixTable.set(b, ixSignal);
       }
       nextTable.set(k, b);
@@ -367,8 +345,14 @@ export function For<E>(props: For.Props<E>): Backing {
     }
   });
   
+  function insert(l: Backing.InsertLocation): void {
+    loc = { ...l };
+    insertBackings(backings, loc);
+  }
+
   return {
-    insert: loc => insertBackings(backings, loc),
-    lastNode: () => lastNodeOfBackings(backings) ?? loc.prev?.lastNode() ?? null
+    insert,
+    lastNode: () => lastNodeOfBackings(backings) ?? loc.prev?.lastNode() ?? null,
+    name: "For"
   };
 }
