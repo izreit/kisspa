@@ -352,3 +352,47 @@ export const For = specialize(function For<E>(props: For.Props<E>): Backing {
     name: "For"
   };
 });
+
+export interface ContextProviderProps<T> {
+  value: T;
+  children?: JSXNode | JSXNode[] | null;
+}
+
+export type ContextPair<T> = [
+  Component<ContextProviderProps<T>, ContextProviderProps<T>["children"]>,
+  () => T,
+];
+
+export function arrayify<T>(v: NonNullable<T> | T[] | null | undefined): T[] | null | undefined {
+  return Array.isArray(v) ? v : (v != null ? [v] : (v as null | undefined));
+}
+
+export function createContext<T>(initial: T): ContextPair<T> {
+  const stack: T[] = [initial];
+
+  const Provider = specialize<ContextProviderProps<T>>(function Provider(props: ContextProviderProps<T>): Backing {
+    let bs: Backing[];
+    try {
+      stack.push(props.value);
+      bs = arrayify(props.children)?.map(c => assemble(c)) ?? [];
+    } finally {
+      stack.pop();
+    }
+
+    let loc: Backing.InsertLocation | null = null;
+    return {
+      insert: (l: Backing.InsertLocation) => {
+        loc = { ...l };
+        insertBackings(bs, loc);
+      },
+      lastNode: () => lastNodeOfBackings(bs, loc?.prev),
+      name: "Ctx"
+    };
+  });
+
+  function use(): T {
+    return stack[stack.length - 1]!;
+  }
+
+  return [Provider, use];
+}
