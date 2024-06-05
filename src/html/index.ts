@@ -1,32 +1,32 @@
 import { autorun, reaction, signal } from "../core";
-import { JSXRawNode, JSXRawElement, Backing, $h, Component, JSXNode} from "./types";
-import { JSXInternal } from "./jsx";
 import { lcs } from "./internal/lcs";
+import { JSXInternal } from "./jsx";
+import { $h, Backing, Component, JSXElement, JSXNode } from "./types";
 
 export * from "./types";
 export type { JSXInternal as JSX };
 
-export function isJSXElement(v: any): v is JSXRawElement {
+export function isJSXElement(v: any): v is JSXElement {
   return v?.[$h];
 }
 
-export function h(name: string, attrs?: JSXInternal.HTMLAttributes | null, ...children: JSXNode[]): JSXRawElement;
-export function h<P, C extends any[]>(name: Component<P, C>, attrs?: P, ...children: C): JSXRawElement;
-export function h<P, C extends any[]>(name: string | Component<P, C>, attrs?: JSXInternal.HTMLAttributes | P | null, ...children: C): JSXRawElement {
-  return { [$h]: 1, name, attrs: attrs ?? {}, el: null, children };
+export function h(name: string, attrs?: JSXInternal.HTMLAttributes | null, ...children: (JSXNode | JSXNode[])[]): JSXElement;
+export function h<P, C extends any[]>(name: Component<P, C>, attrs?: P, ...children: C): JSXElement;
+export function h<P, C extends any[]>(name: string | Component<P, C>, attrs?: JSXInternal.HTMLAttributes | P | null, ...children: C): JSXElement {
+  return { [$h]: 1, name, attrs: attrs ?? {}, el: null, children: children.flat() };
 }
 
 export namespace h {
   export import JSX = JSXInternal;
 }
 
-export function jsx(name: string, attrs?: (JSXInternal.HTMLAttributes & { children?: JSXNode | JSXNode[] } | null)): JSXRawElement;
-export function jsx<P extends { children?: any }>(name: Component<Omit<P, "children">, P["children"]>, attrs?: P): JSXRawElement;
+export function jsx(name: string, attrs?: (JSXInternal.HTMLAttributes & { children?: JSXNode | JSXNode[] } | null)): JSXElement;
+export function jsx<P extends { children?: any }>(name: Component<Omit<P, "children">, P["children"]>, attrs?: P): JSXElement;
 export function jsx<P extends { children?: any }>(
   name: string | Component<Omit<P, "children">, P["children"]>,
-  attrs?: (JSXInternal.HTMLAttributes & { children?: JSXNode | JSXNode[] } | null) | P | null)
-: JSXRawElement {
-  return { [$h]: 1, name, attrs: attrs ?? {}, el: null, children: attrs?.children };
+  attrs?: (JSXInternal.HTMLAttributes & { children?: (JSXNode | JSXNode[])[] } | null) | P | null)
+: JSXElement {
+  return { [$h]: 1, name, attrs: attrs ?? {}, el: null, children: attrs?.children.flat() };
 }
 
 export const jsxs = jsx;
@@ -44,7 +44,7 @@ interface Skeleton {
  * Collect the skeletons for the given JSXNode.
  * IMPORTANT This must be coresspondent with how assemble() consumes skeletons.
  */
-function collectSkeletonsImpl(acc: Skeleton[], jnode: JSXRawNode, parent: Node | null, path: (number | string)[]): void {
+function collectSkeletonsImpl(acc: Skeleton[], jnode: JSXNode, parent: Node | null, path: (number | string)[]): void {
   if (typeof jnode === "string" && parent) {
     parent.appendChild(document.createTextNode(""));
     return;
@@ -77,16 +77,16 @@ function collectSkeletonsImpl(acc: Skeleton[], jnode: JSXRawNode, parent: Node |
     collectSkeletonsImpl(acc, children[i], e, path.concat(i));
 }
 
-function collectSkeletons(jnode: JSXRawNode): Skeleton[] {
+function collectSkeletons(jnode: JSXNode): Skeleton[] {
   const ret: Skeleton[] = [];
   collectSkeletonsImpl(ret, jnode, null, []);
   return ret;
 }
 
-function assignSkeletons(skels: Skeleton[], jnode: JSXRawNode): void {
+function assignSkeletons(skels: Skeleton[], jnode: JSXNode): void {
   for (let i = 0; i < skels.length; ++i) {
     const { el, path } = skels[i];
-    let node = jnode as JSXRawElement;
+    let node = jnode as JSXElement;
     for (let j = 0; j < path.length; ++j) {
       const p = path[j];
       node = (typeof p === "number") ? node.children[p] : node.attrs[p];
@@ -97,7 +97,7 @@ function assignSkeletons(skels: Skeleton[], jnode: JSXRawNode): void {
 
 const skelTable: WeakMap<object, Skeleton[]> = new WeakMap();
 
-function allocateSkeletons(jnode: JSXRawNode, key?: object | null): JSXRawNode {
+function allocateSkeletons(jnode: JSXNode, key?: object | null): JSXNode {
   const skels = key
     ? (skelTable.get(key) ?? skelTable.set(key, collectSkeletons(jnode)).get(key)!)
     : collectSkeletons(jnode);
@@ -122,20 +122,20 @@ function createSimpleBacking(node: Node): Backing {
   return { insert, lastNode: () => node!, name: node };
 }
 
-function assemble(jnode: JSXRawNode, node?: Node | null, loc?: Backing.InsertLocation | null): Backing {
+function assemble(jnode: JSXNode, node?: Node | null, loc?: Backing.InsertLocation | null): Backing {
   const el =
     node ??
-    ((typeof jnode === "object")
+    ((jnode && typeof jnode === "object")
       ? jnode.el?.cloneNode(true)
       : (console.log("UNCACHED", jnode), document.createTextNode((typeof jnode === "function") ? "" : (jnode + ""))));
 
   if (el && !el.parentNode && loc?.parent)
     insertAfter(el, loc.parent, loc.prev);
   
-  if (typeof jnode !== "object") {
+  if (typeof jnode !== "object" || jnode == null) {
     if (typeof jnode === "function") {
       autorun(() => { el!.nodeValue = jnode() + ""; });
-    } else {
+    } else if (jnode != null) {
       el!.nodeValue = jnode + "";
     }
     return createSimpleBacking(el!);
@@ -174,18 +174,19 @@ function assemble(jnode: JSXRawNode, node?: Node | null, loc?: Backing.InsertLoc
     return createSimpleBacking(el!);
 
   } else {
-    const jnodeOrBacking = name({ ...attrs, children });
-    if (typeof jnodeOrBacking === "object" && !isJSXElement(jnodeOrBacking)) {
-      const backing = jnodeOrBacking;
-      backing.insert(loc);
-      return backing;
+    const special = specials.get(name);
+    if (special) {
+      const b = special({ ...attrs, children }, loc);
+      b.insert(loc);
+      return b;
     }
-    const jnode = jnodeOrBacking;
-    return assemble(allocateSkeletons(jnode, name), null, loc);
+
+    const expanded = name({ ...attrs, children });
+    return assemble(allocateSkeletons(expanded, name), null, loc);
   }
 }
 
-export function attach(parent: Element, jnode: JSXRawElement): void {
+export function attach(parent: Element, jnode: JSXElement): void {
   assemble(allocateSkeletons(jnode), null, { parent, prev: null });
 }
 
@@ -211,15 +212,25 @@ function insertBackings(bs: Backing[] | null, loc: Backing.InsertLocation | null
   });
 }
 
+const specials: WeakMap<Component<any, any>, (props: any, loc?: Backing.InsertLocation | null) => Backing> = new WeakMap();
+
+export function specialize<P extends { children?: any }>(
+  impl: (props: P, loc?: Backing.InsertLocation | null) => Backing
+): Component<P, P["children"]> {
+  const ret: Component<P, P["children"]> = () => ""; // Dummy. Never called.
+  specials.set(ret, impl);
+  return ret;
+}
+
 export namespace Show {
   export interface Props {
     when: () => boolean;
-    fallback?: JSXRawNode;
-    children?: JSXRawNode[];
+    fallback?: JSXNode;
+    children?: JSXNode[];
   }
 }
 
-export function Show(props: Show.Props): Backing {
+export const Show = specialize(function Show(props: Show.Props): Backing {
   const { when, fallback } = props;
   const children = props.children ?? [];
   let thenBackings: Backing[] | null = null;
@@ -264,18 +275,18 @@ export function Show(props: Show.Props): Backing {
 
   reaction(when, toggle);
   return { insert, lastNode, name: "Show" };
-}
+});
 
 export namespace For {
   export interface Props<E> {
     each: () => E[];
     key?: (el: E, ix: number) => any;
     noCache?: boolean;
-    children: [(el: E, i: () => number) => JSXRawElement];
+    children: [(el: E, i: () => number) => JSXElement];
   }
 }
 
-export function For<E>(props: For.Props<E>): Backing {
+export const For = specialize(function For<E>(props: For.Props<E>): Backing {
    const { each, key, noCache, children: [fun] } = props;
 
   let backings: Backing[] = [];
@@ -340,4 +351,4 @@ export function For<E>(props: For.Props<E>): Backing {
     lastNode: () => lastNodeOfBackings(backings, loc.prev),
     name: "For"
   };
-}
+});

@@ -29,10 +29,5 @@ export interface JSXElement {
   children: JSXNode[];
 }
 
-export interface JSXRawElement extends JSXElement {
-  children: JSXRawNode[];
-} 
-
-export type JSXRawNode = AccessorOr<string | number> | JSXRawElement;
-export type JSXNode = JSXRawNode | Backing;
+export type JSXNode = AccessorOr<null | string | number> | JSXElement;
 export type Component<P, C extends any> = (props: P & { children: C }) => JSXNode;
