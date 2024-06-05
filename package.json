@@ -3,11 +3,15 @@
   "private": true,
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "types": "lib/index.d.js",
+  "main": "lib/index.js",
   "scripts": {
     "build": "tsc -p ./",
     "test": "jest"
   },
+  "files": [
+    "lib/"
+  ],
   "keywords": [],
   "author": "izreit",
   "license": "MIT",
@@ -17,5 +21,9 @@
     "jest": "^29.7.0",
     "ts-jest": "^29.1.2",
     "typescript": "^5.4.5"
+  },
+  "exports": {
+    ".": "./lib/index.js",
+    "./jsx-runtime": "./lib/html/index.js"
   }
 }

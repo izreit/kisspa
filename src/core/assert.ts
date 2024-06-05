@@ -25,6 +25,6 @@ export function fail<U>(msgOrFun: string | ((arg: U) => string), errorInfoObj?: 
   throw new Error((typeof msgOrFun === "string") ? msgOrFun : msgOrFun(errorInfoObj!));
 }
 
-export function unreachable(v: never): never {
+export function unreachable(_v: never): never {
   fail("should not reach here");
 }
