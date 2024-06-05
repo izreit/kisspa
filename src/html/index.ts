@@ -106,7 +106,7 @@ function allocateSkeletons(jnode: JSXNode, key?: object | null): JSXNode {
 }
 
 function insertAfter(node: Node, parent: Node, prev: Backing | null): void {
-  const rawPrev = prev?.lastNode();
+  const rawPrev = prev?.tail();
   const after = rawPrev ? rawPrev.nextSibling : parent.firstChild;
   parent.insertBefore(node, after);
 }
@@ -119,7 +119,7 @@ function createSimpleBacking(node: Node): Backing {
       node.parentNode?.removeChild(node);
     }
   };
-  return { insert, lastNode: () => node!, name: node };
+  return { insert, tail: () => node!, name: node };
 }
 
 function assemble(jnode: JSXNode, node?: Node | null, loc?: Backing.InsertLocation | null): Backing {
@@ -190,13 +190,13 @@ export function attach(parent: Element, jnode: JSXElement): void {
   assemble(allocateSkeletons(jnode), null, { parent, prev: null });
 }
 
-function lastNodeOfBackings(bs: Backing[], prev?: Backing | null): Node | null {
+function tailOfBackings(bs: Backing[], prev?: Backing | null): Node | null {
   for (let i = bs.length - 1; i >= 0; --i) {
-    const last = bs[i].lastNode();
-    if (last)
-      return last;
+    const t = bs[i].tail();
+    if (t)
+      return t;
   }
-  return prev?.lastNode() ?? null;
+  return prev?.tail() ?? null;
 }
 
 function insertBackings(bs: Backing[] | null, loc: Backing.InsertLocation | null | undefined): void {
@@ -260,11 +260,11 @@ export const Show = specialize(function Show(props: Show.Props): Backing {
     }
   }
 
-  function lastNode(): Node | null {
+  function tail(): Node | null {
     if (showing) {
-      return (thenBackings && lastNodeOfBackings(thenBackings)) ?? loc?.prev?.lastNode() ?? null;
+      return (thenBackings && tailOfBackings(thenBackings)) ?? loc?.prev?.tail() ?? null;
     } else {
-      return fallbackBacking?.lastNode() ?? loc?.prev?.lastNode() ?? null;
+      return fallbackBacking?.tail() ?? loc?.prev?.tail() ?? null;
     }
   }
 
@@ -274,7 +274,7 @@ export const Show = specialize(function Show(props: Show.Props): Backing {
   }
 
   reaction(when, toggle);
-  return { insert, lastNode, name: "Show" };
+  return { insert, tail, name: "Show" };
 });
 
 export namespace For {
@@ -348,7 +348,7 @@ export const For = specialize(function For<E>(props: For.Props<E>): Backing {
 
   return {
     insert,
-    lastNode: () => lastNodeOfBackings(backings, loc.prev),
+    tail: () => tailOfBackings(backings, loc.prev),
     name: "For"
   };
 });
@@ -385,7 +385,7 @@ export function createContext<T>(initial: T): ContextPair<T> {
         loc = { ...l };
         insertBackings(bs, loc);
       },
-      lastNode: () => lastNodeOfBackings(bs, loc?.prev),
+      tail: () => tailOfBackings(bs, loc?.prev),
       name: "Ctx"
     };
   });

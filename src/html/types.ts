@@ -9,8 +9,8 @@ export namespace Backing {
 }
 
 export interface Backing {
-  lastNode(): Node | null;
   insert(loc: Backing.InsertLocation | null | undefined): void;
+  tail(): Node | null;
   name: Node | string;
 }
 
