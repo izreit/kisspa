@@ -111,10 +111,10 @@ function insertAfter(node: Node, parent: Node, prev: Backing | null): void {
   parent.insertBefore(node, after);
 }
 
-function createSimpleBacking(node: Node): Backing {
+function createElementBacking(node: Node): Backing {
   const insert = (pos: Backing.InsertLocation | null | undefined) => {
     if (pos?.parent) {
-      insertAfter(node, pos.parent, pos.prev)
+      insertAfter(node, pos.parent, pos.prev);
     } else {
       node.parentNode?.removeChild(node);
     }
@@ -127,18 +127,18 @@ function assemble(jnode: JSXNode, node?: Node | null, loc?: Backing.InsertLocati
     node ??
     ((jnode && typeof jnode === "object")
       ? jnode.el?.cloneNode(true)
-      : (console.log("UNCACHED", jnode), document.createTextNode((typeof jnode === "function") ? "" : (jnode + ""))));
+      : document.createTextNode((typeof jnode === "function") ? "" : (jnode + "")));
 
   if (el && !el.parentNode && loc?.parent)
     insertAfter(el, loc.parent, loc.prev);
-  
+
   if (typeof jnode !== "object" || jnode == null) {
     if (typeof jnode === "function") {
       autorun(() => { el!.nodeValue = jnode() + ""; });
     } else if (jnode != null) {
       el!.nodeValue = jnode + "";
     }
-    return createSimpleBacking(el!);
+    return createElementBacking(el!);
   }
 
   const { name, attrs, children } = jnode;
@@ -171,7 +171,7 @@ function assemble(jnode: JSXNode, node?: Node | null, loc?: Backing.InsertLocati
         chLoc.prev = assemble(v, null, chLoc);
       }
     }
-    return createSimpleBacking(el!);
+    return createElementBacking(el!);
 
   } else {
     const special = specials.get(name);
@@ -278,16 +278,19 @@ export const Show = specialize(function Show(props: Show.Props): Backing {
 });
 
 export namespace For {
+  export type ForCallback<E> = (el: E, i: () => number) => JSXNode;
+
   export interface Props<E> {
     each: () => E[];
     key?: (el: E, ix: number) => any;
     noCache?: boolean;
-    children: [(el: E, i: () => number) => JSXElement];
+    children: ForCallback<E> | ForCallback<E>[];
   }
 }
 
 export const For = specialize(function For<E>(props: For.Props<E>): Backing {
-   const { each, key, noCache, children: [fun] } = props;
+  const { each, key, noCache, children } = props;
+  const fun = arrayify(children)[0];
 
   let backings: Backing[] = [];
   let backingTable: Map<any, Backing> = new Map();
@@ -363,8 +366,8 @@ export type ContextPair<T> = [
   () => T,
 ];
 
-export function arrayify<T>(v: NonNullable<T> | T[] | null | undefined): T[] | null | undefined {
-  return Array.isArray(v) ? v : (v != null ? [v] : (v as null | undefined));
+export function arrayify<T>(v: NonNullable<T> | T[]): T[] {
+  return Array.isArray(v) ? v : [v];
 }
 
 export function createContext<T>(initial: T): ContextPair<T> {
@@ -374,7 +377,7 @@ export function createContext<T>(initial: T): ContextPair<T> {
     let bs: Backing[];
     try {
       stack.push(props.value);
-      bs = arrayify(props.children)?.map(c => assemble(c)) ?? [];
+      bs = arrayify(props.children ?? [])?.map(c => assemble(c)) ?? [];
     } finally {
       stack.pop();
     }
