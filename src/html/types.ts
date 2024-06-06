@@ -1,19 +1,6 @@
 export type Accessor<T> = () => T;
 export type AccessorOr<T> = T | Accessor<T>;
 
-export namespace Backing {
-  export type InsertLocation = {
-    parent: Node | null;
-    prev: Backing | null;
-  };
-}
-
-export interface Backing {
-  insert(loc: Backing.InsertLocation | null | undefined): void;
-  tail(): Node | null;
-  name: Node | string;
-}
-
 export interface Attributes {
   [key: string]: any;
 }
