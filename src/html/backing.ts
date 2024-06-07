@@ -94,7 +94,7 @@ export function assemble(jnode: JSXNode, node?: Node | null, loc?: Backing.Inser
   } else {
     const special = specials.get(name);
     if (special) {
-      const b = special({ ...attrs, children }, loc);
+      const b = special({ ...attrs, children });
       b.insert(loc);
       return b;
     }
@@ -104,15 +104,17 @@ export function assemble(jnode: JSXNode, node?: Node | null, loc?: Backing.Inser
   }
 }
 
-export function attach(parent: Element, jnode: JSXElement): void {
+export function attach(parent: Element, jnode: JSXNode): void {
   assemble(allocateSkeletons(jnode), null, { parent, prev: null });
 }
 
-export function tailOfBackings(bs: Backing[], prev?: Backing | null): Node | null {
-  for (let i = bs.length - 1; i >= 0; --i) {
-    const t = bs[i].tail();
-    if (t)
-      return t;
+export function tailOfBackings(bs: Backing[] | null | undefined, prev?: Backing | null): Node | null {
+  if (bs) {
+    for (let i = bs.length - 1; i >= 0; --i) {
+      const t = bs[i].tail();
+      if (t)
+        return t;
+    }
   }
   return prev?.tail() ?? null;
 }
@@ -130,16 +132,12 @@ export function insertBackings(bs: Backing[] | null, loc: Backing.InsertLocation
   });
 }
 
-const specials: WeakMap<Component<any, any>, (props: any, loc?: Backing.InsertLocation | null) => Backing> = new WeakMap();
+const specials: WeakMap<Component<any, any>, (props: any) => Backing> = new WeakMap();
 
-export function createSpecial<P extends { children?: any }>(
-  impl: (props: P, loc?: Backing.InsertLocation | null) => Backing
-): Component<P, P["children"]> {
-  const ret: Component<P, P["children"]> = () => ""; // Dummy. Never called.
+export type MemberType<P, Key> = Key extends keyof P ? P[Key] : never;
+
+export function createSpecial<P>(impl: (props: P) => Backing): Component<P, MemberType<P, "children">> {
+  const ret: Component<P, MemberType<P, "children">> = () => ""; // Dummy. Never called.
   specials.set(ret, impl);
   return ret;
-}
-
-export function arrayify<T>(v: NonNullable<T> | T[]): T[] {
-  return Array.isArray(v) ? v : [v];
 }

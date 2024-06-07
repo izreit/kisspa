@@ -1,8 +1,9 @@
 import { autorun, signal } from "../core";
-import { Backing, arrayify, assemble, createSpecial, insertBackings, tailOfBackings } from "./backing";
+import { Backing, assemble, createSpecial, insertBackings, tailOfBackings } from "./backing";
 import { lcs } from "./internal/lcs";
 import { allocateSkeletons } from "./skeleton";
 import { JSXNode } from "./types";
+import { arrayify } from "./util";
 
 export namespace For {
   export type ForCallback<E> = (el: E, i: () => number) => JSXNode;

@@ -1,5 +1,6 @@
-import { Backing, arrayify, assemble, createSpecial, insertBackings, tailOfBackings } from "./backing";
+import { Backing, assemble, createSpecial, insertBackings, tailOfBackings } from "./backing";
 import { Component, JSXNode } from "./types";
+import { arrayify } from "./util";
 
 export interface ContextProviderProps<T> {
   value: T;
@@ -18,7 +19,7 @@ export function createContext<T>(initial: T): ContextPair<T> {
     let bs: Backing[];
     try {
       stack.push(props.value);
-      bs = arrayify(props.children ?? [])?.map(c => assemble(c)) ?? [];
+      bs = arrayify(props.children)?.map(c => assemble(c)) ?? [];
     } finally {
       stack.pop();
     }

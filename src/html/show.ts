@@ -16,7 +16,7 @@ export const Show = createSpecial(function Show(props: Show.Props): Backing {
   let thenBackings: Backing[] | null = null;
   let fallbackBacking: Backing | null = null;
   let showing = false;
-  let loc: Backing.InsertLocation = { parent: null, prev: null };
+  let loc: Backing.InsertLocation | null = null;
 
   function toggle(show: boolean): void {
     if (showing === show) return;
@@ -25,10 +25,8 @@ export const Show = createSpecial(function Show(props: Show.Props): Backing {
 
     if (show) {
       fallbackBacking?.insert(null);
-      if (!thenBackings) {
-        thenBackings = [];
-        children.forEach(c => { thenBackings!.push(assemble(c)); });
-      }
+      if (!thenBackings)
+        thenBackings = children.map(c => assemble(c));
       insertBackings(thenBackings, loc);
     } else {
       insertBackings(thenBackings, null);
@@ -42,15 +40,15 @@ export const Show = createSpecial(function Show(props: Show.Props): Backing {
 
   function tail(): Node | null {
     if (showing) {
-      return (thenBackings && tailOfBackings(thenBackings)) ?? loc?.prev?.tail() ?? null;
+      return tailOfBackings(thenBackings, loc?.prev);
     } else {
       return fallbackBacking?.tail() ?? loc?.prev?.tail() ?? null;
     }
   }
 
-  function insert(l: Backing.InsertLocation): void {
-    loc = { ...l };
-    toggle(!!l.parent);
+  function insert(l: Backing.InsertLocation | null): void {
+    loc = l && { ...l };
+    toggle(!!l?.parent);
   }
 
   reaction(when, toggle);
