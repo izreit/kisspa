@@ -1,4 +1,4 @@
-import { reaction } from "../../core";
+import { reaction } from "../../reactive";
 import { Backing, BackingLocation, assemble, assignLocation, createSpecial, insertBackings, tailOfBackings } from "../core/backing";
 import { JSXNode } from "../core/types";
 

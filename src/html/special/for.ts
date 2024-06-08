@@ -1,4 +1,4 @@
-import { autorun, signal } from "../../core";
+import { autorun, signal } from "../../reactive";
 import { Backing, BackingLocation, assemble, assignLocation, createSpecial, insertBackings, tailOfBackings } from "../core/backing";
 import { lcs } from "./internal/lcs";
 import { allocateSkeletons } from "../core/skeleton";

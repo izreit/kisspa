@@ -1,4 +1,4 @@
-import { autorun } from "../../core";
+import { autorun } from "../../reactive";
 import { allocateSkeletons } from "./skeleton";
 import { $h, Component, JSXElement, JSXNode } from "./types";
 
