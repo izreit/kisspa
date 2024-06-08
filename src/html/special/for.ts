@@ -1,9 +1,9 @@
-import { autorun, signal } from "../core";
-import { Backing, BackingLocation, assemble, assignLocation, createSpecial, insertBackings, tailOfBackings } from "./backing";
+import { autorun, signal } from "../../core";
+import { Backing, BackingLocation, assemble, assignLocation, createSpecial, insertBackings, tailOfBackings } from "../core/backing";
 import { lcs } from "./internal/lcs";
-import { allocateSkeletons } from "./skeleton";
-import { JSXNode } from "./types";
-import { arrayify } from "./util";
+import { allocateSkeletons } from "../core/skeleton";
+import { JSXNode } from "../core/types";
+import { arrayify } from "../core/util";
 
 export namespace For {
   export type ForCallback<E> = (el: E, i: () => number) => JSXNode;

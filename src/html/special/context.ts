@@ -1,6 +1,6 @@
-import { Backing, BackingLocation, assemble, assignLocation, createSpecial, insertBackings, tailOfBackings } from "./backing";
-import { Component, JSXNode } from "./types";
-import { arrayify } from "./util";
+import { Backing, BackingLocation, assemble, assignLocation, createSpecial, insertBackings, tailOfBackings } from "../core/backing";
+import { Component, JSXNode } from "../core/types";
+import { arrayify } from "../core/util";
 
 export interface ContextProviderProps<T> {
   value: T;

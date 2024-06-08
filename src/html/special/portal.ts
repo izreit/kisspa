@@ -1,6 +1,6 @@
-import { Backing, BackingLocation, assemble, assignLocation, createSpecial, insertBackings, tailOfBackings } from "./backing";
-import { ChildrenProp } from "./types";
-import { arrayify, lastOf } from "./util";
+import { Backing, BackingLocation, assemble, assignLocation, createSpecial, insertBackings, tailOfBackings } from "../core/backing";
+import { ChildrenProp } from "../core/types";
+import { arrayify, lastOf } from "../core/util";
 
 export namespace Portal {
   export type SrcProps = { to: any; } & ChildrenProp;
@@ -54,7 +54,7 @@ function createPortalSrcBacking(props: Portal.SrcProps): Backing {
       childBackings = children.map(c => assemble(c));
     insertBackings(childBackings, toShow ? physicalLoc : null);
   }
-  
+
   const physicalBacking: Backing = {
     insert: l => {
       if (assignLocation(physicalLoc, l))
@@ -63,7 +63,7 @@ function createPortalSrcBacking(props: Portal.SrcProps): Backing {
     tail: () => tailOfBackings(childBackings, physicalLoc?.prev),
     name: "PortalSrcPhys",
   };
-  
+
   destBackingFor(to).addChild(physicalBacking);
 
   return {

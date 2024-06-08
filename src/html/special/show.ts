@@ -1,6 +1,6 @@
-import { reaction } from "../core";
-import { Backing, BackingLocation, assemble, assignLocation, createSpecial, insertBackings, tailOfBackings } from "./backing";
-import { JSXNode } from "./types";
+import { reaction } from "../../core";
+import { Backing, BackingLocation, assemble, assignLocation, createSpecial, insertBackings, tailOfBackings } from "../core/backing";
+import { JSXNode } from "../core/types";
 
 export namespace Show {
   export interface Props {
