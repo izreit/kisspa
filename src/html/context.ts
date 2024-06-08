@@ -1,4 +1,4 @@
-import { Backing, assemble, createSpecial, insertBackings, tailOfBackings } from "./backing";
+import { Backing, BackingLocation, assemble, assignLocation, createSpecial, insertBackings, tailOfBackings } from "./backing";
 import { Component, JSXNode } from "./types";
 import { arrayify } from "./util";
 
@@ -24,11 +24,11 @@ export function createContext<T>(initial: T): ContextPair<T> {
       stack.pop();
     }
 
-    let loc: Backing.InsertLocation | null = null;
+    let loc: BackingLocation = { parent: null, prev: null };
     return {
-      insert: (l: Backing.InsertLocation) => {
-        loc = { ...l };
-        insertBackings(bs, loc);
+      insert: (l) => {
+        if (assignLocation(loc, l))
+          insertBackings(bs, loc);
       },
       tail: () => tailOfBackings(bs, loc?.prev),
       name: "Ctx"

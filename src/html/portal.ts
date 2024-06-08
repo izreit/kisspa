@@ -1,4 +1,4 @@
-import { Backing, assemble, createSpecial, insertBackings, tailOfBackings } from "./backing";
+import { Backing, BackingLocation, assemble, assignLocation, createSpecial, insertBackings, tailOfBackings } from "./backing";
 import { ChildrenProp } from "./types";
 import { arrayify, lastOf } from "./util";
 
@@ -14,9 +14,9 @@ interface PortalDestBacking extends Backing {
 
 function createPortalDestBacking(): PortalDestBacking {
   const childBackings: Backing[] = [];
-  let loc: Backing.InsertLocation | null = null;
+  let loc: BackingLocation | null = null;
   return {
-    insert: (l: Backing.InsertLocation | null): void => {
+    insert: (l: BackingLocation | null): void => {
       if (!!loc?.parent == !!l?.parent) return;
       insertBackings(childBackings, l?.parent ? l : null);
       loc = l && { ...l };
@@ -43,8 +43,8 @@ function createPortalSrcBacking(props: Portal.SrcProps): Backing {
 
   let childBackings: Backing[] | null = null;
   let showing = false;
-  let virtualLoc: Backing.InsertLocation = { parent: null, prev: null };
-  let physicalLoc: Backing.InsertLocation = { parent: null, prev: null };
+  let virtualLoc: BackingLocation = { parent: null, prev: null };
+  let physicalLoc: BackingLocation = { parent: null, prev: null };
 
   function updateShow(): void {
     const toShow = !!(virtualLoc.parent && physicalLoc.parent);
@@ -56,9 +56,9 @@ function createPortalSrcBacking(props: Portal.SrcProps): Backing {
   }
   
   const physicalBacking: Backing = {
-    insert: (l: Backing.InsertLocation): void => {
-      physicalLoc = { ...l };
-      updateShow();
+    insert: l => {
+      if (assignLocation(physicalLoc, l))
+        updateShow();
     },
     tail: () => tailOfBackings(childBackings, physicalLoc?.prev),
     name: "PortalSrcPhys",
@@ -67,9 +67,9 @@ function createPortalSrcBacking(props: Portal.SrcProps): Backing {
   destBackingFor(to).addChild(physicalBacking);
 
   return {
-    insert: (l: Backing.InsertLocation): void => {
-      virtualLoc = { ...l };
-      updateShow();
+    insert: (l) => {
+      if (assignLocation(virtualLoc, l))
+        updateShow();
     },
     tail: () => virtualLoc.prev?.tail() ?? null,
     name: "PortalSrcVirt",

@@ -1,5 +1,5 @@
 import { autorun, signal } from "../core";
-import { Backing, assemble, createSpecial, insertBackings, tailOfBackings } from "./backing";
+import { Backing, BackingLocation, assemble, assignLocation, createSpecial, insertBackings, tailOfBackings } from "./backing";
 import { lcs } from "./internal/lcs";
 import { allocateSkeletons } from "./skeleton";
 import { JSXNode } from "./types";
@@ -23,7 +23,7 @@ export const For = createSpecial(function For<E>(props: For.Props<E>): Backing {
   let backings: Backing[] = [];
   let backingTable: Map<any, Backing> = new Map();
   let ixTable: WeakMap<Backing, [() => number, (v: number) => void]> = new WeakMap();
-  let loc: Backing.InsertLocation = { parent: null, prev: null };
+  let loc: BackingLocation = { parent: null, prev: null };
 
   autorun(() => {
     const nextTable: Map<any, Backing> = new Map();
@@ -72,13 +72,11 @@ export const For = createSpecial(function For<E>(props: For.Props<E>): Backing {
     }
   });
 
-  function insert(l: Backing.InsertLocation): void {
-    loc = { ...l };
-    insertBackings(backings, loc);
-  }
-
   return {
-    insert,
+    insert: (l) => {
+      if (assignLocation(loc, l))
+        insertBackings(backings, loc);
+    },
     tail: () => tailOfBackings(backings, loc.prev),
     name: "For"
   };

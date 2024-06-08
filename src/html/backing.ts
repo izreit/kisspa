@@ -2,17 +2,25 @@ import { autorun } from "../core";
 import { allocateSkeletons } from "./skeleton";
 import { $h, Component, JSXElement, JSXNode } from "./types";
 
-export namespace Backing {
-  export type InsertLocation = {
-    parent: Node | null;
-    prev: Backing | null;
-  };
-}
-
 export interface Backing {
-  insert(loc: Backing.InsertLocation | null | undefined): void;
+  insert(loc: BackingLocation | null | undefined): void;
   tail(): Node | null;
   name: Node | string;
+}
+
+export interface BackingLocation {
+  parent: Node | null;
+  prev: Backing | null;
+}
+
+const nullLocation = { parent: null, prev: null };
+
+export function assignLocation(self: BackingLocation, loc: BackingLocation | null | undefined): boolean {
+  const { parent, prev } = loc ?? nullLocation;
+  if (self.parent === parent && self.prev === prev) return false;
+  self.parent = parent;
+  self.prev = prev;
+  return true;
 }
 
 export function isJSXElement(v: any): v is JSXElement {
@@ -30,17 +38,20 @@ function insertAfter(node: Node, parent: Node, prev: Backing | null): void {
 }
 
 function createElementBacking(node: Node): Backing {
-  const insert = (pos: Backing.InsertLocation | null | undefined) => {
-    if (pos?.parent) {
-      insertAfter(node, pos.parent, pos.prev);
-    } else {
-      node.parentNode?.removeChild(node);
-    }
+  return {
+    insert: (pos) => {
+      if (pos?.parent) {
+        insertAfter(node, pos.parent, pos.prev);
+      } else {
+        node.parentNode?.removeChild(node);
+      }
+    },
+    tail: () => node!,
+    name: node
   };
-  return { insert, tail: () => node!, name: node };
 }
 
-export function assemble(jnode: JSXNode, node?: Node | null, loc?: Backing.InsertLocation | null): Backing {
+export function assemble(jnode: JSXNode, node?: Node | null, loc?: BackingLocation | null): Backing {
   const el =
     node ??
     ((jnode && typeof jnode === "object")
@@ -79,7 +90,7 @@ export function assemble(jnode: JSXNode, node?: Node | null, loc?: Backing.Inser
     }
 
     let ch: Node | null = el!.firstChild;
-    let chLoc: Backing.InsertLocation = { parent: el!, prev: null };
+    let chLoc: BackingLocation = { parent: el!, prev: null };
     for (const v of children) {
       // IMPORTANT This condition, for consuming the skeleton, must be correspondent with collectSkeletons().
       if (typeof v === "string" || (isJSXElement(v) && !v.el && typeof v.name === "string")) {
@@ -119,7 +130,7 @@ export function tailOfBackings(bs: Backing[] | null | undefined, prev?: Backing 
   return prev?.tail() ?? null;
 }
 
-export function insertBackings(bs: Backing[] | null, loc: Backing.InsertLocation | null | undefined): void {
+export function insertBackings(bs: Backing[] | null, loc: BackingLocation | null | undefined): void {
   if (!bs) return;
   if (!loc?.parent) {
     bs.forEach(b => b.insert(null));

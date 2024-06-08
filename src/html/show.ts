@@ -1,5 +1,5 @@
 import { reaction } from "../core";
-import { Backing, assemble, createSpecial, insertBackings, tailOfBackings } from "./backing";
+import { Backing, BackingLocation, assemble, assignLocation, createSpecial, insertBackings, tailOfBackings } from "./backing";
 import { JSXNode } from "./types";
 
 export namespace Show {
@@ -16,14 +16,10 @@ export const Show = createSpecial(function Show(props: Show.Props): Backing {
   let thenBackings: Backing[] | null = null;
   let fallbackBacking: Backing | null = null;
   let showing = false;
-  let loc: Backing.InsertLocation | null = null;
+  let loc: BackingLocation = { parent: null, prev: null };
 
-  function toggle(show: boolean): void {
-    if (showing === show) return;
-    showing = show;
-    if (!parent) return;
-
-    if (show) {
+  function update(): void {
+    if (showing) {
       fallbackBacking?.insert(null);
       if (!thenBackings)
         thenBackings = children.map(c => assemble(c));
@@ -38,19 +34,21 @@ export const Show = createSpecial(function Show(props: Show.Props): Backing {
     }
   }
 
-  function tail(): Node | null {
-    if (showing) {
-      return tailOfBackings(thenBackings, loc?.prev);
-    } else {
-      return fallbackBacking?.tail() ?? loc?.prev?.tail() ?? null;
-    }
-  }
+  reaction(when, toShow => {
+    showing = toShow;
+    update();
+  });
 
-  function insert(l: Backing.InsertLocation | null): void {
-    loc = l && { ...l };
-    toggle(!!l?.parent);
-  }
-
-  reaction(when, toggle);
-  return { insert, tail, name: "Show" };
+  return {
+    insert: (l) => {
+      assignLocation(loc, l);
+      update();
+    },
+    tail: () => {
+      return showing ?
+        tailOfBackings(thenBackings, loc.prev) :
+        (fallbackBacking?.tail() ?? loc.prev?.tail() ?? null);
+    },
+    name: "Show"
+  };
 });
