@@ -132,15 +132,12 @@ export function tailOfBackings(bs: Backing[] | null | undefined, prev?: Backing 
 
 export function insertBackings(bs: Backing[] | null, loc: BackingLocation | null | undefined): void {
   if (!bs) return;
-  if (!loc?.parent) {
+  if (loc?.parent) {
+    const parent = loc.parent;
+    bs.reduce((prev, b) => (b.insert({ parent, prev }), b), loc.prev);
+  } else {
     bs.forEach(b => b.insert(null));
-    return;
   }
-  const l = { ...loc };
-  bs.forEach(b => {
-    b.insert(l);
-    l.prev = b;
-  });
 }
 
 const specials: WeakMap<Component<any, any>, (props: any) => Backing> = new WeakMap();
