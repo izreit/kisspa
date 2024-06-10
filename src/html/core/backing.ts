@@ -10,7 +10,7 @@ export interface Backing {
 
 export interface BackingLocation {
   parent: Node | null;
-  prev: Backing | null;
+  prev: Backing | Node | null;
 }
 
 const nullLocation = { parent: null, prev: null };
@@ -31,8 +31,12 @@ export function isStrOrNum(v: any): v is number | string {
   return typeof v === "string" || typeof v === "number";
 }
 
-function insertAfter(node: Node, parent: Node, prev: Backing | null): void {
-  const rawPrev = prev?.tail();
+export function tail(p: Backing | Node | null | undefined): Node | null {
+  return p ? ("nodeName" in p ? p : p.tail()) : null;
+}
+
+function insertAfter(node: Node, parent: Node, prev: Backing | Node | null): void {
+  const rawPrev = tail(prev);
   const after = rawPrev ? rawPrev.nextSibling : parent.firstChild;
   parent.insertBefore(node, after);
 }
@@ -51,7 +55,9 @@ function createElementBacking(node: Node): Backing {
   };
 }
 
-export function assemble(jnode: JSXNode, node?: Node | null, loc?: BackingLocation | null): Backing {
+export function assemble(jnode: JSXNode): Backing;
+export function assemble(jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node;
+export function assemble(jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node {
   const el =
     node ??
     ((jnode && typeof jnode === "object")
@@ -94,13 +100,13 @@ export function assemble(jnode: JSXNode, node?: Node | null, loc?: BackingLocati
     for (const v of children) {
       // IMPORTANT This condition, for consuming the skeleton, must be correspondent with collectSkeletons().
       if (typeof v === "string" || (isJSXElement(v) && !v.el && typeof v.name === "string")) {
-        chLoc.prev = assemble(v, ch);
+        chLoc.prev = assemble(v, null, ch);
         ch = ch?.nextSibling ?? null;
       } else {
-        chLoc.prev = assemble(v, null, chLoc);
+        chLoc.prev = assemble(v, chLoc);
       }
     }
-    return createElementBacking(el!);
+    return node?.parentNode ? el! : createElementBacking(el!);
 
   } else {
     const special = specials.get(name);
@@ -111,15 +117,16 @@ export function assemble(jnode: JSXNode, node?: Node | null, loc?: BackingLocati
     }
 
     const expanded = name({ ...attrs, children });
-    return assemble(allocateSkeletons(expanded, name), null, loc);
+    return assemble(allocateSkeletons(expanded, name), loc);
   }
 }
 
 export function attach(parent: Element, jnode: JSXNode): void {
-  assemble(allocateSkeletons(jnode), null, { parent, prev: null });
+  const b = assemble(allocateSkeletons(jnode));
+  b.insert({ parent, prev: null });
 }
 
-export function tailOfBackings(bs: Backing[] | null | undefined, prev?: Backing | null): Node | null {
+export function tailOfBackings(bs: Backing[] | null | undefined, prev?: Backing | Node | null): Node | null {
   if (bs) {
     for (let i = bs.length - 1; i >= 0; --i) {
       const t = bs[i].tail();
@@ -127,7 +134,7 @@ export function tailOfBackings(bs: Backing[] | null | undefined, prev?: Backing 
         return t;
     }
   }
-  return prev?.tail() ?? null;
+  return tail(prev);
 }
 
 export function insertBackings(bs: Backing[] | null, loc: BackingLocation | null | undefined): void {
@@ -145,7 +152,7 @@ const specials: WeakMap<Component<any, any>, (props: any) => Backing> = new Weak
 export type MemberType<P, Key> = Key extends keyof P ? P[Key] : never;
 
 export function createSpecial<P>(impl: (props: P) => Backing): Component<P, MemberType<P, "children">> {
-  const ret: Component<P, MemberType<P, "children">> = () => ""; // Dummy. Never called.
+  const ret: Component<P, MemberType<P, "children">> = () => 0; // Dummy. Never called but must be unique for each call.
   specials.set(ret, impl);
   return ret;
 }

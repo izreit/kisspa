@@ -1,5 +1,5 @@
 import { reaction } from "../../reactive";
-import { Backing, BackingLocation, assemble, assignLocation, createSpecial, insertBackings, tailOfBackings } from "../core/backing";
+import { Backing, BackingLocation, assemble, assignLocation, createSpecial, insertBackings, tail, tailOfBackings } from "../core/backing";
 import { JSXNode } from "../core/types";
 
 export namespace Show {
@@ -47,7 +47,7 @@ export const Show = createSpecial(function Show(props: Show.Props): Backing {
     tail: () => {
       return showing ?
         tailOfBackings(thenBackings, loc.prev) :
-        (fallbackBacking?.tail() ?? loc.prev?.tail() ?? null);
+        (fallbackBacking?.tail() ?? tail(loc.prev));
     },
     name: "Show"
   };

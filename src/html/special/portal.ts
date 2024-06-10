@@ -1,4 +1,4 @@
-import { Backing, BackingLocation, assemble, assignLocation, createSpecial, insertBackings, tailOfBackings } from "../core/backing";
+import { Backing, BackingLocation, assemble, assignLocation, createSpecial, insertBackings, tail, tailOfBackings } from "../core/backing";
 import { ChildrenProp } from "../core/types";
 import { arrayify, lastOf } from "../core/util";
 
@@ -71,7 +71,7 @@ function createPortalSrcBacking(props: Portal.SrcProps): Backing {
       if (assignLocation(virtualLoc, l))
         updateShow();
     },
-    tail: () => virtualLoc.prev?.tail() ?? null,
+    tail: () => tail(virtualLoc.prev),
     name: "PortalSrcVirt",
   };
 }
