@@ -1,5 +1,5 @@
 import { reaction } from "../../reactive";
-import { Backing, BackingLocation, assemble, assignLocation, createSpecial, insertBackings, tail, tailOfBackings } from "../core/backing";
+import { Backing, BackingLocation, assemble, assignLocation, createSpecial, disposeBackings, insertBackings, tailOf, tailOfBackings } from "../core/backing";
 import { JSXNode } from "../core/types";
 
 export namespace Show {
@@ -20,12 +20,14 @@ export const Show = createSpecial(function Show(props: Show.Props): Backing {
 
   function update(): void {
     if (showing) {
-      fallbackBacking?.insert(null);
+      fallbackBacking?.dispose();
+      fallbackBacking = null;
       if (!thenBackings)
         thenBackings = children.map(c => assemble(c));
       insertBackings(thenBackings, loc);
     } else {
-      insertBackings(thenBackings, null);
+      disposeBackings(thenBackings);
+      thenBackings = null;
       if (fallback) {
         if (!fallbackBacking)
           fallbackBacking = assemble(fallback);
@@ -34,21 +36,24 @@ export const Show = createSpecial(function Show(props: Show.Props): Backing {
     }
   }
 
-  reaction(when, toShow => {
+  const cancelUpdate = reaction(when, toShow => {
     showing = toShow;
     update();
   });
 
-  return {
-    insert: (l) => {
-      assignLocation(loc, l);
-      update();
-    },
-    tail: () => {
-      return showing ?
-        tailOfBackings(thenBackings, loc.prev) :
-        (fallbackBacking?.tail() ?? tail(loc.prev));
-    },
-    name: "Show"
+  const insert = (l: BackingLocation | null | undefined) => {
+    assignLocation(loc, l);
+    update();
   };
+  const tail = (): Node | null => {
+    return showing ?
+      tailOfBackings(thenBackings, loc.prev) :
+      (fallbackBacking?.tail() ?? tailOf(loc.prev));
+  };
+  const dispose = () => {
+    cancelUpdate();
+    disposeBackings(thenBackings);
+    fallbackBacking?.dispose();
+  };
+  return { insert, tail, dispose, name: "Show" };
 });

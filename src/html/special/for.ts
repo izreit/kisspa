@@ -1,5 +1,5 @@
 import { autorun, signal } from "../../reactive";
-import { Backing, BackingLocation, assemble, assignLocation, createSpecial, insertBackings, tailOfBackings } from "../core/backing";
+import { Backing, BackingLocation, assemble, assignLocation, createSpecial, disposeBackings, insertBackings, tailOfBackings } from "../core/backing";
 import { lcs } from "./internal/lcs";
 import { allocateSkeletons } from "../core/skeleton";
 import { JSXNode } from "../core/types";
@@ -25,7 +25,7 @@ export const For = createSpecial(function For<E>(props: For.Props<E>): Backing {
   let ixTable: WeakMap<Backing, [() => number, (v: number) => void]> = new WeakMap();
   let loc: BackingLocation = { parent: null, prev: null };
 
-  autorun(() => {
+  const cancelUpdate = autorun(() => {
     const nextTable: Map<any, Backing> = new Map();
     const nextBackings = each().map((e, i) => {
       const k = key?.(e, i) ?? e;
@@ -41,7 +41,6 @@ export const For = createSpecial(function For<E>(props: For.Props<E>): Backing {
       nextTable.set(k, b);
       return b;
     });
-    backingTable.forEach(_b => { });
     backingTable.clear();
     backingTable = nextTable;
 
@@ -57,7 +56,7 @@ export const For = createSpecial(function For<E>(props: For.Props<E>): Backing {
     for (let cmi = 0; cmi < commonBackings.length; ++cmi) {
       const commonBacking = commonBackings[cmi];
       for (let cb = backings[ci]; ci < backings.length && backings[ci] !== commonBacking; ++ci, cb = backings[ci])
-        cb.insert(null);
+        cb.dispose();
       for (let nb = nextBackings[ni]; ni < nextBackings.length && nb !== commonBacking; ++ni, nb = nextBackings[ni]) {
         nb.insert(l);
         l.prev = nb;
@@ -65,7 +64,7 @@ export const For = createSpecial(function For<E>(props: For.Props<E>): Backing {
       l.prev = commonBacking;
     }
     for (let cb = backings[ci]; ci < backings.length; ++ci, cb = backings[ci])
-      cb.insert(null);
+      cb.dispose();
     for (let nb = nextBackings[ni]; ni < nextBackings.length; ++ni, nb = nextBackings[ni]) {
       nb.insert(l);
       l.prev = nb;
@@ -78,6 +77,10 @@ export const For = createSpecial(function For<E>(props: For.Props<E>): Backing {
         insertBackings(backings, loc);
     },
     tail: () => tailOfBackings(backings, loc.prev),
+    dispose: () => {
+      cancelUpdate();
+      disposeBackings(backings);
+    },
     name: "For"
   };
 });

@@ -1,4 +1,4 @@
-import { Backing, BackingLocation, assemble, assignLocation, createSpecial, insertBackings, tailOfBackings } from "../core/backing";
+import { Backing, BackingLocation, assemble, assignLocation, createSpecial, disposeBackings, insertBackings, tailOfBackings } from "../core/backing";
 import { Component, JSXNode } from "../core/types";
 import { arrayify } from "../core/util";
 
@@ -31,6 +31,7 @@ export function createContext<T>(initial: T): ContextPair<T> {
           insertBackings(bs, loc);
       },
       tail: () => tailOfBackings(bs, loc?.prev),
+      dispose: () => disposeBackings(bs),
       name: "Ctx"
     };
   });

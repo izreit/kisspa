@@ -5,6 +5,7 @@ import { $h, Component, JSXElement, JSXNode } from "./types";
 export interface Backing {
   insert(loc: BackingLocation | null | undefined): void;
   tail(): Node | null;
+  dispose(): void;
   name: Node | string;
 }
 
@@ -31,33 +32,34 @@ export function isStrOrNum(v: any): v is number | string {
   return typeof v === "string" || typeof v === "number";
 }
 
-export function tail(p: Backing | Node | null | undefined): Node | null {
+export function tailOf(p: Backing | Node | null | undefined): Node | null {
   return p ? ("nodeName" in p ? p : p.tail()) : null;
 }
 
 function insertAfter(node: Node, parent: Node, prev: Backing | Node | null): void {
-  const rawPrev = tail(prev);
+  const rawPrev = tailOf(prev);
   const after = rawPrev ? rawPrev.nextSibling : parent.firstChild;
   parent.insertBefore(node, after);
 }
 
-function createElementBacking(node: Node): Backing {
-  return {
-    insert: (pos) => {
-      if (pos?.parent) {
-        insertAfter(node, pos.parent, pos.prev);
-      } else {
-        node.parentNode?.removeChild(node);
-      }
-    },
-    tail: () => node!,
-    name: node
+function createElementBacking(node: Node, disposers: (() => void)[]): Backing {
+  const insert = (pos: BackingLocation | null | undefined) => {
+    if (pos?.parent) {
+      insertAfter(node, pos.parent, pos.prev);
+    } else {
+      node.parentNode?.removeChild(node);
+    }
   };
+  const dispose = () => {
+    insert(null);
+    disposers.forEach(d => d());
+  };
+  return { insert, dispose, tail: () => node!, name: node };
 }
 
-export function assemble(jnode: JSXNode): Backing;
-export function assemble(jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node;
-export function assemble(jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node {
+export function assembleImpl(jnode: JSXNode): Backing;
+export function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node;
+export function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node {
   const el =
     node ??
     ((jnode && typeof jnode === "object")
@@ -68,28 +70,30 @@ export function assemble(jnode: JSXNode, loc?: BackingLocation | null, node?: No
     insertAfter(el, loc.parent, loc.prev);
 
   if (typeof jnode !== "object" || jnode == null) {
+    let disposers: (() => void)[] = [];
     if (typeof jnode === "function") {
-      autorun(() => { el!.nodeValue = jnode() + ""; });
+      disposers.push(autorun(() => { el!.nodeValue = jnode() + ""; }));
     } else if (jnode != null) {
       el!.nodeValue = jnode + "";
     }
-    return createElementBacking(el!);
+    return createElementBacking(el!, disposers);
   }
 
   const { name, attrs, children } = jnode;
   if (typeof name === "string") {
+    let disposers: (() => void)[] = [];
     for (let [k, v] of Object.entries(attrs)) {
       k = k.toLowerCase();
       if (typeof v === "function") {
         if (k[0] === "o" && k[1] === "n") {
           (el as any)[k] = v;
         } else {
-          autorun(() => { (el as any)[k] = v(); });
+          disposers.push(autorun(() => { (el as any)[k] = v(); }));
         }
       } else if (typeof v === "object" && v) {
         for (const [vk, vv] of Object.entries(v)) {
           if (typeof vv === "function") {
-            autorun(() => { (el as any)[k][vk] = vv(); });
+            disposers.push(autorun(() => { (el as any)[k][vk] = vv(); }));
           }
         }
       }
@@ -100,13 +104,13 @@ export function assemble(jnode: JSXNode, loc?: BackingLocation | null, node?: No
     for (const v of children) {
       // IMPORTANT This condition, for consuming the skeleton, must be correspondent with collectSkeletons().
       if (typeof v === "string" || (isJSXElement(v) && !v.el && typeof v.name === "string")) {
-        chLoc.prev = assemble(v, null, ch);
+        chLoc.prev = assembleImpl(v, null, ch);
         ch = ch?.nextSibling ?? null;
       } else {
-        chLoc.prev = assemble(v, chLoc);
+        chLoc.prev = assembleImpl(v, chLoc);
       }
     }
-    return node?.parentNode ? el! : createElementBacking(el!);
+    return (node?.parentNode && disposers.length === 0) ? el! : createElementBacking(el!, disposers);
 
   } else {
     const special = specials.get(name);
@@ -117,8 +121,62 @@ export function assemble(jnode: JSXNode, loc?: BackingLocation | null, node?: No
     }
 
     const expanded = name({ ...attrs, children });
-    return assemble(allocateSkeletons(expanded, name), loc);
+    return assembleImpl(allocateSkeletons(expanded, name), loc);
   }
+}
+
+export interface LifecycleHandlers {
+  onMounts: (() => void)[];
+  onCleanups: (() => void)[];
+}
+
+export interface LifecycleMethods {
+  onMount(f: () => void): void;
+  onCleanup(f: () => void): void;
+}
+
+let lifecycleContext: [LifecycleHandlers, LifecycleMethods] | null = null;
+
+export function useLifecycleMethods(): LifecycleMethods {
+  if (lifecycleContext)
+    return lifecycleContext[1];
+
+  const onMounts: (() => void)[] = [];
+  const onCleanups: (() => void)[] = [];
+  const m: LifecycleMethods = {
+    onMount(f) { onMounts.push(f); },
+    onCleanup(f) { onCleanups.push(f); },
+  };
+  lifecycleContext = [{ onMounts, onCleanups }, m];
+  return m;
+}
+
+export function assemble(jnode: JSXNode): Backing {
+  lifecycleContext = null as ([LifecycleHandlers, LifecycleMethods] | null);
+  const b = assembleImpl(jnode);
+  if (!lifecycleContext)
+    return b;
+
+  const { onMounts, onCleanups } = lifecycleContext[0];
+
+  // wrap insert() and dispose() to call lifecycle methods if onMount()/onCleanup() is called.
+  let mounted = false;
+  const insert = (l: BackingLocation | null | undefined): void => {
+    b.insert(l);
+    if (!mounted && l?.parent) {
+      mounted = true;
+      // Check the length each time to support onMount() called in onMount()
+      for (let i = 0; i < onMounts.length; ++i)
+        onMounts[i]();
+    }
+  };
+  const dispose = (): void => {
+    b.dispose();
+    // Revserse order for notify detach from decendants to ancestors.
+    for (let i = onCleanups.length - 1; i >= 0; --i)
+      onCleanups[i]();
+  };
+  return { ...b, insert, dispose };
 }
 
 export function attach(parent: Element, jnode: JSXNode): void {
@@ -134,7 +192,7 @@ export function tailOfBackings(bs: Backing[] | null | undefined, prev?: Backing 
         return t;
     }
   }
-  return tail(prev);
+  return tailOf(prev);
 }
 
 export function insertBackings(bs: Backing[] | null, loc: BackingLocation | null | undefined): void {
@@ -145,6 +203,10 @@ export function insertBackings(bs: Backing[] | null, loc: BackingLocation | null
   } else {
     bs.forEach(b => b.insert(null));
   }
+}
+
+export function disposeBackings(bs: Backing[] | null): void {
+  bs?.forEach(b => b.dispose());
 }
 
 const specials: WeakMap<Component<any, any>, (props: any) => Backing> = new WeakMap();

@@ -1,4 +1,4 @@
-import { Backing, BackingLocation, assemble, assignLocation, createSpecial, insertBackings, tail, tailOfBackings } from "../core/backing";
+import { Backing, BackingLocation, assemble, assignLocation, createSpecial, disposeBackings, insertBackings, tailOf, tailOfBackings } from "../core/backing";
 import { ChildrenProp } from "../core/types";
 import { arrayify, lastOf } from "../core/util";
 
@@ -10,22 +10,28 @@ export namespace Portal {
 
 interface PortalDestBacking extends Backing {
   addChild(b: Backing): void;
+  removeChild(b: Backing): void;
 }
 
 function createPortalDestBacking(): PortalDestBacking {
   const childBackings: Backing[] = [];
-  let loc: BackingLocation | null = null;
+  let loc: BackingLocation = { parent: null, prev: null };
   return {
     insert: (l: BackingLocation | null): void => {
-      if (!!loc?.parent == !!l?.parent) return;
-      insertBackings(childBackings, l?.parent ? l : null);
-      loc = l && { ...l };
+      if (assignLocation(loc, l))
+        insertBackings(childBackings, l?.parent ? l : null);
     },
     tail: () => tailOfBackings(childBackings, loc?.prev),
+    dispose: () => disposeBackings(childBackings),
     addChild: (b: Backing): void => {
-      if (loc?.parent)
+      if (loc.parent)
         b.insert({ parent: loc.parent, prev: lastOf(childBackings) });
       childBackings.push(b);
+    },
+    removeChild: (b: Backing): void => {
+      const i = childBackings.indexOf(b);
+      b.insert(null);
+      childBackings.splice(i, 1);
     },
     name: "PortalDest"
   };
@@ -50,9 +56,13 @@ function createPortalSrcBacking(props: Portal.SrcProps): Backing {
     const toShow = !!(virtualLoc.parent && physicalLoc.parent);
     if (showing === toShow) return;
     showing = toShow;
-    if (toShow && !childBackings)
-      childBackings = children.map(c => assemble(c));
-    insertBackings(childBackings, toShow ? physicalLoc : null);
+    if (toShow) {
+      if (!childBackings)
+        childBackings = children.map(c => assemble(c));
+      insertBackings(childBackings, physicalLoc);
+    } else {
+      disposeBackings(childBackings);
+    }
   }
 
   const physicalBacking: Backing = {
@@ -61,6 +71,7 @@ function createPortalSrcBacking(props: Portal.SrcProps): Backing {
         updateShow();
     },
     tail: () => tailOfBackings(childBackings, physicalLoc?.prev),
+    dispose: () => {},
     name: "PortalSrcPhys",
   };
 
@@ -71,7 +82,11 @@ function createPortalSrcBacking(props: Portal.SrcProps): Backing {
       if (assignLocation(virtualLoc, l))
         updateShow();
     },
-    tail: () => tail(virtualLoc.prev),
+    tail: () => tailOf(virtualLoc.prev),
+    dispose: () => {
+      disposeBackings(childBackings);
+      destBackingFor(to).removeChild(physicalBacking);
+    },
     name: "PortalSrcVirt",
   };
 }
