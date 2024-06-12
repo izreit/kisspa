@@ -7,4 +7,5 @@ export * from "./special/context";
 export * from "./special/for";
 export * from "./special/portal";
 export * from "./special/show";
+export * from "./special/suspense";
 export type { JSXInternal as JSX };

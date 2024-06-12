@@ -16,7 +16,11 @@ export interface JSXElement {
   children: JSXNode[];
 }
 
-export type JSXNode = AccessorOr<null | string | number> | JSXElement;
+export type JSXNode =
+  | null | string | number
+  | Accessor<null | string | number>
+  | JSXElement
+  | Promise<null | string | number | Accessor<null | string | number> | JSXElement>;
 
 type OmitNever<T> = { [K in keyof T as T[K] extends never ? never : K]: T[K] };
 export type Component<P, C extends any> = (props: OmitNever<P & { children?: C }>) => JSXNode;

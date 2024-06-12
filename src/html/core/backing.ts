@@ -1,6 +1,7 @@
 import { autorun } from "../../reactive";
 import { allocateSkeletons } from "./skeleton";
 import { $h, Component, JSXElement, JSXNode } from "./types";
+import { lastOf } from "./util";
 
 export interface Backing {
   insert(loc: BackingLocation | null | undefined): void;
@@ -57,9 +58,57 @@ function createElementBacking(node: Node, disposers: (() => void)[]): Backing {
   return { insert, dispose, tail: () => node!, name: node };
 }
 
+function isPromise(v: any): v is Promise<any> {
+  return typeof v?.then === "function";
+}
+
+const delayings: Promise<JSXNode>[][] = [];
+
+export function collectDelayings<T>(f: () => T): [T, Promise<JSXNode>[]] {
+  let ret: T;
+  let collected: Promise<JSXNode>[];
+  try {
+    delayings.push([]);
+    ret = f(); // actually promises are collected by delayAssemble() which may be called from f().
+  } finally {
+    collected = delayings.pop()!;
+  }
+  return [ret, collected];
+}
+
+function delayAssemble(jnode: Promise<JSXNode>, l: BackingLocation | null | undefined): Backing {
+  let loc: BackingLocation = { parent: null, prev: null };
+  let backing: Backing | null = null;
+  let disposed = false;
+
+  assignLocation(loc, l);
+  lastOf(delayings)?.push(jnode);
+
+  jnode.then((j) => {
+    if (disposed) return;
+    backing = assemble(j);
+    if (loc)
+      backing.insert(loc);
+  });
+
+  const insert = (l: BackingLocation | null | undefined): void => {
+    assignLocation(loc, l);
+    backing?.insert(l);
+  };
+  const tail = () => backing ? backing.tail() : tailOf(loc?.prev);
+  const dispose = () => {
+    disposed = true;
+    backing?.dispose();
+  };
+  return { insert, tail, dispose, name: "delay" };
+}
+
 export function assembleImpl(jnode: JSXNode): Backing;
 export function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node;
 export function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node {
+  if (isPromise(jnode))
+    return delayAssemble(jnode, loc);
+
   const el =
     node ??
     ((jnode && typeof jnode === "object")
@@ -217,4 +266,8 @@ export function createSpecial<P>(impl: (props: P) => Backing): Component<P, Memb
   const ret: Component<P, MemberType<P, "children">> = () => 0; // Dummy. Never called but must be unique for each call.
   specials.set(ret, impl);
   return ret;
+}
+
+export function mapChildren<T>(cs: JSXNode | JSXNode[] | null | undefined, f: (jnode: JSXNode) => T): T[] {
+  return (Array.isArray(cs)) ? cs.map(f) : (cs ? [f(cs)] : []);
 }
