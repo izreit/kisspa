@@ -1,6 +1,6 @@
 import { Backing, BackingLocation, assemble, assignLocation, createSpecial, disposeBackings, insertBackings, tailOfBackings } from "../core/backing";
 import { Component, JSXNode } from "../core/types";
-import { arrayify } from "../core/util";
+import { arrayify, mapCoerce } from "../core/util";
 
 export interface ContextProviderProps<T> {
   value: T;
@@ -19,7 +19,7 @@ export function createContext<T>(initial: T): ContextPair<T> {
     let bs: Backing[];
     try {
       stack.push(props.value);
-      bs = arrayify(props.children)?.map(c => assemble(c)) ?? [];
+      bs = mapCoerce(props.children, c => assemble(c));
     } finally {
       stack.pop();
     }

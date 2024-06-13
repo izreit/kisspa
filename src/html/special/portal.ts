@@ -1,6 +1,6 @@
 import { Backing, BackingLocation, assemble, assignLocation, createSpecial, disposeBackings, insertBackings, tailOf, tailOfBackings } from "../core/backing";
 import { ChildrenProp } from "../core/types";
-import { arrayify, lastOf } from "../core/util";
+import { arrayify, lastOf, mapCoerce } from "../core/util";
 
 export namespace Portal {
   export type SrcProps = { to: any; } & ChildrenProp;
@@ -44,8 +44,7 @@ function destBackingFor(key: object): PortalDestBacking {
 }
 
 function createPortalSrcBacking(props: Portal.SrcProps): Backing {
-  const { to, children: rawChildren } = props;
-  const children = arrayify(rawChildren);
+  const { to, children } = props;
 
   let childBackings: Backing[] | null = null;
   let showing = false;
@@ -58,7 +57,7 @@ function createPortalSrcBacking(props: Portal.SrcProps): Backing {
     showing = toShow;
     if (toShow) {
       if (!childBackings)
-        childBackings = children.map(c => assemble(c));
+        childBackings = mapCoerce(children, c => assemble(c));
       insertBackings(childBackings, physicalLoc);
     } else {
       disposeBackings(childBackings);

@@ -1,5 +1,6 @@
-import { Backing, BackingLocation, assemble, assignLocation, collectDelayings, createSpecial, disposeBackings, insertBackings, mapChildren, tailOf, tailOfBackings } from "../core/backing";
+import { Backing, BackingLocation, assemble, assignLocation, collectDelayings, createSpecial, disposeBackings, insertBackings, tailOf, tailOfBackings } from "../core/backing";
 import { ChildrenProp, JSXNode } from "../core/types";
+import { mapCoerce } from "../core/util";
 
 export namespace Suspense {
   export interface Props extends ChildrenProp {
@@ -13,7 +14,7 @@ export const Suspense = createSpecial(function Suspense(props: Suspense.Props): 
   let fallbackBacking: Backing | null = null;
   let loc: BackingLocation = { parent: null, prev: null };
 
-  let [backings, promises] = collectDelayings(() => mapChildren(children, c => assemble(c)));
+  let [backings, promises] = collectDelayings(() => mapCoerce(children, c => assemble(c)));
 
   let resolved = false;
   Promise.all(promises).then(() => {

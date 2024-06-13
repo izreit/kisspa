@@ -267,7 +267,3 @@ export function createSpecial<P>(impl: (props: P) => Backing): Component<P, Memb
   specials.set(ret, impl);
   return ret;
 }
-
-export function mapChildren<T>(cs: JSXNode | JSXNode[] | null | undefined, f: (jnode: JSXNode) => T): T[] {
-  return (Array.isArray(cs)) ? cs.map(f) : (cs ? [f(cs)] : []);
-}

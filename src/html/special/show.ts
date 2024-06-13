@@ -1,6 +1,7 @@
 import { reaction } from "../../reactive";
 import { Backing, BackingLocation, assemble, assignLocation, createSpecial, disposeBackings, insertBackings, tailOf, tailOfBackings } from "../core/backing";
 import { JSXNode } from "../core/types";
+import { mapCoerce } from "../core/util";
 
 export namespace Show {
   export interface Props {
@@ -11,8 +12,7 @@ export namespace Show {
 }
 
 export const Show = createSpecial(function Show(props: Show.Props): Backing {
-  const { when, fallback } = props;
-  const children = props.children ?? [];
+  const { when, fallback, children } = props;
   let thenBackings: Backing[] | null = null;
   let fallbackBacking: Backing | null = null;
   let showing = false;
@@ -23,7 +23,7 @@ export const Show = createSpecial(function Show(props: Show.Props): Backing {
       fallbackBacking?.dispose();
       fallbackBacking = null;
       if (!thenBackings)
-        thenBackings = children.map(c => assemble(c));
+        thenBackings = mapCoerce(children, c => assemble(c));
       insertBackings(thenBackings, loc);
     } else {
       disposeBackings(thenBackings);
