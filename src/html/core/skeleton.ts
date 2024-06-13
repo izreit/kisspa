@@ -1,8 +1,8 @@
-import { JSXElement, JSXNode } from "./types";
+import { $noel, JSXElement, JSXNode } from "./types";
 import { isJSXElement, isStrOrNum } from "./backing";
 
 export interface Skeleton {
-  el: Node;
+  el: Node | typeof $noel;
   path: (number | string)[];
 }
 
@@ -20,6 +20,8 @@ function collectSkeletonsImpl(acc: Skeleton[], jnode: JSXNode, parent: Node | nu
     return;
   const { name, attrs, children } = jnode;
   if (typeof name !== "string") {
+    if (!parent)
+      acc.push({ el: $noel, path });
     for (const [k, v] of Object.entries(attrs))
       collectSkeletonsImpl(acc, v, null, path.concat(k));
     for (let i = 0; i < children.length; ++i)

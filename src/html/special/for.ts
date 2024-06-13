@@ -35,7 +35,7 @@ export const For = createSpecial(function For<E>(props: For.Props<E>): Backing {
       } else {
         const ixSignal = signal(i);
         const jnode = fun(e as E, ixSignal[0]);
-        b = assemble(allocateSkeletons(jnode, noCache ? null : fun));
+        b = assemble(allocateSkeletons(jnode, noCache ? null : fun)); // explicitly allocateSkeletons to make skeleton cache available
         ixTable.set(b, ixSignal);
       }
       nextTable.set(k, b);

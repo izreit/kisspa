@@ -8,9 +8,12 @@ export interface Attributes {
 // Symbol to distinguish JSXElement (objects created by h() or jsx()) from any other objects.
 export const $h = Symbol("ficco-h");
 
+// Symbol to mark root nodes which is skeleton-assigned but has no Node.
+export const $noel = Symbol("ficco-noel");
+
 export interface JSXElement {
   [$h]: 1;
-  el: Node | null;
+  el: Node | typeof $noel | null;
   name: string | Component<any, any>;
   attrs: Attributes;
   children: JSXNode[];

@@ -1,6 +1,6 @@
 import { autorun } from "../../reactive";
 import { allocateSkeletons } from "./skeleton";
-import { $h, Component, JSXElement, JSXNode } from "./types";
+import { $h, $noel, Component, JSXElement, JSXNode } from "./types";
 import { lastOf } from "./util";
 
 export interface Backing {
@@ -62,11 +62,11 @@ function isPromise(v: any): v is Promise<any> {
   return typeof v?.then === "function";
 }
 
-const delayings: Promise<JSXNode>[][] = [];
+const delayings: Promise<void>[][] = [];
 
-export function collectDelayings<T>(f: () => T): [T, Promise<JSXNode>[]] {
+export function collectDelayings<T>(f: () => T): [T, Promise<void>[]] {
   let ret: T;
-  let collected: Promise<JSXNode>[];
+  let collected: Promise<void>[];
   try {
     delayings.push([]);
     ret = f(); // actually promises are collected by delayAssemble() which may be called from f().
@@ -81,15 +81,15 @@ function delayAssemble(jnode: Promise<JSXNode>, l: BackingLocation | null | unde
   let backing: Backing | null = null;
   let disposed = false;
 
-  assignLocation(loc, l);
-  lastOf(delayings)?.push(jnode);
-
-  jnode.then((j) => {
+  const p = jnode.then((j) => {
     if (disposed) return;
     backing = assemble(j);
     if (loc)
       backing.insert(loc);
   });
+
+  lastOf(delayings)?.push(p);
+  assignLocation(loc, l);
 
   const insert = (l: BackingLocation | null | undefined): void => {
     assignLocation(loc, l);
@@ -112,7 +112,7 @@ export function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?
   const el =
     node ??
     ((jnode && typeof jnode === "object")
-      ? jnode.el?.cloneNode(true)
+      ? (jnode.el !== $noel ? jnode.el?.cloneNode(true) : null)
       : document.createTextNode((typeof jnode === "function") ? "" : (jnode + "")));
 
   if (el && !el.parentNode && loc?.parent)
@@ -202,7 +202,11 @@ export function useLifecycleMethods(): LifecycleMethods {
 
 export function assemble(jnode: JSXNode): Backing {
   lifecycleContext = null as ([LifecycleHandlers, LifecycleMethods] | null);
+
+  if (isJSXElement(jnode) && !jnode.el)
+    allocateSkeletons(jnode);
   const b = assembleImpl(jnode);
+
   if (!lifecycleContext)
     return b;
 
@@ -229,8 +233,7 @@ export function assemble(jnode: JSXNode): Backing {
 }
 
 export function attach(parent: Element, jnode: JSXNode): void {
-  const b = assemble(allocateSkeletons(jnode));
-  b.insert({ parent, prev: null });
+  assemble(jnode).insert({ parent, prev: null });
 }
 
 export function tailOfBackings(bs: Backing[] | null | undefined, prev?: Backing | Node | null): Node | null | undefined {
