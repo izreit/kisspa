@@ -5,7 +5,7 @@ import { lastOf } from "./util";
 
 export interface Backing {
   insert(loc: BackingLocation | null | undefined): void;
-  tail(): Node | null;
+  tail(): Node | null | undefined;
   dispose(): void;
   name: Node | string;
 }
@@ -33,7 +33,7 @@ export function isStrOrNum(v: any): v is number | string {
   return typeof v === "string" || typeof v === "number";
 }
 
-export function tailOf(p: Backing | Node | null | undefined): Node | null {
+export function tailOf(p: Backing | Node | null | undefined): Node | null | undefined {
   return p ? ("nodeName" in p ? p : p.tail()) : null;
 }
 
@@ -43,7 +43,7 @@ function insertAfter(node: Node, parent: Node, prev: Backing | Node | null): voi
   parent.insertBefore(node, after);
 }
 
-function createElementBacking(node: Node, disposers: (() => void)[]): Backing {
+function createNodeBacking(node: Node, disposers: (() => void)[]): Backing {
   const insert = (pos: BackingLocation | null | undefined) => {
     if (pos?.parent) {
       insertAfter(node, pos.parent, pos.prev);
@@ -125,7 +125,7 @@ export function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?
     } else if (jnode != null) {
       el!.nodeValue = jnode + "";
     }
-    return createElementBacking(el!, disposers);
+    return createNodeBacking(el!, disposers);
   }
 
   const { name, attrs, children } = jnode;
@@ -159,7 +159,7 @@ export function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?
         chLoc.prev = assembleImpl(v, chLoc);
       }
     }
-    return (node?.parentNode && disposers.length === 0) ? el! : createElementBacking(el!, disposers);
+    return (node?.parentNode && disposers.length === 0) ? el! : createNodeBacking(el!, disposers);
 
   } else {
     const special = specials.get(name);
@@ -233,7 +233,7 @@ export function attach(parent: Element, jnode: JSXNode): void {
   b.insert({ parent, prev: null });
 }
 
-export function tailOfBackings(bs: Backing[] | null | undefined, prev?: Backing | Node | null): Node | null {
+export function tailOfBackings(bs: Backing[] | null | undefined, prev?: Backing | Node | null): Node | null | undefined {
   if (bs) {
     for (let i = bs.length - 1; i >= 0; --i) {
       const t = bs[i].tail();

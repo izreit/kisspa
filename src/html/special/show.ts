@@ -1,13 +1,12 @@
 import { reaction } from "../../reactive";
 import { Backing, BackingLocation, assemble, assignLocation, createSpecial, disposeBackings, insertBackings, tailOf, tailOfBackings } from "../core/backing";
-import { JSXNode } from "../core/types";
+import { ChildrenProp, JSXNode } from "../core/types";
 import { mapCoerce } from "../core/util";
 
 export namespace Show {
-  export interface Props {
+  export interface Props extends ChildrenProp {
     when: () => boolean;
     fallback?: JSXNode;
-    children?: JSXNode[];
   }
 }
 
@@ -45,7 +44,7 @@ export const Show = createSpecial(function Show(props: Show.Props): Backing {
     assignLocation(loc, l);
     update();
   };
-  const tail = (): Node | null => {
+  const tail = (): Node | null | undefined => {
     return showing ?
       tailOfBackings(thenBackings, loc.prev) :
       (fallbackBacking?.tail() ?? tailOf(loc.prev));

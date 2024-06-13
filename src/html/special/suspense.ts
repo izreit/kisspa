@@ -9,8 +9,7 @@ export namespace Suspense {
 }
 
 export const Suspense = createSpecial(function Suspense(props: Suspense.Props): Backing {
-  const { fallback } = props;
-  const children = props.children ?? [];
+  const { fallback, children } = props;
   let fallbackBacking: Backing | null = null;
   let loc: BackingLocation = { parent: null, prev: null };
 
@@ -36,7 +35,7 @@ export const Suspense = createSpecial(function Suspense(props: Suspense.Props): 
       fallbackBacking?.insert(loc);
     }
   };
-  const tail = (): Node | null => {
+  const tail = () => {
     return resolved ?
       tailOfBackings(backings, loc.prev) :
       (fallbackBacking?.tail() ?? tailOf(loc.prev));
