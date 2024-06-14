@@ -1,3 +1,4 @@
+import { describe, it, expect } from "vitest";
 import { cloneutil } from "../cloneutil";
 import { autorun, bindObserver, cancelAutorun, debugGetStoreInternal, Key, observe, unwatch, watchDeep, watchShallow } from "../core";
 

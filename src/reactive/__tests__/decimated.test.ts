@@ -1,3 +1,4 @@
+import { describe, it, expect } from "vitest";
 import { decimated } from "../decimated";
 
 describe("decimated", function () {

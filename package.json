@@ -7,7 +7,8 @@
   "main": "lib/index.js",
   "scripts": {
     "build": "tsc -p ./",
-    "test": "jest"
+    "test": "vitest",
+    "cov": "vitest run --coverage"
   },
   "files": [
     "lib/"
@@ -16,11 +17,10 @@
   "author": "izreit",
   "license": "MIT",
   "devDependencies": {
-    "@types/jest": "^29.5.12",
+    "@vitest/coverage-istanbul": "^1.6.0",
     "esbuild": "0.21.1",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.1.2",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
   },
   "exports": {
     ".": "./lib/index.js",
