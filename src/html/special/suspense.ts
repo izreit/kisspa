@@ -1,4 +1,4 @@
-import { Backing, BackingLocation, assemble, assignLocation, collectDelayings, createSpecial, disposeBackings, insertBackings, tailOf, tailOfBackings } from "../core/backing";
+import { Backing, BackingLocation, assemble, assignLocation, collectDelayings, createSpecial, disposeBackings, insertBackings, tailOfBackings } from "../core/backing";
 import { ChildrenProp, JSXNode } from "../core/types";
 import { mapCoerce } from "../core/util";
 

@@ -69,7 +69,7 @@ export function collectDelayings<T>(f: () => T): [T, Promise<void>[]] {
   let collected: Promise<void>[];
   try {
     delayings.push([]);
-    ret = f(); // actually promises are collected by delayAssemble() which may be called from f().
+    ret = f(); // promises are collected by delayAssemble() which may be called from f().
   } finally {
     collected = delayings.pop()!;
   }

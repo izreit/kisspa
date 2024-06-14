@@ -1,6 +1,6 @@
 import { Backing, BackingLocation, assemble, assignLocation, createSpecial, disposeBackings, insertBackings, tailOf, tailOfBackings } from "../core/backing";
 import { ChildrenProp } from "../core/types";
-import { arrayify, lastOf, mapCoerce } from "../core/util";
+import { lastOf, mapCoerce } from "../core/util";
 
 export namespace Portal {
   export type SrcProps = { to: any; } & ChildrenProp;
