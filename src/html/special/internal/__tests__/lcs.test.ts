@@ -1,3 +1,4 @@
+import { describe, it, expect } from "vitest";
 import { lcs } from "../lcs";
 
 function charLcs(a: string, b: string): string {
