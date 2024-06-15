@@ -1,3 +1,4 @@
+import { it, expect, describe } from "vitest";
 import { observe } from "../core";
 import { autorunDecimated, reaction } from "../util";
 

@@ -232,8 +232,28 @@ export function assemble(jnode: JSXNode): Backing {
   return { ...b, insert, dispose };
 }
 
+export interface BackingRoot {
+  attach(jnode: JSXNode): void;
+  detach(): void;
+}
+
+export function createRoot(parent: Element): BackingRoot {
+  let b: Backing | null = null;
+  const attach = (jnode: JSXNode) => {
+    b?.dispose();
+    b = assemble(jnode);
+    b.insert({ parent, prev: null });
+    return b;
+  };
+  const detach = () => {
+    b?.dispose();
+    b = null;
+  };
+  return { attach, detach };
+}
+
 export function attach(parent: Element, jnode: JSXNode): void {
-  assemble(jnode).insert({ parent, prev: null });
+  createRoot(parent).attach(jnode);
 }
 
 export function tailOfBackings(bs: Backing[] | null | undefined, prev?: Backing | Node | null): Node | null | undefined {
