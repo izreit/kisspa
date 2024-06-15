@@ -6,5 +6,8 @@ export default defineConfig({
       provider: "istanbul", // or "v8"
       reporter: "html-spa",
     },
+    environmentMatchGlobs: [
+      ["src/html/**", "happy-dom"],
+    ],
   },
 });

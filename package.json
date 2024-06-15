@@ -6,7 +6,7 @@
   "types": "lib/index.d.js",
   "main": "lib/index.js",
   "scripts": {
-    "build": "tsc -p ./",
+    "build": "tsc -p ./tsconfig.build.json",
     "test": "vitest",
     "cov": "vitest run --coverage"
   },
@@ -19,6 +19,7 @@
   "devDependencies": {
     "@vitest/coverage-istanbul": "^1.6.0",
     "esbuild": "0.21.1",
+    "happy-dom": "^14.12.0",
     "typescript": "^5.4.5",
     "vitest": "^1.6.0"
   },
