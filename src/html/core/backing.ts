@@ -1,7 +1,7 @@
 import { autorun } from "../../reactive";
 import { allocateSkeletons } from "./skeleton";
-import { $noel, Component, JSXNode, isJSXElement } from "./types";
-import { lastOf } from "./util";
+import { $noel, Component, JSXNode, Ref, isJSXElement } from "./types";
+import { arrayify, lastOf } from "./util";
 
 export interface Backing {
   insert(loc: BackingLocation | null | undefined): void;
@@ -99,6 +99,14 @@ function delayAssemble(jnode: Promise<JSXNode>, l: BackingLocation | null | unde
   return { insert, tail, dispose, name: "delay" };
 }
 
+function resolveRef(el: HTMLElement, r: Ref<HTMLElement> | ((e: HTMLElement) => void)): void {
+  (typeof r === "function") ? r(el) : (r.value = el);
+}
+
+function assignAttribute(el: HTMLElement, k: string, v: string | null): void {
+  (v != null) ? el.setAttribute(k, v) : el.removeAttribute(k);
+}
+
 export function assembleImpl(jnode: JSXNode): Backing;
 export function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node;
 export function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node {
@@ -126,14 +134,20 @@ export function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?
 
   const { name, attrs, children } = jnode;
   if (typeof name === "string") {
-    let disposers: (() => void)[] = [];
+    let refVal: (Ref<HTMLElement> | ((v: HTMLElement) => void))[] | null = null;
+    const disposers: (() => void)[] = [];
+
     for (let [k, v] of Object.entries(attrs)) {
-      k = k.toLowerCase();
+      if (k === "ref" && v) {
+        refVal = arrayify(v);
+        continue;
+      }
+
       if (typeof v === "function") {
         if (k[0] === "o" && k[1] === "n") {
-          (el as any)[k] = v;
+          assignAttribute(el as HTMLElement, k, v);
         } else {
-          disposers.push(autorun(() => { (el as any)[k] = v(); }));
+          disposers.push(autorun(() => { assignAttribute(el as HTMLElement, k, v()); }));
         }
       } else if (typeof v === "object" && v) {
         for (const [vk, vv] of Object.entries(v)) {
@@ -144,17 +158,25 @@ export function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?
       }
     }
 
-    let ch: Node | null = el!.firstChild;
+    let skelCh: Node | null = el!.firstChild;
     let chLoc: BackingLocation = { parent: el!, prev: null };
     for (const v of children) {
+      let ch: Backing | Node;
       // IMPORTANT This condition, for consuming the skeleton, must be correspondent with collectSkeletons().
       if (typeof v === "string" || (isJSXElement(v) && !v.el && typeof v.name === "string")) {
-        chLoc.prev = assembleImpl(v, null, ch);
-        ch = ch?.nextSibling ?? null;
+        ch = assembleImpl(v, null, skelCh);
+        skelCh = skelCh?.nextSibling ?? null;
       } else {
-        chLoc.prev = assembleImpl(v, chLoc);
+        ch = assembleImpl(v, chLoc);
       }
+      chLoc.prev = ch;
+      if (!isNode(ch))
+        disposers.push(ch.dispose);
     }
+
+    if (refVal)
+      refVal.forEach(r => resolveRef(el as HTMLElement, r));
+
     return (node?.parentNode && disposers.length === 0) ? el! : createNodeBacking(el!, disposers);
 
   } else {

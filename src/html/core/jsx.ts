@@ -4,19 +4,19 @@
 
 /// <reference lib="dom" />
 
-import {
-	Accessor,
-	AccessorOr,
-	JSXNode,
-} from './types';
+import { Accessor, AccessorOr, JSXNode, Ref } from './types';
 
 type Booleanish = boolean | 'true' | 'false';
 
 export namespace JSXInternal {
 	export interface IntrinsicAttributes {
-		// key?: any;
+    ref?:
+      | Ref<HTMLElement>
+      | ((v: HTMLElement) => void)
+      | (Ref<HTMLElement> | ((v: HTMLElement) => void))[];
+		key?: any;
 	}
-	
+
 	// export type ElementType<P = any> =
 	// 	| {
 	// 			[K in keyof IntrinsicElements]: P extends IntrinsicElements[K]
@@ -701,13 +701,13 @@ export namespace JSXInternal {
 		| 'doc-toc';
 
 	type AriaRole = WAIAriaRole | DPubAriaRole;
-	
+
 	export interface FiccoAttributes {
 		children?: Element | Element[];
 	}
 
 	export interface HTMLAttributes<RefType extends EventTarget = EventTarget>
-		extends DOMAttributes<RefType>, AriaAttributes, FiccoAttributes
+		extends DOMAttributes<RefType>, AriaAttributes, IntrinsicAttributes, FiccoAttributes
 	{
 		// Standard HTML Attributes
 		accept?: string | undefined | Accessor<string | undefined>;
@@ -739,7 +739,7 @@ export namespace JSXInternal {
 		checked?: boolean | undefined | Accessor<boolean | undefined>;
 		cite?: string | undefined | Accessor<string | undefined>;
 		class?: string | undefined | Accessor<string | undefined>;
-		className?: string | undefined | Accessor<string | undefined>;
+		// className?: string | undefined | Accessor<string | undefined>;
 		cols?: number | undefined | Accessor<number | undefined>;
 		colSpan?: number | undefined | Accessor<number | undefined>;
 		colspan?: number | undefined | Accessor<number | undefined>;
