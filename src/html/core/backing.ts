@@ -1,6 +1,6 @@
 import { autorun } from "../../reactive";
 import { allocateSkeletons } from "./skeleton";
-import { $h, $noel, Component, JSXElement, JSXNode } from "./types";
+import { $noel, Component, JSXNode, isJSXElement } from "./types";
 import { lastOf } from "./util";
 
 export interface Backing {
@@ -25,16 +25,12 @@ export function assignLocation(self: BackingLocation, loc: BackingLocation | nul
   return true;
 }
 
-export function isJSXElement(v: any): v is JSXElement {
-  return v?.[$h];
-}
-
-export function isStrOrNum(v: any): v is number | string {
-  return typeof v === "string" || typeof v === "number";
+function isNode(v: any): v is Node {
+  return "nodeName" in v;
 }
 
 export function tailOf(p: Backing | Node | null | undefined): Node | null | undefined {
-  return p ? ("nodeName" in p ? p : p.tail()) : null;
+  return p ? (isNode(p) ? p : p.tail()) : null;
 }
 
 function insertAfter(node: Node, parent: Node, prev: Backing | Node | null): void {

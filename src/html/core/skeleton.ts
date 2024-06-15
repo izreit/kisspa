@@ -1,5 +1,8 @@
-import { $noel, JSXElement, JSXNode } from "./types";
-import { isJSXElement, isStrOrNum } from "./backing";
+import { $noel, JSXElement, JSXNode, isJSXElement } from "./types";
+
+function isStrOrNum(v: any): v is number | string {
+  return typeof v === "string" || typeof v === "number";
+}
 
 export interface Skeleton {
   el: Node | typeof $noel;
