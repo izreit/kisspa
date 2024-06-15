@@ -33,3 +33,14 @@ export type ChildrenProp = { children?: JSXNode | JSXNode[] | null; };
 export function isJSXElement(v: any): v is JSXElement {
   return v?.[$h];
 }
+
+export type Ref<T> = { value: T | null };
+
+export function createRef<T>(): Ref<T> {
+  return { value: null };
+}
+
+export type PropRef =
+  | Ref<HTMLElement>
+  | ((v: HTMLElement) => void)
+  | (Ref<HTMLElement> | ((v: HTMLElement) => void))[];
