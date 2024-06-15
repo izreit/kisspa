@@ -1,11 +1,12 @@
 import { Backing, BackingLocation, assemble, assignLocation, collectDelayings, createSpecial, disposeBackings, insertBackings, tailOfBackings } from "../core/backing";
-import { ChildrenProp, JSXNode } from "../core/types";
+import { JSXNode, PropChildren } from "../core/types";
 import { mapCoerce } from "../core/util";
 
 export namespace Suspense {
-  export interface Props extends ChildrenProp {
+  export interface Props {
     fallback?: JSXNode;
     errorFallback?: JSXNode | ((error: unknown, reset: () => void) => JSXNode);
+    children?: PropChildren;
   }
 }
 

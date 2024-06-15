@@ -1,12 +1,13 @@
 import { reaction } from "../../reactive";
 import { Backing, BackingLocation, assemble, assignLocation, createSpecial, disposeBackings, insertBackings, tailOf, tailOfBackings } from "../core/backing";
-import { ChildrenProp, JSXNode } from "../core/types";
+import { JSXNode, PropChildren } from "../core/types";
 import { mapCoerce } from "../core/util";
 
 export namespace Show {
-  export interface Props extends ChildrenProp {
+  export interface Props {
     when: () => boolean;
     fallback?: JSXNode;
+    children: PropChildren;
   }
 }
 
