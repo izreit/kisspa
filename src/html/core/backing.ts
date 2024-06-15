@@ -39,7 +39,18 @@ function insertAfter(node: Node, parent: Node, prev: Backing | Node | null): voi
   parent.insertBefore(node, after);
 }
 
-function createNodeBacking(node: Node, disposers: (() => void)[]): Backing {
+const doNothing = () => {};
+
+function createNodeBackingIfNeeded(node: Node, disposers: (() => void)[], staticParent: boolean): Backing | Node {
+  const tail = () => node;
+
+  if (staticParent) {
+    if (disposers.length === 0)
+      return node;
+    const dispose = (disposers.length === 1) ? disposers[0] : () => disposers.forEach(d => d());
+    return { insert: doNothing, dispose, tail, name: node };
+  }
+
   const insert = (pos: BackingLocation | null | undefined) => {
     if (pos?.parent) {
       insertAfter(node, pos.parent, pos.prev);
@@ -51,7 +62,7 @@ function createNodeBacking(node: Node, disposers: (() => void)[]): Backing {
     insert(null);
     disposers.forEach(d => d());
   };
-  return { insert, dispose, tail: () => node!, name: node };
+  return { insert, dispose, tail, name: node };
 }
 
 function isPromise(v: any): v is Promise<any> {
@@ -113,6 +124,7 @@ export function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?
   if (isPromise(jnode))
     return delayAssemble(jnode, loc);
 
+  const staticParent = !!node?.parentNode;
   const el =
     node ??
     ((jnode && typeof jnode === "object")
@@ -129,7 +141,7 @@ export function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?
     } else if (jnode != null) {
       el!.nodeValue = jnode + "";
     }
-    return createNodeBacking(el!, disposers);
+    return createNodeBackingIfNeeded(el!, disposers, staticParent);
   }
 
   const { name, attrs, children } = jnode;
@@ -177,7 +189,7 @@ export function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?
     if (refVal)
       refVal.forEach(r => resolveRef(el as HTMLElement, r));
 
-    return (node?.parentNode && disposers.length === 0) ? el! : createNodeBacking(el!, disposers);
+    return createNodeBackingIfNeeded(el!, disposers, staticParent);
 
   } else {
     const special = specials.get(name);
