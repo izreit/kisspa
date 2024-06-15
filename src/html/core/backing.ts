@@ -145,7 +145,7 @@ export function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?
 
       if (typeof v === "function") {
         if (k[0] === "o" && k[1] === "n") {
-          assignAttribute(el as HTMLElement, k, v);
+          (el as any)[k.toLowerCase()] = v;
         } else {
           disposers.push(autorun(() => { assignAttribute(el as HTMLElement, k, v()); }));
         }
