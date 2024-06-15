@@ -1,10 +1,10 @@
 import { Backing, BackingLocation, assemble, assignLocation, createSpecial, disposeBackings, insertBackings, tailOfBackings } from "../core/backing";
-import { Component, JSXNode } from "../core/types";
+import { Component, PropChildren } from "../core/types";
 import { mapCoerce } from "../core/util";
 
 export interface ContextProviderProps<T> {
   value: T;
-  children?: JSXNode | JSXNode[] | null;
+  children?: PropChildren;
 }
 
 export type ContextPair<T> = [

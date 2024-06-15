@@ -1,10 +1,16 @@
 import { Backing, BackingLocation, assemble, assignLocation, createSpecial, disposeBackings, insertBackings, tailOf, tailOfBackings } from "../core/backing";
-import { ChildrenProp } from "../core/types";
+import { PropChildren } from "../core/types";
 import { lastOf, mapCoerce } from "../core/util";
 
 export namespace Portal {
-  export type SrcProps = { to: any; } & ChildrenProp;
-  export type DestProps = { from: any; } & ChildrenProp; // children is not used but required for type inference...
+  export type SrcProps = {
+    to: any;
+    children?: PropChildren;
+  };
+  export type DestProps = {
+    from: any;
+    children?: PropChildren; // children is not used but required for type inference...
+  }
   export type Props = DestProps | SrcProps;
 }
 

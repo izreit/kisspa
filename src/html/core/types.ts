@@ -28,8 +28,6 @@ export type JSXNode =
 type OmitNever<T> = { [K in keyof T as T[K] extends never ? never : K]: T[K] };
 export type Component<P, C extends any> = (props: OmitNever<P & { children?: C }>) => JSXNode;
 
-export type ChildrenProp = { children?: JSXNode | JSXNode[] | null; };
-
 export function isJSXElement(v: any): v is JSXElement {
   return v?.[$h];
 }
@@ -40,6 +38,7 @@ export function createRef<T>(): Ref<T> {
   return { value: null };
 }
 
+export type PropChildren = JSXNode | JSXNode[] | null;
 export type PropRef =
   | Ref<HTMLElement>
   | ((v: HTMLElement) => void)
