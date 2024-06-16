@@ -4,7 +4,7 @@
 
 /// <reference lib="dom" />
 
-import { Accessor, AccessorOr, JSXNode, Ref } from './types';
+import { Accessor, AccessorOr, JSXNode, JSXNodeAsync, Ref } from './types';
 
 type Booleanish = boolean | 'true' | 'false';
 
@@ -25,6 +25,7 @@ export namespace JSXInternal {
 	// 	  }[keyof IntrinsicElements]
 	// 	| ComponentType<P>;
 
+  export type AsyncElement = JSXNodeAsync;
 	export type Element = JSXNode;
 
 	export interface ElementAttributesProperty {
