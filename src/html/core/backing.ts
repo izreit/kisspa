@@ -127,9 +127,9 @@ export function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?
   const staticParent = !!node?.parentNode;
   const el =
     node ??
-    ((jnode && typeof jnode === "object")
-      ? (jnode.el !== $noel ? jnode.el?.cloneNode(true) : null)
-      : document.createTextNode((typeof jnode === "function") ? "" : (jnode + "")));
+    ((jnode && typeof jnode === "object") ?
+      (jnode.el !== $noel ? jnode.el?.cloneNode(true) : null) :
+      document.createTextNode((typeof jnode === "function") ? "" : (jnode + "")));
 
   if (el && !el.parentNode && loc?.parent)
     insertAfter(el, loc.parent, loc.prev);
@@ -204,51 +204,52 @@ export function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?
   }
 }
 
-export interface LifecycleHandlers {
+export interface ComponentMethodState {
   onMounts: (() => void)[];
   onCleanups: (() => void)[];
 }
 
-export interface LifecycleMethods {
-  onMount(f: () => void): void;
-  onCleanup(f: () => void): void;
+export interface ComponentMethods {
+  onMount: (f: () => void) => void;
+  onCleanup: (f: () => void) => void;
+  reaction: (f: () => void) => void;
 }
 
-let lifecycleContext: [LifecycleHandlers, LifecycleMethods] | null = null;
+let componentContext: [ComponentMethodState, ComponentMethods] | null = null;
 
-export function useLifecycleMethods(): LifecycleMethods {
-  if (lifecycleContext)
-    return lifecycleContext[1];
+export function useComponentMethods(): ComponentMethods {
+  if (componentContext)
+    return componentContext[1];
 
   const onMounts: (() => void)[] = [];
   const onCleanups: (() => void)[] = [];
-  const m: LifecycleMethods = {
+  const m: ComponentMethods = {
     onMount(f) { onMounts.push(f); },
     onCleanup(f) { onCleanups.push(f); },
+    reaction(f) { onCleanups.push(autorun(f)); },
   };
-  lifecycleContext = [{ onMounts, onCleanups }, m];
+  componentContext = [{ onMounts, onCleanups }, m];
   return m;
 }
 
 export function assemble(jnode: JSXNode): Backing {
-  lifecycleContext = null as ([LifecycleHandlers, LifecycleMethods] | null);
+  componentContext = null as ([ComponentMethodState, ComponentMethods] | null);
 
   if (isJSXElement(jnode) && !jnode.el)
     allocateSkeletons(jnode);
   const b = assembleImpl(jnode);
 
-  if (!lifecycleContext)
+  if (!componentContext)
     return b;
 
-  const { onMounts, onCleanups } = lifecycleContext[0];
-
   // wrap insert() and dispose() to call lifecycle methods if onMount()/onCleanup() is called.
+  const { onMounts, onCleanups } = componentContext[0];
   let mounted = false;
   const insert = (l: BackingLocation | null | undefined): void => {
     b.insert(l);
     if (!mounted && l?.parent) {
       mounted = true;
-      // Check the length each time to support onMount() called in onMount()
+      // Check the length each time to for onMount() called in onMount()
       for (let i = 0; i < onMounts.length; ++i)
         onMounts[i]();
     }
@@ -273,7 +274,6 @@ export function createRoot(parent: Element): BackingRoot {
     b?.dispose();
     b = assemble(jnode);
     b.insert({ parent, prev: null });
-    return b;
   };
   const detach = () => {
     b?.dispose();
@@ -282,8 +282,10 @@ export function createRoot(parent: Element): BackingRoot {
   return { attach, detach };
 }
 
-export function attach(parent: Element, jnode: JSXNode): void {
-  createRoot(parent).attach(jnode);
+export function attach(parent: Element, jnode: JSXNode): () => void {
+  const r = createRoot(parent)
+  r.attach(jnode);
+  return r.detach;
 }
 
 export function tailOfBackings(bs: Backing[] | null | undefined, prev?: Backing | Node | null): Node | null | undefined {

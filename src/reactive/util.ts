@@ -19,7 +19,7 @@ export function autorunDecimated(f: () => void): AutorunDecimatedResult {
   };
 }
 
-export function reaction<T>(probe: () => T, fun: (current: T, previous: T | undefined) => void): () => void {
+export function watchProbe<T>(probe: () => T, fun: (current: T, previous: T | undefined) => void): () => void {
   let prev: T | undefined = undefined;
   return autorun(() => {
     const cur = probe();

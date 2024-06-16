@@ -1,4 +1,4 @@
-import { reaction } from "../../reactive";
+import { watchProbe } from "../../reactive";
 import { Backing, BackingLocation, assemble, assignLocation, createSpecial, disposeBackings, insertBackings, tailOf, tailOfBackings } from "../core/backing";
 import { JSXNode, PropChildren } from "../core/types";
 import { mapCoerce } from "../core/util";
@@ -36,7 +36,7 @@ export const Show = createSpecial(function Show(props: Show.Props): Backing {
     }
   }
 
-  const cancelUpdate = reaction(when, toShow => {
+  const cancelUpdate = watchProbe(when, toShow => {
     showing = toShow;
     update();
   });

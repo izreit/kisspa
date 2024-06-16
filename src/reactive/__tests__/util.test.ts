@@ -1,6 +1,6 @@
 import { it, expect, describe } from "vitest";
 import { observe } from "../core";
-import { autorunDecimated, reaction } from "../util";
+import { autorunDecimated, watchProbe } from "../util";
 
 describe("util", function () {
   describe("autorunDecimated", () => {
@@ -31,8 +31,8 @@ describe("util", function () {
     });
   });
 
-  describe("reaction", () => {
-    it("detects changes with watch()", async function () {
+  describe("watchProbe", () => {
+    it("detects changes", async function () {
       const raw = {
         values: ["fee", "glaa", "zoo"]
       };
@@ -40,7 +40,7 @@ describe("util", function () {
 
       let count = 0;
       let history: [string, string | undefined] | null = null;
-      reaction(() => store.values[1], (cur, prev) => {
+      watchProbe(() => store.values[1], (cur, prev) => {
         count++;
         history = [cur, prev];
       });
