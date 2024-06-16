@@ -191,14 +191,13 @@ export function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?
 
     return createNodeBackingIfNeeded(el!, disposers, staticParent);
 
-  } else {
-    const special = specials.get(name);
-    if (special) {
-      const b = special({ ...attrs, children });
-      b.insert(loc);
-      return b;
-    }
+  } else if (specials.has(name)) {
+    const special = specials.get(name)!;
+    const b = special({ ...attrs, children });
+    b.insert(loc);
+    return b;
 
+  } else {
     const expanded = name({ ...attrs, children });
     return assembleImpl(allocateSkeletons(expanded, name), loc);
   }
@@ -215,11 +214,13 @@ export interface ComponentMethods {
   reaction: (f: () => void) => void;
 }
 
-let componentContext: [ComponentMethodState, ComponentMethods] | null = null;
+const componentContexts: ([ComponentMethodState, ComponentMethods] | null)[] = [];
 
 export function useComponentMethods(): ComponentMethods {
-  if (componentContext)
-    return componentContext[1];
+  const last = componentContexts.length - 1;
+  const cctx = componentContexts[last];
+  if (cctx)
+    return cctx[1];
 
   const onMounts: (() => void)[] = [];
   const onCleanups: (() => void)[] = [];
@@ -228,22 +229,23 @@ export function useComponentMethods(): ComponentMethods {
     onCleanup(f) { onCleanups.push(f); },
     reaction(f) { onCleanups.push(autorun(f)); },
   };
-  componentContext = [{ onMounts, onCleanups }, m];
+  componentContexts[last] = [{ onMounts, onCleanups }, m];
   return m;
 }
 
 export function assemble(jnode: JSXNode): Backing {
-  componentContext = null as ([ComponentMethodState, ComponentMethods] | null);
+  componentContexts.push(null);
 
   if (isJSXElement(jnode) && !jnode.el)
     allocateSkeletons(jnode);
   const b = assembleImpl(jnode);
 
-  if (!componentContext)
+  const cctx = lastOf(componentContexts);
+  if (!cctx)
     return b;
 
   // wrap insert() and dispose() to call lifecycle methods if onMount()/onCleanup() is called.
-  const { onMounts, onCleanups } = componentContext[0];
+  const { onMounts, onCleanups } = cctx[0];
   let mounted = false;
   const insert = (l: BackingLocation | null | undefined): void => {
     b.insert(l);

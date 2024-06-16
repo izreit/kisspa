@@ -19,6 +19,13 @@ export interface JSXElement {
   children: JSXNode[];
 }
 
+export type JSXNodeSync =
+  | null | string | number
+  | Accessor<null | string | number>
+  | JSXElement;
+
+export type JSXNodeAsync = Promise<JSXNodeSync>;
+
 export type JSXNode =
   | null | string | number
   | Accessor<null | string | number>
