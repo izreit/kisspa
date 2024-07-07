@@ -6,13 +6,16 @@
   "types": "lib/index.d.js",
   "main": "lib/index.js",
   "scripts": {
-    "build": "npm run build:parser && npm run build:ts",
-    "build:ts": "tsc -p ./tsconfig.build.json",
-    "build:parser": "tspeg --enable-memo ./src/upwind/parser.peg ./src/upwind/parser.ts",
+    "prepare": "npm run build",
+    "build": "npm run _build:parser && npm run _build:ts && npm run _build:dist",
     "test": "vitest",
-    "cov": "vitest run --coverage"
+    "cov": "vitest run --coverage",
+    "_build:parser": "tspeg --enable-memo ./src/upwind/parser.peg ./src/upwind/parser.ts",
+    "_build:ts": "tsc -p ./tsconfig.build.json",
+    "_build:dist": "vite build && tsc -p ./tsconfig.decl.json"
   },
   "files": [
+    "dist/",
     "lib/"
   ],
   "keywords": [],
@@ -23,10 +26,13 @@
     "happy-dom": "^14.12.0",
     "tspeg": "^3.3.1",
     "typescript": "^5.4.5",
+    "vite": "^5.3.3",
     "vitest": "^1.6.0"
   },
   "exports": {
-    ".": "./lib/index.js",
+    ".": "./dist/index.js",
+    "./html": "./dist/html/index.js",
+    "./reactive": "./dist/reactive/index.js",
     "./jsx-runtime": "./lib/html/index.js"
   }
 }
