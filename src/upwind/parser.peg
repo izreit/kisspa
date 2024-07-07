@@ -1,47 +1,61 @@
 ---
+export type Mod = {
+   modKey: string;
+   target: { name: string, rel: string | null } | null;
+   begin: number;
+   end: number;
+};
 export type Decl = {
-  contexts: string[];
+  modifiers: Mod[];
   name: string[];
-  value: string[];
+  value: string[] | null;
   begin: number;
   end: number;
 };
 ---
 
 DECLS
- := _ beginpos=@ head=DECL tail={__ d=DECL}* endpos=@ _ $
-    .val = Decl[] { return [...this.head.val, ...this.tail.map(t => t.d.val).flat()]; }
+ := _ beginpos=@ head=DECL tail={__ d=DECL}* endpos=@ _
+   .val = Decl[] { return [...this.head.val, ...this.tail.map(t => t.d.val).flat()]; }
  | beginpos=@ _ endpos=@ $
-    .val = Decl[] { return []; }
+   .val = Decl[] { return []; }
 
 DECL
- := beginpos=@ name=NAME ':' v=VALUE endpos=@
-    .val = Decl[] {
-      const begin = this.beginpos.overallPos;
-      const end = this.endpos.overallPos;
-      return [{ contexts: [], name: this.name.val, value: this.v.val, begin, end }];
-    }
- | name=NAME '.' decl=DECL
-    .val = Decl[] { return this.decl.val.map(d => ({ ...d, contexts: d.contexts.concat(this.name.val) })); }
- | name=NAME '.\(' ds=DECLS '\)' 
-    .val = Decl[] { return this.ds.val.map(d => ({ ...d, contexts: d.contexts.concat(this.name.val) })); }
+ := mod=MOD '/{' ds=DECLS '}' 
+   .val = Decl[] { return this.ds.val.map(d => ({ ...d, modifiers: d.modifiers.concat(this.mod.val) })); }
+ | mod=MOD '/' decl=DECL
+   .val = Decl[] { return this.decl.val.map(d => ({ ...d, modifiers: d.modifiers.concat(this.mod.val) })); }
+ | beginpos=@ name=NAME v={':' c=VAL}? endpos=@
+   .val = Decl[] {
+     const begin = this.beginpos.overallPos;
+     const end = this.endpos.overallPos;
+     return [{ modifiers: [], name: this.name.val, value: this.v?.c.val ?? null, begin, end }];
+   }
+
+MOD
+ := beginpos=@ v=':*[^/_:\s]+' target={'_' name='[^/:\s~\+]+' rel='[~\+]'?}? endpos=@
+   .val = Mod {
+     const begin = this.beginpos.overallPos;
+     const end = this.endpos.overallPos;
+     const tgt = this.target;
+     const target = tgt ? { name: tgt.name, rel: tgt.rel ?? null } : null;
+     return { modKey: this.v, target, begin, end };
+   }
 
 NAME
  := head=FRAG tail={'-' f=FRAG}*
-    .val = string[] { return [this.head, ...this.tail.map(t => t.f)]; }
+   .val = string[] { return [this.head, ...this.tail.map(t => t.f)]; }
 
 FRAG := '[^-\s:\.]+'
-VALUE := UNDERSCORE_SEPARATED
-
-UNDERSCORE_SEPARATED
- := '_*' head={NONUNDERSCORE | QUOTED} tail={'_+' v={NONUNDERSCORE | QUOTED}}* '_*'
-    .val = string[] { return [this.head.val, ...this.tail.map(t => t.v.val)]; }
-NONUNDERSCORE
- := v='([^\s_]|\\_)+'
-    .val = string { return this.v.replace(/\\_/g, "_"); }
+VAL
+ := '_*' head={NONUS | QUOTED} tail={'_+' v={NONUS | QUOTED}}* '_*'
+   .val = string[] { return [this.head.val, ...this.tail.map(t => t.v.val)]; }
+NONUS
+ := v='([^\s_}]|\\_)+'
+   .val = string { return this.v.replace(/\\_/g, "_"); }
 QUOTED
   := '\'' v='([^\']|\\\')*' '\''
-     .val = string { return this.v.replace(/\\\u0027/g, "'"); }
+   .val = string { return this.v.replace(/\\\u0027/g, "'"); }
 
 __ := '[ \t\n\r]+'
 _ := '[ \t\n\r]*'
