@@ -1,7 +1,6 @@
 import type { JSXInternal } from "./core/jsx";
 export * from "./core/backing";
 export * from "./core/h";
-export * from "./core/skeleton";
 export * from "./core/types";
 export * from "./special/context";
 export * from "./special/for";

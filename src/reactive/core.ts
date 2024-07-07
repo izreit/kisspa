@@ -55,10 +55,8 @@ const arrayMutators = ((a) => new Set<Function>([a.shift, a.unshift, a.push, a.p
 const MUTATION_MARKER = Symbol();
 let arrayMutatorCallDepth = 0;
 
-const debug = { enabled: false };
-
-export function debugGetStoreInternal() {
-  return { refs, revRefs, memoizedTable, debug, parentRefTable, propWatcherTable };
+export function debugGetInternal() {
+  return { refs, revRefs, memoizedTable, parentRefTable, propWatcherTable };
 }
 
 function isWrappable(v: any): v is object {
@@ -78,7 +76,7 @@ export const requestFlush = (() => {
   const funs = new Set<() => void>();
 
   return decimated(function flush() {
-    if (writtens.length === 0) return;
+    if (!writtens.length) return;
 
     for (let i = 0; i < writtens.length; i += 5) {
       const wrapped = writtens[i];
@@ -114,11 +112,6 @@ export const requestFlush = (() => {
     funs.clear();
   });
 })();
-
-function flushSync(): void {
-  while (writtens.length > 0)
-    requestFlush.immediate();
-}
 
 function addRef(wrapped: any, prop: Key, value: any, observer: () => void): void {
   const refent = refs.get(wrapped) ?? refs.set(wrapped, new Map()).get(wrapped)!;
@@ -164,14 +157,14 @@ export function observe<T extends object>(initial: T): [T, StoreSetter<T>] {
         return raw;
 
       const ret = observe(raw)[0];
-      if (writings.has(proxy)) {
-        writings.add(ret);
+      if (writings.has_(proxy)) {
+        writings.add_(ret);
       }
       return ret;
     },
 
     set(target, prop, value, receiver) {
-      if (!writings.has(proxy)) {
+      if (!writings.has_(proxy)) {
         throw new Error(`cannot write to property ${String(prop)} outside a writing context`);
       }
       const v: any = unwrap(value);
@@ -195,7 +188,7 @@ export function observe<T extends object>(initial: T): [T, StoreSetter<T>] {
     },
 
     deleteProperty(target, prop) {
-      if (!writings.has(proxy))
+      if (!writings.has_(proxy))
         throw new Error(`cannot delete a property ${String(prop)} outside a writing context`);
 
       const cacheEntry = valueCacheTable.get(proxy);
@@ -211,13 +204,15 @@ export function observe<T extends object>(initial: T): [T, StoreSetter<T>] {
   const setter = (<U>(writer: (val: T) => U, opts?: StoreSetterOptions): U => {
     const lazyFlush = opts?.lazyFlush ?? false;
     try {
-      writings.save();
-      writings.add(proxy);
+      writings.save_();
+      writings.add_(proxy);
       return writer(proxy);
     } finally {
-      writings.restore();
-      if (!lazyFlush)
-        flushSync();
+      writings.restore_();
+      if (!lazyFlush) {
+        while (writtens.length)
+          requestFlush.immediate();
+      }
     }
   }) as StoreSetter<T>;
 
@@ -288,14 +283,14 @@ type PropWatcherEntry = {
 };
 
 type ParentRef = {
-  locations: Mapset<object, Key>;
+  locations_: Mapset<object, Key>;
   /**
    * The minimal distance from the watcher root. Used to notify changes with the shortest path from the root.
    * This is important not only to be efficient but also to avoid infinite loop caused by cyclic references.
    */
-  minNorm: number;
-  minParent: object | null;
-  minKey: Key | null;
+  minNorm_: number;
+  minParent_: object | null;
+  minKey_: Key | null;
 };
 
 const propWatcherTable: WeakMap<PropWatcherId, PropWatcherEntry> = new WeakMap();
@@ -306,12 +301,12 @@ function registerParentRef(wid: PropWatcherId, target: object, key: Key, child: 
   child = observe(child)[0];
 
   const tableFromChild = (parentRefTable.has(child) ? parentRefTable : (parentRefTable.set(child, new Map()))).get(child)!;
-  const pref = (tableFromChild.has(wid) ? tableFromChild : tableFromChild.set(wid, { locations: new Mapset(), minParent: null, minKey: null, minNorm: Infinity })).get(wid)!;
-  pref.locations.add(target, key);
-  if (pref.minNorm > norm) {
-    pref.minNorm = norm;
-    pref.minParent = target;
-    pref.minKey = key;
+  const pref = (tableFromChild.has(wid) ? tableFromChild : tableFromChild.set(wid, { locations_: new Mapset(), minParent_: null, minKey_: null, minNorm_: Infinity })).get(wid)!;
+  pref.locations_.add_(target, key);
+  if (pref.minNorm_ > norm) {
+    pref.minNorm_ = norm;
+    pref.minParent_ = target;
+    pref.minKey_ = key;
   }
 
   if (deep)
@@ -323,13 +318,13 @@ function unregisterParentRefs(wid: PropWatcherId, parent: object, prop: Key, chi
   const wchild = observe(child)[0];
   const pref = parentRefTable.get(wchild)?.get(wid);
   if (!pref) return;
-  if (pref.minParent == parent) {
-    pref.minNorm = Infinity;
-    pref.minKey = pref.minParent = null;
+  if (pref.minParent_ == parent) {
+    pref.minNorm_ = Infinity;
+    pref.minKey_ = pref.minParent_ = null;
   }
 
-  pref.locations.delete(parent, prop);
-  if (pref.locations.size === 0)
+  pref.locations_.delete_(parent, prop);
+  if (pref.locations_.size_ === 0)
     parentRefTable.get(wchild)!.delete(wid);
 }
 
@@ -376,22 +371,22 @@ function getPathTrie(wid: PropWatcherId, target: Wrapped): Trie<Key> | null{
   if (!pref) return null; // unwatched
 
   // calculate minKey if invalidated
-  if (pref.minParent == null) {
+  if (pref.minParent_ == null) {
     let n = Infinity;
-    pref.locations.forEach((keys, parent) => {
+    pref.locations_.forEach_((keys, parent) => {
       const ppref = parentRefTable.get(parent)?.get(wid);
-      if (ppref && n > ppref.minNorm + 1) {
-        pref.minNorm = n = ppref.minNorm + 1;
-        pref.minParent = parent;
-        pref.minKey = keys.values().next().value;
+      if (ppref && n > ppref.minNorm_ + 1) {
+        pref.minNorm_ = n = ppref.minNorm_ + 1;
+        pref.minParent_ = parent;
+        pref.minKey_ = keys.values().next().value;
       }
     })
   }
 
-  if (pref.minKey === DUMMY_SYMBOL)
+  if (pref.minKey_ === DUMMY_SYMBOL)
     return trieRoot;
 
-  return getPathTrie(wid, pref.minParent)?.childFor(pref.minKey!) ?? null;
+  return getPathTrie(wid, pref.minParent_)?.childFor_(pref.minKey_!) ?? null;
 }
 
 const flushingWatchers: Set<PropWatcherId> = new Set();
@@ -414,7 +409,7 @@ function notifyPropChange(target: Wrapped, prop: Key, val: any, prev: any): void
       return;
     }
     const pathTrie = getPathTrie(wid, target);
-    if (pathTrie == null)
+    if (!pathTrie)
       return;
 
     const { onAssign, onApply, deep } = watcher;
@@ -424,18 +419,17 @@ function notifyPropChange(target: Wrapped, prop: Key, val: any, prev: any): void
     }
 
     if (prop === MUTATION_MARKER) {
-      if (onApply)
-         onApply(pathTrie.trace(), val, prev);  // when (prop === MUTATION_HANDLER), val and prev is this and arguments. Ugh! need more readability...
+      onApply?.(pathTrie.trace_(), val, prev);  // when (prop === MUTATION_HANDLER), val and prev is this and arguments. Ugh! need more readability...
       return;
     }
 
     if (deep) {
       unregisterParentRefs(wid, target, prop, prev);
-      registerParentRef(wid, target, prop, val, pref.minNorm + 1, true);
+      registerParentRef(wid, target, prop, val, pref.minNorm_ + 1, true);
     }
 
     if (!onApply || arrayMutatorCallDepth === 0)
-      onAssign(pathTrie.childFor(prop).trace(), (val !== DELETE_MARKER) ? val : undefined, val === DELETE_MARKER);
+      onAssign(pathTrie.childFor_(prop).trace_(), (val !== DELETE_MARKER) ? val : undefined, val === DELETE_MARKER);
   });
 
   stale.forEach(wid => {

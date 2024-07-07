@@ -1,38 +1,38 @@
 import { assert } from "../assert";
 
 export class LayeredSet<T> {
-  private map: Map<T, number> = new Map();
-  private layers: T[][] = [[]];
-  private current: T[] = this.layers[0];
+  private map_: Map<T, number> = new Map();
+  private layers_: T[][] = [[]];
+  private current_: T[] = this.layers_[0];
 
-  save(): void {
-    this.current = [];
-    this.layers.push(this.current);
+  save_(): void {
+    this.current_ = [];
+    this.layers_.push(this.current_);
   }
 
-  restore(): void {
-    const l = this.layers.pop();
-    this.current = this.layers[this.layers.length - 1];
+  restore_(): void {
+    const l = this.layers_.pop();
+    this.current_ = this.layers_[this.layers_.length - 1];
     assert(l != null, "LayeredSet#restore: overrun");
-    const { map } = this;
+    const { map_ } = this;
     for (let i = 0; i < l.length; ++i) {
       const v = l[i]
-      const count = map.get(v)!;
+      const count = map_.get(v)!;
       if (count === 1) {
-        map.delete(v)
+        map_.delete(v)
       } else {
-        map.set(v, count - 1);
+        map_.set(v, count - 1);
       }
     }
   }
 
-  has(v: T): boolean {
-    return this.map.has(v);
+  has_(v: T): boolean {
+    return this.map_.has(v);
   }
 
-  add(v: T): void {
-    const { map, current } = this;
-    map.set(v, map.has(v) ? map.get(v)! + 1 : 1);
-    current.push(v);
+  add_(v: T): void {
+    const { map_, current_ } = this;
+    map_.set(v, map_.has(v) ? map_.get(v)! + 1 : 1);
+    current_.push(v);
   }
 }

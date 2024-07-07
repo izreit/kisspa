@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { cloneutil } from "../cloneutil";
-import { autorun, bindObserver, cancelAutorun, debugGetStoreInternal, Key, observe, unwatch, watchDeep, watchShallow } from "../core";
+import { autorun, bindObserver, cancelAutorun, debugGetInternal, Key, observe, unwatch, watchDeep, watchShallow } from "../core";
 
 describe("microstore", function () {
   it("can be read/modified", function () {
@@ -11,7 +11,7 @@ describe("microstore", function () {
   });
 
   it("can watch a simple object", async function () {
-    const internal = debugGetStoreInternal();
+    const internal = debugGetInternal();
 
     const raw = { foo: 4 };
     const [store, setStore] = observe(raw);
@@ -194,7 +194,7 @@ describe("microstore", function () {
   });
 
   it("can watch multiple stores", async function () {
-    const internal = debugGetStoreInternal();
+    const internal = debugGetInternal();
 
     const raw1 = { index: 1 };
     const raw2 = { values: ["fee", "bar", "zoo", "buzz", "woohoo"] };
@@ -792,7 +792,7 @@ describe("microstore", function () {
 
   describe("watchShallow()", () => {
     it("detects changes of its propeties", async () => {
-      const { parentRefTable } = debugGetStoreInternal();
+      const { parentRefTable } = debugGetInternal();
 
       const raw = {
         values: ["fee", "glaa", "zoo"],
