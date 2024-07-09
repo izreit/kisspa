@@ -118,9 +118,9 @@ function assignAttribute(el: HTMLElement, k: string, v: string | null): void {
   (v != null) ? el.setAttribute(k, v) : el.removeAttribute(k);
 }
 
-export function assembleImpl(jnode: JSXNode): Backing;
-export function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node;
-export function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node {
+function assembleImpl(jnode: JSXNode): Backing;
+function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node;
+function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node {
   if (isPromise(jnode))
     return delayAssemble(jnode, loc);
 
@@ -203,7 +203,7 @@ export function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?
   }
 }
 
-export interface ComponentMethodState {
+interface ComponentMethodState {
   onMounts: (() => void)[];
   onCleanups: (() => void)[];
 }

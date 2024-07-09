@@ -9,6 +9,11 @@ import { Accessor, AccessorOr, JSXNode, JSXNodeAsync, Ref } from './types';
 type Booleanish = boolean | 'true' | 'false';
 
 export namespace JSXInternal {
+  // Ugh! A dummy variable to make JSXInternal a value but not a type-only namespace.
+  // it seems that type-only namespaces cannot be exported as a member of another
+  // namespace when `isolatedModules: true`...
+  export const _ = 1;
+
 	export interface IntrinsicAttributes {
     ref?:
       | Ref<HTMLElement>

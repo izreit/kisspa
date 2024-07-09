@@ -7,10 +7,10 @@ export interface ContextProviderProps<T> {
   children?: PropChildren;
 }
 
-export type ContextPair<T> = [
-  Component<ContextProviderProps<T>, ContextProviderProps<T>["children"]>,
-  () => T
-];
+export type ContextPair<T> = {
+  Provider: Component<ContextProviderProps<T>, ContextProviderProps<T>["children"]>;
+  useContext: () => T;
+};
 
 export function createContext<T>(initial: T): ContextPair<T> {
   const stack: T[] = [initial];
@@ -36,9 +36,9 @@ export function createContext<T>(initial: T): ContextPair<T> {
     };
   });
 
-  function use(): T {
+  function useContext(): T {
     return stack[stack.length - 1]!;
   }
 
-  return [Provider, use];
+  return { Provider, useContext };
 }
