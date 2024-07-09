@@ -6,11 +6,15 @@
   "types": "lib/index.d.js",
   "main": "lib/index.js",
   "scripts": {
-    "build": "tsc -p ./tsconfig.build.json",
+    "prepare": "npm run build",
+    "build": "npm run _build:ts && npm run _build:dist",
     "test": "vitest",
-    "cov": "vitest run --coverage"
+    "cov": "vitest run --coverage",
+    "_build:ts": "tsc -p ./tsconfig.build.json",
+    "_build:dist": "vite build -- --clean -t reactive && vite build -- -t html && vite build -- -t whole && tsc -p ./tsconfig.decl.json"
   },
   "files": [
+    "dist/",
     "lib/"
   ],
   "keywords": [],
@@ -19,11 +23,16 @@
   "devDependencies": {
     "@vitest/coverage-istanbul": "^1.6.0",
     "happy-dom": "^14.12.0",
+    "terser": "^5.31.1",
     "typescript": "^5.4.5",
+    "vite": "^5.3.3",
     "vitest": "^1.6.0"
   },
   "exports": {
-    ".": "./lib/index.js",
-    "./jsx-runtime": "./lib/html/index.js"
+    ".": "./dist/upwind/bundle.js",
+    "./html": "./dist/html/bundle.js",
+    "./reactive": "./dist/reactive/index.js",
+    "./jsx-runtime": "./lib/html/index.js",
+    "./raw/*": "./lib/*.js"
   }
 }

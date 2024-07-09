@@ -10,5 +10,5 @@ export function lastOf<T>(vs: T[]): T | null {
 }
 
 export function mapCoerce<T, U>(xs: T | T[] | null | undefined, f: (x: T) => U): U[] {
-  return (isArray(xs)) ? xs.map(f) : (xs ? [f(xs)] : []);
+  return (isArray(xs)) ? xs.map(f) : (xs != null ? [f(xs)] : []);
 }

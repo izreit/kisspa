@@ -1,39 +1,39 @@
 export class Mapset<K, V> {
-  readonly map: Map<K, Set<V>> = new Map();
+  readonly map_: Map<K, Set<V>> = new Map();
 
-  get size(): number{
-    return this.map.size;
+  get size_(): number{
+    return this.map_.size;
   }
 
-  add(key: K, val: V): this {
-    const { map } = this;
-    (map.has(key) ? map : map.set(key, new Set())).get(key)!.add(val);
+  add_(key: K, val: V): this {
+    const { map_ } = this;
+    (map_.has(key) ? map_ : map_.set(key, new Set())).get(key)!.add(val);
     return this;
   }
 
-  delete(key: K, val: V): boolean {
-    const { map } = this;
-    if (!map.has(key))
+  delete_(key: K, val: V): boolean {
+    const { map_ } = this;
+    if (!map_.has(key))
       return false;
 
-    const set = map.get(key)!;
+    const set = map_.get(key)!;
     if (!set.delete(val))
       return false;
 
     if (set.size === 0)
-      map.delete(key);
+      map_.delete(key);
     return true;
   }
 
-  has(key: K): boolean {
-    return this.map.has(key);
+  has_(key: K): boolean {
+    return this.map_.has(key);
   }
 
-  forEach(callback: (set: Set<V>, key: K) => void): void {
-    this.map.forEach(callback);
+  forEach_(callback: (set: Set<V>, key: K) => void): void {
+    this.map_.forEach(callback);
   }
 
-  clear(): void {
-    this.map.clear();
+  clear_(): void {
+    this.map_.clear();
   }
 }

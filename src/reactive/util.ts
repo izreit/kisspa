@@ -40,12 +40,6 @@ export function signal<T>(val: T): [() => T, (v: T) => void] {
   return [() => store.v, v => set(s => { s.v = v; })];
 }
 
-export function memoize<T>(f: () => T): () => T {
-  const [val, set] = signal<T>(null!);
-  autorun(() => set(f()));
-  return val;
-}
-
 function arrayEqual<T extends unknown[]>(xs: T, ys: T[]): boolean {
   if (xs.length !== ys.length) return false;
   for (let i = 0; i < xs.length; ++i)
