@@ -33,6 +33,6 @@
     "./html": "./dist/html/bundle.js",
     "./reactive": "./dist/reactive/index.js",
     "./jsx-runtime": "./lib/html/index.js",
-    "./raw/*": "./lib/"
+    "./raw/*": "./lib/*.js"
   }
 }
