@@ -25,9 +25,9 @@ const target = opts.target ?? "whole";
 // to make them independent each other. In other words, vite produces
 // chunk script file for the integrated big entry.
 const entryTable = {
-  whole: { "index": resolve(__dirname, "src", "index.ts") },
+  whole: { "upwind/bundle": resolve(__dirname, "src", "upwind", "bundle.ts") },
   reactive: { "reactive/index": resolve(__dirname, "src", "reactive", "index.ts") },
-  html: { "html/index": resolve(__dirname, "src", "html", "index.ts") },
+  html: { "html/bundle": resolve(__dirname, "src", "html", "bundle.ts") },
 };
 
 export default defineConfig({

@@ -122,7 +122,7 @@ export function createTag(): Tag {
     if (cache) return cache;
 
     const parsed = parse(s);
-    if (parsed.val.length === 0)
+    if (parsed.val_.length === 0)
       return "";
 
     if (checkFirst && !/^\s/.test(s))
@@ -131,8 +131,8 @@ export function createTag(): Tag {
       console.warn(`upwind: ${JSON.stringify(s)} should end with " " since treated as if there.`);
 
     const { root, prefix, media, alias } = config;
-    const klasses = parsed.val.map(decl => {
-      const { modifiers, name, value, begin, end } = decl;
+    const klasses = parsed.val_.map(decl => {
+      const { mods: modifiers, name, value, begin, end } = decl;
 
       // no value (classname without ':') is treated as-is.
       if (value == null)

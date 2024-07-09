@@ -7,7 +7,7 @@ export type Mod = {
 };
 
 export type Decl = {
-  modifiers: Mod[];
+  mods: Mod[];
   name: string[];
   value: string[] | null;
   begin: number;
@@ -15,15 +15,15 @@ export type Decl = {
 };
 
 type ParseResult<T> = {
-  fail?: false;
-  val: T;
-  begin: number;
-  end: number;
+  fail_?: false;
+  val_: T;
+  begin_: number;
+  end_: number;
 };
 
 type ParseFailure = {
-  fail: true;
-  end: number;
+  fail_: true;
+  end_: number;
 };
 
 export function parse(src: string): ParseResult<Decl[]> {
@@ -37,25 +37,25 @@ export function parse(src: string): ParseResult<Decl[]> {
 // _ := '[ \t\n\r]*'
 function parseDecls(src: string, ix: number): ParseResult<Decl[]> {
   const val: Decl[] = [];
-  const begin = matchRe(src, ix, /[\s\t\n\r]*/y)!.end; // skip spaces
-  if (begin === src.length) return { val: [], begin: 0, end: begin };
+  const begin = matchRe(src, ix, /[\s\t\n\r]*/y)!.end_; // skip spaces
+  if (begin === src.length) return { val_: [], begin_: 0, end_: begin };
   ix = begin;
 
   const mCar = parseDecl(src, ix);
-  if (!mCar.fail)
-    val.push(...mCar.val);
-  ix = mCar.end;
+  if (!mCar.fail_)
+    val.push(...mCar.val_);
+  ix = mCar.end_;
 
   const reWSp = /[\s\t\n\r]+/y;
   for (;;) {
-    const ixSep = matchRe(src, ix, reWSp)?.end;
+    const ixSep = matchRe(src, ix, reWSp)?.end_;
     if (ixSep == null) break;
     const mCdr = parseDecl(src, ixSep);
-    if (!mCdr.fail)
-      val.push(...mCdr.val);
-    ix = mCdr.end;
+    if (!mCdr.fail_)
+      val.push(...mCdr.val_);
+    ix = mCdr.end_;
   }
-  return { val, begin, end: ix };
+  return { val_: val, begin_: begin, end_: ix };
 }
 
 // DECL
@@ -67,46 +67,46 @@ function parseDecl(src: string, ix: number): ParseResult<Decl[]> | ParseFailure 
 
   const mMod = parseMod(src, ix);
   withMod: if (mMod) {
-    const { val: mod, end: ixMod } = mMod;
+    const { val_: mod, end_: ixMod } = mMod;
     if (src[ixMod] !== "/") break withMod;
 
     if (src[ixMod + 1] === "{") {
       //  := mod=MOD '/{' ds=DECLS '}'
       const mDeclGroup = parseDecls(src, ixMod + 2); // +2 for "/{"
-      if (mDeclGroup.fail || src[mDeclGroup.end] !== "}") break withMod;
-      ix = mDeclGroup.end + 1; // +1 for "}"
-      const decls = mDeclGroup.val.map(d => ({ ...d, modifiers: d.modifiers.concat(mod) }));
-      return { val: decls, begin, end: ix };
+      if (mDeclGroup.fail_ || src[mDeclGroup.end_] !== "}") break withMod;
+      ix = mDeclGroup.end_ + 1; // +1 for "}"
+      const decls = mDeclGroup.val_.map(d => ({ ...d, mods: d.mods.concat(mod) }));
+      return { val_: decls, begin_: begin, end_: ix };
 
     } else {
       //  | mod=MOD '/' decl=DECL
       const mDecl = parseDecl(src, ixMod + 1); // +1 for "/"
-      if (mDecl.fail) break withMod;
-      ix = mDecl.end;
-      const decls = mDecl.val.map(d => ({ ...d, modifiers: d.modifiers.concat(mod) }));
-      return { val: decls, begin, end: ix };
+      if (mDecl.fail_) break withMod;
+      ix = mDecl.end_;
+      const decls = mDecl.val_.map(d => ({ ...d, mods: d.mods.concat(mod) }));
+      return { val_: decls, begin_: begin, end_: ix };
     }
   }
 
   //  | beginpos=@ name=NAME v={':' c=VAL}? endpos=@
   const mName = parseName(src, ix);
   if (!mName) return skipToDelim(src, ix);
-  ix = mName.end;
+  ix = mName.end_;
 
   let value: string[] | null = null;
-  if (src[mName.end] === ":") {
+  if (src[mName.end_] === ":") {
     ++ix;
     const mVal = parseVal(src, ix);
     if (!mVal) return skipToDelim(src, ix);
-    ix = mVal.end;
-    value = mVal.val;
+    ix = mVal.end_;
+    value = mVal.val_;
   }
   const end = ix;
-  return { val: [{ modifiers: [], name: mName.val, value, begin, end }], begin, end };
+  return { val_: [{ mods: [], name: mName.val_, value, begin, end }], begin_: begin, end_: end };
 }
 
 function skipToDelim(src: string, ix: number): ParseFailure {
-  return { fail: true, end: matchRe(src, ix, /[^\s\t\n\r}]*/y)!.end };
+  return { fail_: true, end_: matchRe(src, ix, /[^\s\t\n\r}]*/y)!.end_ };
 }
 
 // MOD := beginpos=@ v=':*[^/_:\s]+' target={'_' name='[^/:\s~\+]+' rel='[~\+]'?}? endpos=@
@@ -116,19 +116,19 @@ function parseMod(src: string, ix: number): ParseResult<Mod> | null {
 
   const mMod = matchRe(src, ix, /:*[^/_:\s\(\)]+/y);
   if (!mMod) return null;
-  ix = mMod.end;
-  const modKey = mMod.val[0];
+  ix = mMod.end_;
+  const modKey = mMod.val_[0];
 
   parseTarget: if (src[ix] === "_") {
     const mTargetName = matchRe(src, ix + 1, /[^/:\s~\+]+/y); // +1 for "_"
     if (!mTargetName) break parseTarget;
-    const mRel = matchRe(src, mTargetName.end, /[~\+]?/y)!;
-    ix = mRel.end;
-    target = { name: mTargetName.val[0], rel: mRel.val[0] || null };
+    const mRel = matchRe(src, mTargetName.end_, /[~\+]?/y)!;
+    ix = mRel.end_;
+    target = { name: mTargetName.val_[0], rel: mRel.val_[0] || null };
   }
 
   const end = ix;
-  return { val: { modKey, target, begin, end }, begin, end };
+  return { val_: { modKey, target, begin, end }, begin_: begin, end_: end };
 }
 
 // NAME := '-'* head=FRAG tail={'-' f=FRAG}*
@@ -140,14 +140,14 @@ function parseName(src: string, ix: number): ParseResult<string[]> | null {
 
   const mPrefix = matchRe(src, ix, /-+/y);
   if (mPrefix) {
-    val.push(mPrefix.val[0].slice(-1)); // strip the last "-" (since joined by "-" later)
-    ix = mPrefix.end;
+    val.push(mPrefix.val_[0].slice(-1)); // strip the last "-" (since joined by "-" later)
+    ix = mPrefix.end_;
   }
 
   const mCar = matchRe(src, ix, reFrag);
   if (!mCar) return null;
-  val.push(mCar.val[0]);
-  ix = mCar.end;
+  val.push(mCar.val_[0]);
+  ix = mCar.end_;
 
   for (;;) {
     if (src[ix] !== "-") break;
@@ -157,10 +157,10 @@ function parseName(src: string, ix: number): ParseResult<string[]> | null {
       val.push(""); // rescure the names ended with "-" (although seems invalid)
       break;
     }
-    val.push(mCdr.val[0]);
-    ix = mCdr.end;
+    val.push(mCdr.val_[0]);
+    ix = mCdr.end_;
   }
-  return { val, begin, end: ix };
+  return { val_: val, begin_: begin, end_: ix };
 }
 
 // VAL := '_*' head={NONUS | QUOTED} tail={'_+' v={NONUS | QUOTED}}* '_*'
@@ -169,25 +169,25 @@ function parseVal(src: string, ix: number): ParseResult<string[]> | null {
   const begin = ix;
   const val: string[] = [];
 
-  ix = matchRe(src, ix, /_*/y)!.end;
+  ix = matchRe(src, ix, /_*/y)!.end_;
 
   const mCar = parseValSegment(src, ix);
   if (!mCar) return null;
-  val.push(mCar.val);
-  ix = mCar.end;
+  val.push(mCar.val_);
+  ix = mCar.end_;
 
   for (;;) {
-    const ixSep = matchRe(src, ix, reUSp)?.end;
+    const ixSep = matchRe(src, ix, reUSp)?.end_;
     if (ixSep == null) break;
     const mCdr = parseValSegment(src, ixSep);
     if (!mCdr) break;
-    val.push(mCdr.val);
-    ix = mCdr.end;
+    val.push(mCdr.val_);
+    ix = mCdr.end_;
   }
 
-  ix = matchRe(src, ix, /_*/y)!.end;
+  ix = matchRe(src, ix, /_*/y)!.end_;
 
-  return { val, begin, end: ix };
+  return { val_: val, begin_: begin, end_: ix };
 }
 
 // NONUS := v='(\\_\[^\s_}])+'
@@ -196,14 +196,14 @@ function parseValSegment(src: string, ix: number): ParseResult<string> | null {
   const begin = ix;
   const mn = matchRe(src, ix, /(?!')(?:\\_|[^\s_\}])+/y);
   if (mn)
-    return { val: mn.val[0].replace(/\\_/g, "_"), begin, end: mn.end  };
+    return { val_: mn.val_[0].replace(/\\_/g, "_"), begin_: begin, end_: mn.end_  };
   const mq = matchRe(src, ix, /'((?:\\'|[^'])*)'/y);
-  return mq ? { val: mq.val[1].replace(/\\'/g, "'"), begin, end: mq.end } : null;
+  return mq ? { val_: mq.val_[1].replace(/\\'/g, "'"), begin_: begin, end_: mq.end_ } : null;
 }
 
 function matchRe(src: string, ix: number, re: RegExp): ParseResult<RegExpMatchArray> | null {
   const begin = ix;
   re.lastIndex = ix;
   const m = re.exec(src);
-  return m ? { val: m, begin, end: ix + m[0].length } : null;
+  return m ? { val_: m, begin_: begin, end_: ix + m[0].length } : null;
 }

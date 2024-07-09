@@ -1,7 +1,9 @@
 {
   "extends": "./tsconfig.base.json",
   "files": [
-    "./src/index.ts"
+    "./src/index.ts",
+    "./src/upwind/bundle.ts",
+    "./src/html/bundle.ts"
   ],
   "exclude": [
     "./src/**/*.test.ts"
