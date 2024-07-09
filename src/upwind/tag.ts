@@ -12,6 +12,7 @@ export namespace Tag {
     alias: { [key: string]: string[] };
     color: { [colorName: string]: { [colorVal: string]: ColorStr } };
     colorRe: RegExp | null;
+    num: (v: number) => string;
   }
 
   export interface ExtendOptions {
@@ -20,6 +21,7 @@ export namespace Tag {
     media?: { [key: string]: string };
     alias?: { [key: string]: string };
     color?: { [colorName: string]: { [colorVal: string]: ColorStr } };
+    num?: (v: number) => string;
   }
 }
 
@@ -41,7 +43,7 @@ const trbl: [string, string | string[]][] = [
 ];
 
 function extend(config: Tag.Config, opts: Tag.ExtendOptions): void {
-  const { root, prefix, media, alias, color } = opts;
+  const { root, prefix, media, alias, color, num } = opts;
 
   if (root)
     config.root = root;
@@ -70,6 +72,9 @@ function extend(config: Tag.Config, opts: Tag.ExtendOptions): void {
       .map(name => name.replace(/[^a-zA-Z0-9]/g, "")); // sanitize for safety
     config.colorRe = new RegExp(`^(${colorNames.join("|")})-(\\d{1,3})(?:/(\\d{1,2}))$`);
   }
+
+  if (num)
+    config.num = num;
 }
 
 function escape(s: string): string {
@@ -88,11 +93,17 @@ function product(...args: (string | string[])[]): string[][] {
   return ret;
 }
 
-function replaceColor(val: string[], config: Tag.Config): void {
-  const { color, colorRe } = config;
-  if (!colorRe) return;
+function replaceValue(val: string[], config: Tag.Config): void {
+  const { color, colorRe, num } = config;
+  const reNum = /^\d+(?:\.5)?$/;
   for (let i = 0; i < val.length; ++i) {
-    const m = val[i].match(colorRe);
+    const v = val[i];
+    if (reNum.test(v)) {
+      val[i] = num(Number(v));
+      continue;
+    }
+    if (!colorRe) continue;
+    const m = v.match(colorRe);
     if (!m) continue;
     const alpha = Math.ceil(255 * parseInt(m[3]) / 100).toString(16);
     val[i] = `${color[m[1]][m[2]]}${alpha}`;
@@ -112,6 +123,7 @@ export function createTag(): Tag {
     alias: createEmptyObj(),
     color: createEmptyObj(),
     colorRe: null,
+    num: n => `${n / 4}rem`,
   };
 
   const cacheTable = new Map<string, string>();
@@ -161,7 +173,7 @@ export function createTag(): Tag {
       // expand alias
       const propNames = product(...name.map(n => alias[n] ?? n));
 
-      replaceColor(value, config);
+      replaceValue(value, config);
       const valueStr = value.join(" ");
 
       // wrap style by media modifiers (e.g. sm, md)
