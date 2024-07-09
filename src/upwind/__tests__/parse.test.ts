@@ -4,18 +4,18 @@ import { parse } from "../parse";
 describe("parse", () => {
   it("accepts empty", () => {
     expect(parse(" ")).toEqual({
-      begin: 0,
-      end: 1,
-      val: [],
+      begin_: 0,
+      end_: 1,
+      val_: [],
     });
   });
 
   it("parses one-word declation", () => {
     expect(parse("margin:3px")).toEqual({
-      begin: 0,
-      end: 10,
-      val: [
-        { begin: 0, end: 10, modifiers: [], name: ["margin"], value: ["3px"] },
+      begin_: 0,
+      end_: 10,
+      val_: [
+        { begin: 0, end: 10, mods: [], name: ["margin"], value: ["3px"] },
       ],
     });
   });
@@ -23,10 +23,10 @@ describe("parse", () => {
   it("parses --name", () => {
     const src = "--margin:3px";
     expect(parse(src)).toEqual({
-      begin: 0,
-      end: src.length,
-      val: [
-        { begin: 0, end: src.length, modifiers: [], name: ["-", "margin"], value: ["3px"] },
+      begin_: 0,
+      end_: src.length,
+      val_: [
+        { begin: 0, end: src.length, mods: [], name: ["-", "margin"], value: ["3px"] },
       ],
     });
   });
@@ -34,11 +34,11 @@ describe("parse", () => {
   it("parses one-word declations", () => {
     const src = "  margin:3px \t \n background:red  ";
     expect(parse(src)).toEqual({
-      begin: 2,
-      end: src.length,
-      val: [
-        { begin: 2, end: 12, modifiers: [], name: ["margin"], value: ["3px"] },
-        { begin: 17, end: 31, modifiers: [], name: ["background"], value: ["red"] },
+      begin_: 2,
+      end_: src.length,
+      val_: [
+        { begin: 2, end: 12, mods: [], name: ["margin"], value: ["3px"] },
+        { begin: 17, end: 31, mods: [], name: ["background"], value: ["red"] },
       ],
     });
   });
@@ -46,10 +46,10 @@ describe("parse", () => {
   it("parses underscore-separated value", () => {
     const src = "margin:3px_2px_0_1\\_0";
     expect(parse(src)).toEqual({
-      begin: 0,
-      end: src.length,
-      val: [
-        { begin: 0, end: src.length, modifiers: [], name: ["margin"], value: ["3px", "2px", "0", "1_0"] },
+      begin_: 0,
+      end_: src.length,
+      val_: [
+        { begin: 0, end: src.length, mods: [], name: ["margin"], value: ["3px", "2px", "0", "1_0"] },
       ],
     });
   });
@@ -57,10 +57,10 @@ describe("parse", () => {
   it("parses quoted value", () => {
     const src = "margin:'3px 2px 0 \\'0\\''";
     expect(parse(src)).toEqual({
-      begin: 0,
-      end: src.length,
-      val: [
-        { begin: 0, end: src.length, modifiers: [], name: ["margin"], value: ["3px 2px 0 '0'"] },
+      begin_: 0,
+      end_: src.length,
+      val_: [
+        { begin: 0, end: src.length, mods: [], name: ["margin"], value: ["3px 2px 0 '0'"] },
       ],
     });
   });
@@ -68,10 +68,10 @@ describe("parse", () => {
   it("parses quoted value in underscore-separated", () => {
     const src = `font-family:Verdana_'"MS Gothic"'`;
     expect(parse(src)).toEqual({
-      begin: 0,
-      end: src.length,
-      val: [
-        { begin: 0, end: src.length, modifiers: [], name: ["font", "family"], value: ["Verdana", `"MS Gothic"`] },
+      begin_: 0,
+      end_: src.length,
+      val_: [
+        { begin: 0, end: src.length, mods: [], name: ["font", "family"], value: ["Verdana", `"MS Gothic"`] },
       ],
     });
   });
@@ -79,13 +79,13 @@ describe("parse", () => {
   it("parses modifier", () => {
     const src = "sm/:hover/border-top:10%";
     expect(parse(src)).toEqual({
-      begin: 0,
-      end: src.length,
-      val: [
+      begin_: 0,
+      end_: src.length,
+      val_: [
         {
           begin: 10,
           end: 24,
-          modifiers: [
+          mods: [
             { begin: 3, end: 9, modKey: ":hover", target: null },
             { begin: 0, end: 2, modKey: "sm", target: null },
           ],
@@ -99,13 +99,13 @@ describe("parse", () => {
   it("parses modifier target", () => {
     const src = ":hover_group~/border-top:10%";
     expect(parse(src)).toEqual({
-      begin: 0,
-      end: src.length,
-      val: [
+      begin_: 0,
+      end_: src.length,
+      val_: [
         {
           begin: 14,
           end: src.length,
-          modifiers: [
+          mods: [
             { begin: 0, end: 13, modKey: ":hover", target: { name: "group", rel: "~" } },
           ],
           name: ["border", "top"],
@@ -118,13 +118,13 @@ describe("parse", () => {
   it("parses modifier target with no rel", () => {
     const src = ":hover_group/bg:red";
     expect(parse(src)).toEqual({
-      begin: 0,
-      end: src.length,
-      val: [
+      begin_: 0,
+      end_: src.length,
+      val_: [
         {
           begin: 13,
           end: src.length,
-          modifiers: [
+          mods: [
             { begin: 0, end: 12, modKey: ":hover", target: { name: "group", rel: null } },
           ],
           name: ["bg"],
@@ -137,13 +137,13 @@ describe("parse", () => {
   it("parses grouped modifier", () => {
     const src = "sm/:hover/{border-top:10% color:red} padding:1px";
     expect(parse(src)).toEqual({
-      begin: 0,
-      end: src.length,
-      val: [
+      begin_: 0,
+      end_: src.length,
+      val_: [
         {
           begin: 11,
           end: 25,
-          modifiers: [
+          mods: [
             { begin: 3, end: 9, modKey: ":hover", target: null },
             { begin: 0, end: 2, modKey: "sm", target: null },
           ],
@@ -153,7 +153,7 @@ describe("parse", () => {
         {
           begin: 26,
           end: 35,
-          modifiers: [
+          mods: [
             { begin: 3, end: 9, modKey: ":hover", target: null },
             { begin: 0, end: 2, modKey: "sm", target: null },
           ],
@@ -163,7 +163,7 @@ describe("parse", () => {
         {
           begin: 37,
           end: 48,
-          modifiers: [],
+          mods: [],
           name: ["padding"],
           value: ["1px"]
         },
@@ -174,11 +174,11 @@ describe("parse", () => {
   it("passes through a normal classname", () => {
     const src = "m:1 ordinally-classname";
     expect(parse(src)).toEqual({
-      begin: 0,
-      end: src.length,
-      val: [
-        { begin: 0, end: 3, modifiers: [], name: ["m"], value: ["1"] },
-        { begin: 4, end: src.length, modifiers: [], name: ["ordinally", "classname"], value: null },
+      begin_: 0,
+      end_: src.length,
+      val_: [
+        { begin: 0, end: 3, mods: [], name: ["m"], value: ["1"] },
+        { begin: 4, end: src.length, mods: [], name: ["ordinally", "classname"], value: null },
       ],
     });
   });
@@ -186,10 +186,10 @@ describe("parse", () => {
   it("skips invalid valid", () => {
     const src = "m: p:2";
     expect(parse(src)).toEqual({
-      begin: 0,
-      end: src.length,
-      val: [
-        { begin: 3, end: 6, modifiers: [], name: ["p"], value: ["2"] },
+      begin_: 0,
+      end_: src.length,
+      val_: [
+        { begin: 3, end: 6, mods: [], name: ["p"], value: ["2"] },
       ],
     });
   });
@@ -197,17 +197,17 @@ describe("parse", () => {
   it("skips invalid modifier target", () => {
     const src = "sm/text-decoration:auto :hover_/m:1 p:1";
     expect(parse(src)).toEqual({
-      begin: 0,
-      end: 39,
-      val: [
+      begin_: 0,
+      end_: 39,
+      val_: [
         {
           begin: 3,
           end: 23,
-          modifiers: [{ begin: 0, end: 2, modKey: "sm", target: null }],
+          mods: [{ begin: 0, end: 2, modKey: "sm", target: null }],
           name: ["text", "decoration"],
           value: ["auto"]
         },
-        { begin: 36, end: src.length, modifiers: [], name: ["p"], value: ["1"] },
+        { begin: 36, end: src.length, mods: [], name: ["p"], value: ["1"] },
       ],
     });
   });
@@ -215,10 +215,10 @@ describe("parse", () => {
   it("accepts invalid name that ends with '-'", () => {
     const src = "text-:auto";
     expect(parse(src)).toEqual({
-      begin: 0,
-      end: src.length,
-      val: [
-        { begin: 0, end: src.length, modifiers: [], name: ["text", ""], value: ["auto"] },
+      begin_: 0,
+      end_: src.length,
+      val_: [
+        { begin: 0, end: src.length, mods: [], name: ["text", ""], value: ["auto"] },
       ],
     });
   });
@@ -226,10 +226,10 @@ describe("parse", () => {
   it("skips non-terminated group", () => {
     const src = "p:3 :active/{d:flex";
     expect(parse(src)).toEqual({
-      begin: 0,
-      end: src.length,
-      val: [
-        { begin: 0, end: 3, modifiers: [], name: ["p"], value: ["3"] },
+      begin_: 0,
+      end_: src.length,
+      val_: [
+        { begin: 0, end: 3, mods: [], name: ["p"], value: ["3"] },
       ],
     });
   });
