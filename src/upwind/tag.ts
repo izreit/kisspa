@@ -1,5 +1,6 @@
 import { mapCoerce, arrayify } from "../html/core/util";
-import { parse } from "./parser";
+import { createEmptyObj, objForEach } from "./objutil";
+import { parse } from "./parse";
 
 export namespace Tag {
   export type ColorStr = string;
@@ -76,7 +77,7 @@ function escape(s: string): string {
 }
 
 function copyProps<T extends object>(lhs: T, rhs: T): void {
-  (Object.keys(rhs) as (keyof T)[]).forEach(n => { lhs[n] = rhs[n]; });
+  objForEach(rhs, (v, k) => { lhs[k] = v; });
 }
 
 function product(...args: (string | string[])[]): string[][] {
@@ -107,9 +108,9 @@ export function createTag(): Tag {
   const config: Tag.Config = {
     root: null,
     prefix: "",
-    media: Object.create(null),
-    alias: Object.create(null),
-    color: Object.create(null),
+    media: createEmptyObj(),
+    alias: createEmptyObj(),
+    color: createEmptyObj(),
     colorRe: null,
   };
 
@@ -120,19 +121,17 @@ export function createTag(): Tag {
     const cache = cacheTable.get(s);
     if (cache) return cache;
 
-    const { ast, errs } = parse(s);
-    if (errs.length > 0 || !ast || ast.val.length === 0) {
-      errs.forEach(e => console.error(JSON.stringify(s), e.toString()));
+    const parsed = parse(s);
+    if (parsed.val.length === 0)
       return "";
-    }
 
-    if (checkFirst && ast.beginpos.overallPos === 0)
+    if (checkFirst && !/^\s/.test(s))
       console.warn(`upwind: ${JSON.stringify(s)} should begin with " " since treated as if there.`);
-    if (checkLast && ast.endpos.overallPos === s.length - 1)
+    if (checkLast && !/\s$/.test(s))
       console.warn(`upwind: ${JSON.stringify(s)} should end with " " since treated as if there.`);
 
     const { root, prefix, media, alias } = config;
-    const klasses = ast.val.map(decl => {
+    const klasses = parsed.val.map(decl => {
       const { modifiers, name, value, begin, end } = decl;
 
       // no value (classname without ':') is treated as-is.
