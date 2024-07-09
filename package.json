@@ -7,10 +7,9 @@
   "main": "lib/index.js",
   "scripts": {
     "prepare": "npm run build",
-    "build": "npm run _build:parser && npm run _build:ts && npm run _build:dist",
+    "build": "npm run _build:ts && npm run _build:dist",
     "test": "vitest",
     "cov": "vitest run --coverage",
-    "_build:parser": "tspeg --enable-memo ./src/upwind/parser.peg ./src/upwind/parser.ts",
     "_build:ts": "tsc -p ./tsconfig.build.json",
     "_build:dist": "vite build -- --clean -t reactive && vite build -- -t html && vite build -- -t whole && tsc -p ./tsconfig.decl.json"
   },
@@ -25,7 +24,6 @@
     "@vitest/coverage-istanbul": "^1.6.0",
     "happy-dom": "^14.12.0",
     "terser": "^5.31.1",
-    "tspeg": "^3.3.1",
     "typescript": "^5.4.5",
     "vite": "^5.3.3",
     "vitest": "^1.6.0"
