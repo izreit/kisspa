@@ -1,5 +1,6 @@
 import { autorun, signal } from "../../reactive";
-import { Backing, BackingLocation, assemble, assignLocation, createSpecial, disposeBackings, insertBackings, tailOfBackings } from "../core/backing";
+import { Backing, assemble, assignLocation, createLocation, createSpecial } from "../core/backing";
+import { disposeBackings, insertBackings, tailOfBackings } from "../core/specialHelper";
 import { lcs } from "./internal/lcs";
 import { allocateSkeletons } from "../core/skeleton";
 import { JSXNode } from "../core/types";
@@ -23,7 +24,7 @@ export const For = createSpecial(function For<E>(props: For.Props<E>): Backing {
   let backings: Backing[] = [];
   let backingTable: Map<any, Backing> = new Map();
   let ixTable: WeakMap<Backing, [() => number, (v: number) => void]> = new WeakMap();
-  let loc: BackingLocation = { parent: null, prev: null };
+  let loc = createLocation();
 
   const cancelUpdate = autorun(() => {
     const nextTable: Map<any, Backing> = new Map();

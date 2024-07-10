@@ -1,4 +1,5 @@
-import { Backing, BackingLocation, assemble, assignLocation, createSpecial, disposeBackings, insertBackings, tailOf, tailOfBackings } from "../core/backing";
+import { Backing, assemble, assignLocation, createLocation, createSpecial, tailOf } from "../core/backing";
+import { disposeBackings, insertBackings, tailOfBackings } from "../core/specialHelper";
 import { PropChildren } from "../core/types";
 import { lastOf, mapCoerce } from "../core/util";
 
@@ -21,9 +22,9 @@ interface PortalDestBacking extends Backing {
 
 function createPortalDestBacking(): PortalDestBacking {
   const childBackings: Backing[] = [];
-  let loc: BackingLocation = { parent: null, prev: null };
+  let loc = createLocation();
   return {
-    insert: (l: BackingLocation | null): void => {
+    insert: (l): void => {
       if (assignLocation(loc, l))
         insertBackings(childBackings, l?.parent ? l : null);
     },
@@ -31,7 +32,7 @@ function createPortalDestBacking(): PortalDestBacking {
     dispose: () => disposeBackings(childBackings),
     addChild: (b: Backing): void => {
       if (loc.parent)
-        b.insert({ parent: loc.parent, prev: lastOf(childBackings) });
+        b.insert(createLocation(loc.parent, lastOf(childBackings)));
       childBackings.push(b);
     },
     removeChild: (b: Backing): void => {
@@ -54,8 +55,8 @@ function createPortalSrcBacking(props: Portal.SrcProps): Backing {
 
   let childBackings: Backing[] | null = null;
   let showing = false;
-  let virtualLoc: BackingLocation = { parent: null, prev: null };
-  let physicalLoc: BackingLocation = { parent: null, prev: null };
+  let virtualLoc = createLocation();
+  let physicalLoc = createLocation();
 
   function updateShow(): void {
     const toShow = !!(virtualLoc.parent && physicalLoc.parent);
