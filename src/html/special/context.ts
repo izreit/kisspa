@@ -1,4 +1,5 @@
-import { Backing, BackingLocation, assemble, assignLocation, createSpecial, disposeBackings, insertBackings, tailOfBackings } from "../core/backing";
+import { Backing, assemble, assignLocation, createLocation, createSpecial } from "../core/backing";
+import { disposeBackings, insertBackings, tailOfBackings } from "../core/specialHelper";
 import { Component, PropChildren } from "../core/types";
 import { mapCoerce } from "../core/util";
 
@@ -24,7 +25,7 @@ export function createContext<T>(initial: T): ContextPair<T> {
       stack.pop();
     }
 
-    let loc: BackingLocation = { parent: null, prev: null };
+    let loc = createLocation();
     return {
       insert: (l) => {
         if (assignLocation(loc, l))

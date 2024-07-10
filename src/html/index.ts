@@ -1,7 +1,10 @@
 import type { JSXInternal } from "./core/jsx";
-export { assemble, assignLocation, attach, createRoot, createSpecial, disposeBackings, insertBackings, tailOf, tailOfBackings, useComponentMethods } from "./core/backing";
-export type { Backing, BackingLocation, BackingRoot, ComponentMethods, MemberType } from "./core/backing";
+export { assemble, assignLocation, createSpecial, tailOf, useComponentMethods } from "./core/backing";
+export type { Backing, BackingLocation, ComponentMethods, MemberType } from "./core/backing";
 export { h, jsx, jsxs } from "./core/h";
+export { attach, createRoot } from "./core/root";
+export type { BackingRoot } from "./core/root";
+export { disposeBackings, insertBackings, tailOfBackings } from "./core/specialHelper";
 export { $h, createRef } from "./core/types";
 export type { Accessor, AccessorOr, Attributes, Component, JSXElement, JSXNode, JSXNodeAsync, JSXNodeSync, PropChildren, PropRef, Ref } from "./core/types";
 export { createContext } from "./special/context";
