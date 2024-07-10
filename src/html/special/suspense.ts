@@ -1,4 +1,5 @@
-import { Backing, BackingLocation, assemble, assignLocation, collectDelayings, createSpecial, disposeBackings, insertBackings, tailOfBackings } from "../core/backing";
+import { Backing, BackingLocation, assemble, assignLocation, collectDelayings, createLocation, createSpecial } from "../core/backing";
+import { disposeBackings, insertBackings, tailOfBackings } from "../core/specialHelper";
 import { JSXNode, PropChildren } from "../core/types";
 import { mapCoerce } from "../core/util";
 
@@ -12,7 +13,7 @@ export namespace Suspense {
 
 export const Suspense = createSpecial(function Suspense(props: Suspense.Props): Backing {
   const { fallback, errorFallback, children } = props;
-  let loc: BackingLocation = { parent: null, prev: null };
+  let loc = createLocation();
   let fallbackBackings: Backing[] | null = null;
   let errorFallbackBackings: Backing[] | null = null;
   let backings: Backing[];
