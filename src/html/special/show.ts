@@ -1,5 +1,6 @@
 import { watchProbe } from "../../reactive";
-import { Backing, BackingLocation, assemble, assignLocation, createSpecial, disposeBackings, insertBackings, tailOf, tailOfBackings } from "../core/backing";
+import { Backing, BackingLocation, assemble, assignLocation, createLocation, createSpecial, tailOf } from "../core/backing";
+import { disposeBackings, insertBackings, tailOfBackings } from "../core/specialHelper";
 import { JSXNode, PropChildren } from "../core/types";
 import { mapCoerce } from "../core/util";
 
@@ -16,7 +17,7 @@ export const Show = createSpecial(function Show(props: Show.Props): Backing {
   let thenBackings: Backing[] | null = null;
   let fallbackBacking: Backing | null = null;
   let showing = false;
-  let loc: BackingLocation = { parent: null, prev: null };
+  let loc = createLocation();
 
   function update(): void {
     if (showing) {

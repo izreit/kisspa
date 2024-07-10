@@ -15,7 +15,11 @@ export interface BackingLocation {
   prev: Backing | Node | null;
 }
 
-const nullLocation = { parent: null, prev: null };
+export function createLocation(parent: Node | null = null, prev: Backing | Node | null = null): BackingLocation {
+  return { parent, prev };
+}
+
+const nullLocation = createLocation();
 
 export function assignLocation(self: BackingLocation, loc: BackingLocation | null | undefined): boolean {
   const { parent, prev } = loc ?? nullLocation;
@@ -84,7 +88,7 @@ export function collectDelayings<T>(f: () => T): [T, Promise<void>[]] {
 }
 
 function delayAssemble(jnode: Promise<JSXNode>, l: BackingLocation | null | undefined): Backing {
-  let loc: BackingLocation = { parent: null, prev: null };
+  let loc = createLocation();
   let backing: Backing | null = null;
   let disposed = false;
 
@@ -171,7 +175,7 @@ function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?: Node 
     }
 
     let skelCh: Node | null = el!.firstChild;
-    let chLoc: BackingLocation = { parent: el!, prev: null };
+    let chLoc = createLocation(el!);
     for (const v of children) {
       let ch: Backing | Node;
       // IMPORTANT This condition, for consuming the skeleton, must be correspondent with collectSkeletons().
@@ -263,56 +267,6 @@ export function assemble(jnode: JSXNode): Backing {
       onCleanups[i]();
   };
   return { ...b, insert, dispose };
-}
-
-export interface BackingRoot {
-  attach(jnode: JSXNode): void;
-  detach(): void;
-}
-
-export function createRoot(parent: Element): BackingRoot {
-  let b: Backing | null = null;
-  const attach = (jnode: JSXNode) => {
-    b?.dispose();
-    b = assemble(jnode);
-    b.insert({ parent, prev: null });
-  };
-  const detach = () => {
-    b?.dispose();
-    b = null;
-  };
-  return { attach, detach };
-}
-
-export function attach(parent: Element, jnode: JSXNode): () => void {
-  const r = createRoot(parent)
-  r.attach(jnode);
-  return r.detach;
-}
-
-export function tailOfBackings(bs: Backing[] | null | undefined, prev?: Backing | Node | null): Node | null | undefined {
-  if (bs) {
-    for (let i = bs.length - 1; i >= 0; --i) {
-      const t = bs[i].tail();
-      if (t)
-        return t;
-    }
-  }
-  return tailOf(prev);
-}
-
-export function insertBackings(bs: Backing[] | null, loc: BackingLocation | null | undefined): void {
-  if (!bs) return;
-  if (loc?.parent) {
-    const parent = loc.parent;
-    bs.reduce((prev, b) => (b.insert({ parent, prev }), b), loc.prev);
-  } else {
-    bs.forEach(b => b.insert(null));
-  }
-}
-
-export function disposeBackings(bs: Backing[] | null): void {
-  bs?.forEach(b => b.dispose());
 }
 
 const specials: WeakMap<Component<any, any>, (props: any) => Backing> = new WeakMap();
