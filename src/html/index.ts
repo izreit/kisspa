@@ -10,6 +10,7 @@ export type { Accessor, AccessorOr, Attributes, Component, JSXElement, JSXNode, 
 export { createContext } from "./special/context";
 export type { ContextPair, ContextProviderProps } from "./special/context";
 export { For } from "./special/for";
+export { Head } from "./special/head";
 export { Portal } from "./special/portal";
 export { Show } from "./special/show";
 export { Suspense } from "./special/suspense";

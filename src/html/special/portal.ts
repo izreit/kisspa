@@ -5,11 +5,11 @@ import { lastOf, mapCoerce } from "../core/util";
 
 export namespace Portal {
   export type SrcProps = {
-    to: any;
+    to: object;
     children?: PropChildren;
   };
   export type DestProps = {
-    from: any;
+    from: object;
     children?: PropChildren; // children is not used but required for type inference...
   }
   export type Props = DestProps | SrcProps;
@@ -46,11 +46,15 @@ function createPortalDestBacking(): PortalDestBacking {
 
 const destBackings: WeakMap<object, PortalDestBacking> = new WeakMap();
 
-function destBackingFor(key: object): PortalDestBacking {
+export function hasPortalDestBackingFor(key: object): boolean {
+  return destBackings.has(key);
+}
+
+export function destBackingFor(key: object): PortalDestBacking {
   return destBackings.get(key) ?? (destBackings.set(key, createPortalDestBacking()).get(key)!);
 }
 
-function createPortalSrcBacking(props: Portal.SrcProps): Backing {
+export function createPortalSrcBacking(props: Portal.SrcProps): Backing {
   const { to, children } = props;
 
   let childBackings: Backing[] | null = null;
