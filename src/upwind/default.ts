@@ -39,14 +39,16 @@ export const defaultColors = (() => {
   return ret;
 })();
 
-const minWidthStr = (n: number) => `(min-width: ${n}px)`
+const mediaStr = (s: string) => `@media ${s} { $whole }`;
+const minWidthStr = (n: number) => mediaStr(`(min-width: ${n}px)`);
 
-export const defaultMedia = {
+export const defaultModifiers = {
   sm: minWidthStr(640),
   md: minWidthStr(768),
   lg: minWidthStr(1024),
   xl: minWidthStr(1280),
   "2xl": minWidthStr(1536),
+  dark: mediaStr(`(prefers-color-scheme: dark)`)
 };
 
 export const defaultAlias = {
@@ -62,7 +64,7 @@ export const defaultAlias = {
 
 export const $ = createTag();
 $.extend({
-  media: defaultMedia,
-  alias: defaultAlias,
-  color: defaultColors,
+  modifiers: defaultModifiers,
+  aliases: defaultAlias,
+  colors: defaultColors,
 });
