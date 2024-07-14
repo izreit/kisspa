@@ -1,26 +1,70 @@
 import { mapCoerce, arrayify } from "../html/core/util";
-import { createEmptyObj, objForEach } from "./objutil";
+import { createEmptyObj, objForEach, objKeys } from "./objutil";
 import { parse } from "./parse";
 
 export namespace Tag {
   export type ColorStr = string;
 
+  export interface ModifierDef {
+    type_: "<whole>" | "<selector>";
+    prefix_: string;
+    postfix_: string;
+  }
+
   export interface Config {
-    root: string | null;
     prefix: string;
-    media: { [key: string]: string };
-    alias: { [key: string]: string[] };
-    color: { [colorName: string]: { [colorVal: string]: ColorStr } };
+
+    /**
+     * Define modifiers.
+     *
+     * The keys of the properties will be modifier names. The values are their expansion form.
+     * A value must include either `"<whole>" or `"<selector>".
+     * `"<whole>"` is replaced by the generated declaration.
+     * `"<selector>"` is replaced by the selector of the generated declaration.
+     *
+     * For example, the following declares a modifier `print`:
+     *
+     * ```
+     * $.extend({
+     *   modifiers: {
+     *     // my own modifier for printer
+     *     print: "@media printer { <whole> }",
+     *   }
+     * });
+     * ```
+     *
+     * then you can use it (e.g. ``` $`print/background:white` ```).
+     *
+     * Other examples:
+     *
+     * ```
+     * {
+     *   modifiers: {
+     *     // override a screen size breakpoint.
+     *     xl: "@media (min-width: 1700px) { <whole> }",
+     *
+     *     // override dark mode modifier to use className "dark".
+     *     dark: "<selector>:is(.dark *)",
+     *
+     *     // override dark mode modifier to use a data attribute `data-darkmode`.
+     *     dark: "<selector>:where([data-darkmode="true"], [data-darkmode="true"] *)",
+     *   }
+     * }
+     * ```
+     */
+    modifiers: { [key: string]: ModifierDef };
+
+    aliases: { [key: string]: string[] };
+    colors: { [colorName: string]: { [colorVal: string]: ColorStr } };
     colorRe: RegExp | null;
     num: (v: number) => string;
   }
 
   export interface ExtendOptions {
-    root?: string;
     prefix?: string;
-    media?: { [key: string]: string };
-    alias?: { [key: string]: string };
-    color?: { [colorName: string]: { [colorVal: string]: ColorStr } };
+    modifiers?: { [key: string]: string };
+    aliases?: { [key: string]: string };
+    colors?: { [colorName: string]: { [colorVal: string]: ColorStr } };
     num?: (v: number) => string;
   }
 }
@@ -42,33 +86,41 @@ const trbl: [string, string | string[]][] = [
   ["e", "-inline-end"],
 ];
 
-function extend(config: Tag.Config, opts: Tag.ExtendOptions): void {
-  const { root, prefix, media, alias, color, num } = opts;
+const reModifierPlaceHolder = /(<(?:selector|whole)>)/;
+const modifierPlaceHolderWhole = "<whole>";
 
-  if (root)
-    config.root = root;
+function extend(config: Tag.Config, opts: Tag.ExtendOptions): void {
+  const { prefix, modifiers, aliases, colors, num } = opts;
+
   if (prefix != null)
     config.prefix = prefix;
-  if (media)
-    copyProps(config.media, media);
 
-  if (alias) {
-    copyProps(config.alias, Object.keys(alias).reduce((acc, k) => {
-      const v = alias[k];
-      if (k.includes("<trbl>")) {
-        trbl.forEach(([abbrev, expanded]) => {
-          acc[k.replace("<trbl>", abbrev)] = mapCoerce(expanded, e => v.replace("<trbl>", e));
-        });
-      } else {
-        acc[k] = [v];
+  if (modifiers) {
+    objForEach(modifiers, (v, k) => {
+      const m  = v.match(reModifierPlaceHolder);
+      if (m) {
+        const [prefix_, postfix_] = v.split(m[0]);
+        const type_ = m[0] as "<whole>" | "<selector>";
+        config.modifiers[k] = { type_, prefix_, postfix_: postfix_ ?? "" };
       }
-      return acc;
-    }, {} as { [key: string]: string[] }));
+    });
   }
 
-  if (color) {
-    copyProps(config.color, color);
-    const colorNames = Object.keys(config.color)
+  if (aliases) {
+    objForEach(aliases, (v: string, k: string) => {
+      if (k.includes("<trbl>")) {
+        trbl.forEach(([abbrev, expanded]) => {
+          config.aliases[k.replace("<trbl>", abbrev)] = mapCoerce(expanded, e => v.replace("<trbl>", e));
+        });
+      } else {
+        config.aliases[k] = [v];
+      }
+    });
+  }
+
+  if (colors) {
+    copyProps(config.colors, colors);
+    const colorNames = objKeys(config.colors)
       .map(name => name.replace(/[^a-zA-Z0-9]/g, "")); // sanitize for safety
     config.colorRe = new RegExp(`^(${colorNames.join("|")})-(\\d{1,3})(?:/(\\d{1,2}))$`);
   }
@@ -94,7 +146,7 @@ function product(...args: (string | string[])[]): string[][] {
 }
 
 function replaceValue(val: string[], config: Tag.Config): void {
-  const { color, colorRe, num } = config;
+  const { colors: color, colorRe, num } = config;
   const reNum = /^\d+(?:\.5)?$/;
   for (let i = 0; i < val.length; ++i) {
     const v = val[i];
@@ -117,11 +169,10 @@ export function createTag(): Tag {
   const sheet = el.sheet!;
 
   const config: Tag.Config = {
-    root: null,
     prefix: "",
-    media: createEmptyObj(),
-    alias: createEmptyObj(),
-    color: createEmptyObj(),
+    modifiers: createEmptyObj(),
+    aliases: createEmptyObj(),
+    colors: createEmptyObj(),
     colorRe: null,
     num: n => `${n / 4}rem`,
   };
@@ -142,7 +193,7 @@ export function createTag(): Tag {
     if (checkLast && !/\s$/.test(s))
       console.warn(`upwind: ${JSON.stringify(s)} should end with " " since treated as if there.`);
 
-    const { root, prefix, media, alias } = config;
+    const { prefix, modifiers: modifierTable, aliases: aliasTable } = config;
     const klasses = parsed.val_.map(decl => {
       const { mods: modifiers, name, value, begin, end } = decl;
 
@@ -157,31 +208,30 @@ export function createTag(): Tag {
         return className;
 
       // wrap selector by modifiers (e.g. :active, :hover_peer~)
-      let modStack: typeof modifiers = [];
       let selector = "." + escape(className);
       for (let i = 0; i < modifiers.length; ++i) {
         const { modKey, target } = modifiers[i];
         if (modKey[0] === ":") {
           selector = target ? `${target.name}${modKey} ${target.rel ?? ""} ${selector}` : `${selector}${modKey}`;
         } else {
-          modStack.push(modifiers[i]);
+          const decl = modifierTable[modKey];
+          if (decl?.type_ !== modifierPlaceHolderWhole)
+            selector = `${decl.prefix_}${selector}${decl.postfix_}`;
         }
       }
-      if (root)
-        selector = `${root} ${selector}`;
 
       // expand alias
-      const propNames = product(...name.map(n => alias[n] ?? n));
+      const propNames = product(...name.map(n => aliasTable[n] ?? n));
 
       replaceValue(value, config);
       const valueStr = value.join(" ");
 
       // wrap style by media modifiers (e.g. sm, md)
       let style = `${selector} { ${propNames.map(propName => `${propName.join("-")}: ${valueStr}`).join(";")} }`;
-      for (let i = modStack.length - 1; i >= 0; --i) {
-        const med = media[modStack[i].modKey];
-        if (!med) continue;
-        style = `@media ${med} { ${style} }`;
+      for (let i = 0; i < modifiers.length; ++i) {
+        const decl = modifierTable[modifiers[i].modKey];
+        if (decl?.type_ === modifierPlaceHolderWhole)
+          style = `${decl.prefix_}${style}${decl.postfix_}`;
       }
 
       sheet.insertRule(style);
