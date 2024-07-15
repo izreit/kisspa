@@ -5,6 +5,10 @@ import { parse } from "./parse";
 export namespace Tag {
   export type ColorStr = string;
 
+  export interface TargetStyleSheet {
+    insertRule(s: string): void;
+  }
+
   export interface ModifierDef {
     type_: "<whole>" | "<selector>";
     prefix_: string;
@@ -75,6 +79,7 @@ export namespace Tag {
 export interface Tag {
   (strs: TemplateStringsArray, ...exprs: (string | (() => string))[]): () => string;
   extend(opts: Tag.ExtendOptions): void;
+  insert(rule: string): void;
 }
 
 const trbl: [string, string | string[]][] = [
@@ -125,11 +130,16 @@ function replaceValue(val: string[], config: Tag.Config): void {
 const reModifierPlaceHolder = /(<(?:selector|whole)>)/;
 const modifierPlaceHolderWhole = "<whole>";
 
-export function createTag(): Tag {
-  // Note that `new CSSStyeSheet()` is't suported by Safari as of 16.4 (2023-03-27).
-  const el = document.createElement("style");
-  document.head.appendChild(el);
-  const sheet = el.sheet!;
+export function createTag(target?: Tag.TargetStyleSheet): Tag {
+  if (!target) {
+    const el = document.createElement("style");
+    document.head.appendChild(el);
+    target = el.sheet!;
+  }
+
+  function insertRule(s: string): void {
+    target!.insertRule(s);
+  }
 
   const config: Tag.Config = {
     prefix: "",
@@ -201,7 +211,7 @@ export function createTag(): Tag {
           style = `${decl.prefix_}${style}${decl.postfix_}`;
       }
 
-      sheet.insertRule(style);
+      insertRule(style);
       registered.add(className);
       return className;
     });
@@ -263,7 +273,7 @@ export function createTag(): Tag {
           const cssdecl = value ? makeCSSDeclarations(name, value) : (aliasTable[name.join("-")] ?? "");
           return `${timings}{${cssdecl}}`;
         }).join("");
-        sheet.insertRule(`@keyframes ${k} {${rules}}`);
+        insertRule(`@keyframes ${k} {${rules}}`);
       });
     }
   }
@@ -290,5 +300,6 @@ export function createTag(): Tag {
   }) as Tag;
 
   ret.extend = extend;
+  ret.insert = insertRule;
   return ret;
 }
