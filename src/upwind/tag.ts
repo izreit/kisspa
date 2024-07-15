@@ -54,7 +54,8 @@ export namespace Tag {
      */
     modifiers: { [key: string]: ModifierDef };
 
-    aliases: { [key: string]: string[] };
+    properties: { [key: string]: string[] };
+    aliases: { [key: string]: string };
     colors: { [colorName: string]: { [colorVal: string]: ColorStr } };
     colorRe: RegExp | null;
     num: (v: number) => string;
@@ -63,6 +64,7 @@ export namespace Tag {
   export interface ExtendOptions {
     prefix?: string;
     modifiers?: { [key: string]: string };
+    properties?: { [key: string]: string };
     aliases?: { [key: string]: string };
     colors?: { [colorName: string]: { [colorVal: string]: ColorStr } };
     num?: (v: number) => string;
@@ -85,49 +87,6 @@ const trbl: [string, string | string[]][] = [
   ["s", "-inline-start"],
   ["e", "-inline-end"],
 ];
-
-const reModifierPlaceHolder = /(<(?:selector|whole)>)/;
-const modifierPlaceHolderWhole = "<whole>";
-
-function extend(config: Tag.Config, opts: Tag.ExtendOptions): void {
-  const { prefix, modifiers, aliases, colors, num } = opts;
-
-  if (prefix != null)
-    config.prefix = prefix;
-
-  if (modifiers) {
-    objForEach(modifiers, (v, k) => {
-      const m  = v.match(reModifierPlaceHolder);
-      if (m) {
-        const [prefix_, postfix_] = v.split(m[0]);
-        const type_ = m[0] as "<whole>" | "<selector>";
-        config.modifiers[k] = { type_, prefix_, postfix_: postfix_ ?? "" };
-      }
-    });
-  }
-
-  if (aliases) {
-    objForEach(aliases, (v: string, k: string) => {
-      if (k.includes("<trbl>")) {
-        trbl.forEach(([abbrev, expanded]) => {
-          config.aliases[k.replace("<trbl>", abbrev)] = mapCoerce(expanded, e => v.replace("<trbl>", e));
-        });
-      } else {
-        config.aliases[k] = [v];
-      }
-    });
-  }
-
-  if (colors) {
-    copyProps(config.colors, colors);
-    const colorNames = objKeys(config.colors)
-      .map(name => name.replace(/[^a-zA-Z0-9]/g, "")); // sanitize for safety
-    config.colorRe = new RegExp(`^(${colorNames.join("|")})-(\\d{1,3})(?:/(\\d{1,2}))$`);
-  }
-
-  if (num)
-    config.num = num;
-}
 
 function escape(s: string): string {
   return s.replace(/[^a-zA-Z0-9_-]/g, c => "\\" + c);
@@ -162,6 +121,9 @@ function replaceValue(val: string[], config: Tag.Config): void {
   }
 }
 
+const reModifierPlaceHolder = /(<(?:selector|whole)>)/;
+const modifierPlaceHolderWhole = "<whole>";
+
 export function createTag(): Tag {
   // Note that `new CSSStyeSheet()` is't suported by Safari as of 16.4 (2023-03-27).
   const el = document.createElement("style");
@@ -171,6 +133,7 @@ export function createTag(): Tag {
   const config: Tag.Config = {
     prefix: "",
     modifiers: createEmptyObj(),
+    properties: createEmptyObj(),
     aliases: createEmptyObj(),
     colors: createEmptyObj(),
     colorRe: null,
@@ -180,7 +143,7 @@ export function createTag(): Tag {
   const cacheTable = new Map<string, string>();
   const registered = new Set<string>();
 
-  function parseAndRegister(s: string, checkFirst: boolean, checkLast: boolean): string {
+  function parseAndRegister(s: string, checkFirst?: boolean, checkLast?: boolean): string {
     const cache = cacheTable.get(s);
     if (cache) return cache;
 
@@ -193,13 +156,15 @@ export function createTag(): Tag {
     if (checkLast && !/\s$/.test(s))
       console.warn(`upwind: ${JSON.stringify(s)} should end with " " since treated as if there.`);
 
-    const { prefix, modifiers: modifierTable, aliases: aliasTable } = config;
+    const { prefix, modifiers: modifierTable, properties: propTable, aliases: aliasTable } = config;
     const klasses = parsed.val_.map(decl => {
       const { mods: modifiers, name, value, begin, end } = decl;
 
       // no value (classname without ':') is treated as-is.
-      if (value == null)
-        return name.join("-");
+      if (value == null) {
+        const n = name.join("-");
+        return aliasTable[n] ?? n;
+      }
 
       const declSrc = s.slice(begin, end);
       const modPrefix = modifiers.map(m => s.slice(m.begin, m.end)).join(".");
@@ -220,8 +185,8 @@ export function createTag(): Tag {
         }
       }
 
-      // expand alias
-      const propNames = product(...name.map(n => aliasTable[n] ?? n));
+      // expand property alias
+      const propNames = product(...name.map(n => propTable[n] ?? n));
 
       replaceValue(value, config);
       const valueStr = value.join(" ");
@@ -244,14 +209,58 @@ export function createTag(): Tag {
     return ret;
   }
 
+  function extend(opts: Tag.ExtendOptions): void {
+    const { prefix, modifiers, properties, aliases, colors, num } = opts;
+
+    if (prefix != null)
+      config.prefix = prefix;
+
+    if (modifiers) {
+      objForEach(modifiers, (v, k) => {
+        const m  = v.match(reModifierPlaceHolder);
+        if (m) {
+          const type_ = m[0] as "<whole>" | "<selector>";
+          const [prefix_, postfix_] = v.split(m[0]);
+          config.modifiers[k] = { type_, prefix_, postfix_: postfix_ ?? "" };
+        }
+      });
+    }
+
+    if (properties) {
+      objForEach(properties, (v, k) => {
+        if (k.includes("<trbl>")) {
+          trbl.forEach(([abbrev, expanded]) => {
+            config.properties[k.replace("<trbl>", abbrev)] = mapCoerce(expanded, e => v.replace("<trbl>", e));
+          });
+        } else {
+          config.properties[k] = [v];
+        }
+      });
+    }
+
+    if (aliases) {
+      objForEach(aliases, (v, k) => { config.aliases[k] = parseAndRegister(v); });
+    }
+
+    if (colors) {
+      copyProps(config.colors, colors);
+      const colorNames = objKeys(config.colors)
+        .map(name => name.replace(/[^a-zA-Z0-9]/g, "")); // sanitize for safety
+      config.colorRe = new RegExp(`^(${colorNames.join("|")})-(\\d{1,3})(?:/(\\d{1,2}))$`);
+    }
+
+    if (num)
+      config.num = num;
+  }
+
   const ret = ((strs: TemplateStringsArray, ...exprs: (string | (() => string))[]): () => string => {
-    if (strs.length === 0) return () => "";
+    // assert(strs.length > 0); // as long as this is used as a tag funtion for tagged template literals.
 
     const parsed: (string | (() => string))[] = [];
     for (let i = 0; i < strs.length - 1; ++i) {
       parsed.push(parseAndRegister(strs[i], i > 0, true));
       const e = exprs[i]!;
-      parsed.push((typeof e === "string") ? parseAndRegister(e, false, false) : e);
+      parsed.push((typeof e === "string") ? parseAndRegister(e) : e);
     }
     parsed.push(parseAndRegister(strs[strs.length - 1], strs.length > 1, false));
 
@@ -265,6 +274,6 @@ export function createTag(): Tag {
     };
   }) as Tag;
 
-  ret.extend = opts => extend(config, opts);
+  ret.extend = extend;
   return ret;
 }

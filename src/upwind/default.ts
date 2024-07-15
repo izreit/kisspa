@@ -51,7 +51,7 @@ export const defaultModifiers = {
   dark: mediaStr(`(prefers-color-scheme: dark)`)
 };
 
-export const defaultAlias = {
+export const defaultProperties = {
   "m<trbl>": "margin<trbl>",
   "p<trbl>": "padding<trbl>",
   "b<trbl>": "border<trbl>",
@@ -65,6 +65,6 @@ export const defaultAlias = {
 export const $ = createTag();
 $.extend({
   modifiers: defaultModifiers,
-  aliases: defaultAlias,
+  properties: defaultProperties,
   colors: defaultColors,
 });
