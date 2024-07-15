@@ -27,7 +27,7 @@ export namespace Tag {
      * ```
      * $.extend({
      *   modifiers: {
-     *     // my own modifier for printer
+     *     // modifier for style only applied for printers
      *     print: "@media printer { <whole> }",
      *   }
      * });
@@ -55,19 +55,20 @@ export namespace Tag {
     modifiers: { [key: string]: ModifierDef };
 
     properties: { [key: string]: string[] };
-    aliases: { [key: string]: string };
     colors: { [colorName: string]: { [colorVal: string]: ColorStr } };
     colorRe: RegExp | null;
     num: (v: number) => string;
+    aliases: { [key: string]: string };
   }
 
   export interface ExtendOptions {
     prefix?: string;
     modifiers?: { [key: string]: string };
     properties?: { [key: string]: string };
-    aliases?: { [key: string]: string };
     colors?: { [colorName: string]: { [colorVal: string]: ColorStr } };
     num?: (v: number) => string;
+    aliases?: { [key: string]: string };
+    keyframes?: { [name: string]: string };
   }
 }
 
@@ -140,6 +141,13 @@ export function createTag(): Tag {
     num: n => `${n / 4}rem`,
   };
 
+  function makeCSSDeclarations(name: string[], value: string[]): string {
+    const { properties: propTable } = config;
+    const propNames = product(...name.map(n => propTable[n] ?? n));
+    replaceValue(value, config);
+    return `${propNames.map(propName => `${propName.join("-")}: ${value.join(" ")}`).join(";")}`;
+  }
+
   const cacheTable = new Map<string, string>();
   const registered = new Set<string>();
 
@@ -156,7 +164,7 @@ export function createTag(): Tag {
     if (checkLast && !/\s$/.test(s))
       console.warn(`upwind: ${JSON.stringify(s)} should end with " " since treated as if there.`);
 
-    const { prefix, modifiers: modifierTable, properties: propTable, aliases: aliasTable } = config;
+    const { prefix, modifiers: modifierTable, aliases: aliasTable } = config;
     const klasses = parsed.val_.map(decl => {
       const { mods: modifiers, name, value, begin, end } = decl;
 
@@ -172,7 +180,7 @@ export function createTag(): Tag {
       if (registered.has(className))
         return className;
 
-      // wrap selector by modifiers (e.g. :active, :hover_peer~)
+      // wrap selector by selector modifiers (e.g. :active, :hover_peer~)
       let selector = "." + escape(className);
       for (let i = 0; i < modifiers.length; ++i) {
         const { modKey, target } = modifiers[i];
@@ -185,14 +193,8 @@ export function createTag(): Tag {
         }
       }
 
-      // expand property alias
-      const propNames = product(...name.map(n => propTable[n] ?? n));
-
-      replaceValue(value, config);
-      const valueStr = value.join(" ");
-
-      // wrap style by media modifiers (e.g. sm, md)
-      let style = `${selector} { ${propNames.map(propName => `${propName.join("-")}: ${valueStr}`).join(";")} }`;
+      // wrap style by whole modifiers (e.g. sm, md)
+      let style = `${selector}{${makeCSSDeclarations(name, value)}}`;
       for (let i = 0; i < modifiers.length; ++i) {
         const decl = modifierTable[modifiers[i].modKey];
         if (decl?.type_ === modifierPlaceHolderWhole)
@@ -210,7 +212,7 @@ export function createTag(): Tag {
   }
 
   function extend(opts: Tag.ExtendOptions): void {
-    const { prefix, modifiers, properties, aliases, colors, num } = opts;
+    const { prefix, modifiers, properties, aliases, colors, keyframes, num } = opts;
 
     if (prefix != null)
       config.prefix = prefix;
@@ -238,10 +240,6 @@ export function createTag(): Tag {
       });
     }
 
-    if (aliases) {
-      objForEach(aliases, (v, k) => { config.aliases[k] = parseAndRegister(v); });
-    }
-
     if (colors) {
       copyProps(config.colors, colors);
       const colorNames = objKeys(config.colors)
@@ -251,6 +249,23 @@ export function createTag(): Tag {
 
     if (num)
       config.num = num;
+
+    // Aliases and keyframes must be the last step since they may use other settings.
+    if (aliases)
+      objForEach(aliases, (v, k) => { config.aliases[k] = parseAndRegister(v); });
+
+    if (keyframes) {
+      const { aliases: aliasTable } = config;
+      objForEach(keyframes, (v, k) => {
+        const rules = parse(v).val_.map(decl => {
+          const { mods, name, value } = decl;
+          const timings = mods.map(m => m.modKey).join(","); // modifiers for keyframes are expected as the timing (e.g. from, to, 30%)
+          const cssdecl = value ? makeCSSDeclarations(name, value) : (aliasTable[name.join("-")] ?? "");
+          return `${timings}{${cssdecl}}`;
+        }).join("");
+        sheet.insertRule(`@keyframes ${k} {${rules}}`);
+      });
+    }
   }
 
   const ret = ((strs: TemplateStringsArray, ...exprs: (string | (() => string))[]): () => string => {
