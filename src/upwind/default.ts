@@ -39,7 +39,7 @@ export const defaultColors = (() => {
   return ret;
 })();
 
-const mediaStr = (s: string) => `@media ${s} { $whole }`;
+const mediaStr = (s: string) => `@media ${s} { <whole> }`;
 const minWidthStr = (n: number) => mediaStr(`(min-width: ${n}px)`);
 
 export const defaultModifiers = {
