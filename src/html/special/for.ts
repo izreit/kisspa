@@ -12,13 +12,13 @@ export namespace For {
   export interface Props<E> {
     each: () => E[];
     key?: (el: E, ix: number) => any;
-    noCache?: boolean;
+    noSkeleton?: boolean;
     children: ForCallback<E> | ForCallback<E>[];
   }
 }
 
 export const For = createSpecial(function For<E>(props: For.Props<E>): Backing {
-  const { each, key, noCache, children } = props;
+  const { each, key, noSkeleton, children } = props;
   const fun = arrayify(children)[0];
 
   let backings: Backing[] = [];
@@ -36,7 +36,7 @@ export const For = createSpecial(function For<E>(props: For.Props<E>): Backing {
       } else {
         const ixSignal = signal(i);
         const jnode = fun(e as E, ixSignal[0]);
-        b = assemble(allocateSkeletons(jnode, noCache ? null : fun)); // explicitly allocateSkeletons to make skeleton cache available
+        b = assemble(allocateSkeletons(jnode, noSkeleton ? null : fun)); // explicitly allocateSkeletons to make skeleton cache available
         ixTable.set(b, ixSignal);
       }
       nextTable.set(k, b);
