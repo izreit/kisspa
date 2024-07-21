@@ -1,9 +1,9 @@
 import { autorun, signal, watchProbe } from "../../reactive";
-import { Backing, BackingLocation, assemble, assignLocation, createLocation, createSpecial, tailOf } from "../core/backing";
+import { assemble, assignLocation, Backing, BackingLocation, createLocation, createSpecial, tailOf } from "../core/backing";
 import { h } from "../core/h";
 import { allocateSkeletons } from "../core/skeleton";
 import { disposeBackings, insertBackings, tailOfBackings } from "../core/specialHelper";
-import { JSXElement, JSXNode, PropChildren } from "../core/types";
+import { isJSXElement, JSXNode, PropChildren } from "../core/types";
 import { arrayify, mapCoerce } from "../core/util";
 import { createContextFun } from "./context";
 import { Show } from "./show";
@@ -70,21 +70,21 @@ export namespace Match {
     when: () => boolean;
     children?: PropChildren;
   }
-  export interface GuardProps<T extends Exclude<any, number | string | boolean>> {
+  export interface GuardProps<T extends object> {
     guard: () => T | false;
-    children?: (v: T) => JSXElement;
+    children?: (v: T) => PropChildren;
     noSkeleton?: boolean;
   }
-  export type Props<T> = WhenProps | GuardProps<T>;
+  export type Props<T extends object> = WhenProps | GuardProps<T>;
 }
 
-export const Match = createSpecial(<T>(props: Match.Props<T>): Backing => {
+export const Match = createSpecial(<T extends object>(props: Match.Props<T>): Backing => {
   let childrenBackings: Backing[] | null = null;
   let showing = false;
   let loc = createLocation();
 
   const ctx = useSwitchContext();
-  const when = "when" in props ? props.when : () => props.guard() !== false;
+  const when = "when" in props ? props.when : () => !!props.guard();
   const index = ctx.register_(when);
   const cond = () => ctx.active_() === index;
 
@@ -93,7 +93,7 @@ export const Match = createSpecial(<T>(props: Match.Props<T>): Backing => {
       if (!childrenBackings && props.children) {
         let cs = "when" in props ?
           props.children :
-          allocateSkeletons( // explicitly allocateSkeletons to make skeleton cache available
+          allocateSkeletonsIfNeeded( // explicitly allocateSkeletons to make skeleton cache available
             props.children(props.guard() as T), // `as T` is valid since guard() is true here
             props.noSkeleton ? null : props.children
           );
@@ -124,3 +124,9 @@ export const Match = createSpecial(<T>(props: Match.Props<T>): Backing => {
     name: "Match",
   };
 });
+
+function allocateSkeletonsIfNeeded(target: PropChildren, key: object | null): PropChildren {
+  if (isJSXElement(target))
+    allocateSkeletons(target, key);
+  return target;
+}
