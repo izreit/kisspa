@@ -8,7 +8,7 @@ export namespace Show {
   export interface Props {
     when: () => boolean;
     fallback?: JSXNode;
-    children: PropChildren;
+    children?: PropChildren;
   }
 }
 
