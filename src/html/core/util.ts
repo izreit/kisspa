@@ -1,6 +1,6 @@
 export const isArray = Array.isArray;
 
-export function arrayify<T>(v: NonNullable<T> | T[] | null | undefined): T[] {
+export function arrayify<T>(v: T | T[] | null | undefined): T[] {
   return isArray(v) ? v : (v != null ? [v] : []);
 }
 
@@ -12,3 +12,9 @@ export function lastOf<T>(vs: T[]): T | null {
 export function mapCoerce<T, U>(xs: T | T[] | null | undefined, f: (x: T) => U): U[] {
   return (isArray(xs)) ? xs.map(f) : (xs != null ? [f(xs)] : []);
 }
+
+export function isPromise(v: any): v is Promise<any> {
+  return typeof v?.then === "function";
+}
+
+export const objEntries = <T>(o: { [key: string]: T }): [string, T][] => Object.entries(o);

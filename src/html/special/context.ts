@@ -8,15 +8,15 @@ export interface ContextProviderProps<T> {
   children?: PropChildren;
 }
 
-export type ContextPair<T> = {
-  Provider: Component<ContextProviderProps<T>, ContextProviderProps<T>["children"]>;
+export type ContextFunPair<T> = {
+  ProviderFun: (props: ContextProviderProps<T>) => Backing;
   useContext: () => T;
 };
 
-export function createContext<T>(initial: T): ContextPair<T> {
+export function createContextFun<T>(initial: T): ContextFunPair<T> {
   const stack: T[] = [initial];
 
-  const Provider = createSpecial<ContextProviderProps<T>>(function Provider(props: ContextProviderProps<T>): Backing {
+  function ProviderImpl(props: ContextProviderProps<T>): Backing {
     let bs: Backing[];
     try {
       stack.push(props.value);
@@ -35,11 +35,21 @@ export function createContext<T>(initial: T): ContextPair<T> {
       dispose: () => disposeBackings(bs),
       name: "Ctx"
     };
-  });
+  }
 
   function useContext(): T {
     return stack[stack.length - 1]!;
   }
 
-  return { Provider, useContext };
+  return { ProviderFun: ProviderImpl, useContext };
+}
+
+export type ContextPair<T> = {
+  Provider: Component<ContextProviderProps<T>, ContextProviderProps<T>["children"]>;
+  useContext: () => T;
+};
+
+export function createContext<T>(initial: T): ContextPair<T> {
+  const { ProviderFun: ProviderImpl, useContext } = createContextFun(initial);
+  return { Provider: createSpecial(ProviderImpl), useContext };
 }

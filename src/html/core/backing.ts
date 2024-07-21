@@ -1,7 +1,7 @@
 import { autorun } from "../../reactive";
 import { allocateSkeletons } from "./skeleton";
 import { $noel, Component, JSXNode, Ref, isJSXElement } from "./types";
-import { arrayify, lastOf } from "./util";
+import { arrayify, isPromise, lastOf } from "./util";
 
 export interface Backing {
   insert(loc: BackingLocation | null | undefined): void;
@@ -67,10 +67,6 @@ function createNodeBackingIfNeeded(node: Node, disposers: (() => void)[], static
     disposers.forEach(d => d());
   };
   return { insert, dispose, tail, name: node };
-}
-
-function isPromise(v: any): v is Promise<any> {
-  return typeof v?.then === "function";
 }
 
 const delayings: Promise<void>[][] = [];
@@ -148,7 +144,7 @@ function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?: Node 
     return createNodeBackingIfNeeded(el!, disposers, staticParent);
   }
 
-  const { name, attrs, children } = jnode;
+  const { name, attrs, children, rawChildren } = jnode;
   if (typeof name === "string") {
     let refVal: (Ref<HTMLElement> | ((v: HTMLElement) => void))[] | null = null;
     const disposers: (() => void)[] = [];
@@ -197,12 +193,13 @@ function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?: Node 
 
   } else if (specials.has(name)) {
     const special = specials.get(name)!;
-    const b = special({ ...attrs, children });
+    const b = special({ ...attrs, children: rawChildren });
     b.insert(loc);
     return b;
 
   } else {
-    const expanded = name({ ...attrs, children });
+    const expanded = name({ ...attrs, children: rawChildren });
+    // TODO check isPromise(expanded) to force delayAssemble() to cache the skeletons
     return assembleImpl(allocateSkeletons(expanded, name), loc);
   }
 }
