@@ -109,9 +109,11 @@ function assignSkeletons(skels: Skeleton[], jnode: JSXNode): void {
 const skelTable: WeakMap<object, Skeleton[]> = new WeakMap();
 
 export function allocateSkeletons(jnode: JSXNode, key?: object | null): JSXNode {
-  const skels = key
-    ? (skelTable.get(key) ?? skelTable.set(key, collectSkeletons(jnode)).get(key)!)
-    : collectSkeletons(jnode);
-  assignSkeletons(skels, jnode);
+  if (isJSXElement(jnode)) {
+    const skels = key
+      ? (skelTable.get(key) ?? skelTable.set(key, collectSkeletons(jnode)).get(key)!)
+      : collectSkeletons(jnode);
+    assignSkeletons(skels, jnode);
+  }
   return jnode;
 }
