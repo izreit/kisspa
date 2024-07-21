@@ -24,7 +24,7 @@ export function jsx<P extends { children?: any; }>(
 
 export const jsxs = jsx;
 
-function makeJSXElement(name: string | Component<any, any>, attrs: Attributes, children: JSXNode[]): JSXElement {
+export function makeJSXElement(name: string | Component<any, any>, attrs: Attributes, children: any[]): JSXElement {
   const rawChildren = children.length === 1 ? children[0] : children; // unwrap if singular, forced to be array by ...args
   return { [$h]: 1, el: null, name, attrs, children: children.flat(), rawChildren };
 }
