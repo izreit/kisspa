@@ -12,11 +12,29 @@ export const $h = Symbol("h");
 export const $noel = Symbol("noel");
 
 export interface JSXElement {
+  /**
+   * (internal) Marker to distinguish JSXElement from any other objects.
+   */
   [$h]: 1;
+
+  /**
+   * (internal) Assigned skeleton node.
+   * null for not assigned yet, $noel for no need to assign (i.e. a component).
+   */
   el: Node | typeof $noel | null;
+
   name: string | Component<any, any>;
   attrs: Attributes;
+
+  /**
+   * Normalized (flattened) children.
+   */
   children: JSXNode[];
+
+  /**
+   * Raw children as it given. Used to pass to the component as props.
+   */
+  rawChildren: any;
 }
 
 export type JSXNodeSync =

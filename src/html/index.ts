@@ -14,4 +14,5 @@ export { Head } from "./special/head";
 export { Portal } from "./special/portal";
 export { Show } from "./special/show";
 export { Suspense } from "./special/suspense";
+export { Match, Switch } from "./special/switch";
 export type { JSXInternal as JSX };
