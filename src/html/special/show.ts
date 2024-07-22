@@ -12,7 +12,7 @@ export namespace Show {
   }
 }
 
-export const Show = createSpecial(function Show(props: Show.Props): Backing {
+export function ShowImpl(props: Show.Props): Backing {
   const { when, fallback, children } = props;
   let thenBackings: Backing[] | null = null;
   let fallbackBacking: Backing | null = null;
@@ -57,4 +57,6 @@ export const Show = createSpecial(function Show(props: Show.Props): Backing {
     fallbackBacking?.dispose();
   };
   return { insert, tail, dispose, name: "Show" };
-});
+}
+
+export const Show = createSpecial(ShowImpl);
