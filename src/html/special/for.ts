@@ -1,10 +1,9 @@
 import { autorun, signal } from "../../reactive";
 import { Backing, assemble, assignLocation, createLocation, createSpecial } from "../core/backing";
 import { disposeBackings, insertBackings, tailOfBackings } from "../core/specialHelper";
-import { lcs } from "./internal/lcs";
-import { allocateSkeletons } from "../core/skeleton";
 import { JSXNode } from "../core/types";
 import { arrayify } from "../core/util";
+import { lcs } from "./internal/lcs";
 
 export namespace For {
   export type ForCallback<E> = (el: E, i: () => number) => JSXNode;
@@ -12,13 +11,12 @@ export namespace For {
   export interface Props<E> {
     each: () => E[];
     key?: (el: E, ix: number) => any;
-    noSkeleton?: boolean;
     children: ForCallback<E> | ForCallback<E>[];
   }
 }
 
 export const For = createSpecial(function For<E>(props: For.Props<E>): Backing {
-  const { each, key, noSkeleton, children } = props;
+  const { each, key, children } = props;
   const fun = arrayify(children)[0];
 
   let backings: Backing[] = [];
@@ -36,7 +34,7 @@ export const For = createSpecial(function For<E>(props: For.Props<E>): Backing {
       } else {
         const ixSignal = signal(i);
         const jnode = fun(e as E, ixSignal[0]);
-        b = assemble(allocateSkeletons(jnode, noSkeleton ? null : fun)); // explicitly allocateSkeletons to make skeleton cache available
+        b = assemble(jnode);
         ixTable.set(b, ixSignal);
       }
       nextTable.set(k, b);

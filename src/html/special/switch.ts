@@ -1,9 +1,8 @@
 import { autorun, signal, watchProbe } from "../../reactive";
 import { assemble, assignLocation, Backing, BackingLocation, createLocation, createSpecial, tailOf } from "../core/backing";
 import { h } from "../core/h";
-import { allocateSkeletons } from "../core/skeleton";
 import { disposeBackings, insertBackings, tailOfBackings } from "../core/specialHelper";
-import { isJSXElement, JSXNode, PropChildren } from "../core/types";
+import { JSXNode, PropChildren } from "../core/types";
 import { arrayify, mapCoerce } from "../core/util";
 import { createContextFun } from "./context";
 import { Show } from "./show";
@@ -73,7 +72,6 @@ export namespace Match {
   export interface GuardProps<T extends object> {
     guard: () => T | false;
     children?: (v: T) => PropChildren;
-    noSkeleton?: boolean;
   }
   export type Props<T extends object> = WhenProps | GuardProps<T>;
 }
@@ -91,12 +89,7 @@ export const Match = createSpecial(<T extends object>(props: Match.Props<T>): Ba
   function update(): void {
     if (showing) {
       if (!childrenBackings && props.children) {
-        let cs = "when" in props ?
-          props.children :
-          allocateSkeletonsIfNeeded( // explicitly allocateSkeletons to make skeleton cache available
-            props.children(props.guard() as T), // `as T` is valid since guard() is true here
-            props.noSkeleton ? null : props.children
-          );
+        const cs = "when" in props ? props.children : props.children(props.guard() as T); // `as T` is valid since guard() is true here
         childrenBackings = mapCoerce(cs, c => assemble(c));
       }
       insertBackings(childrenBackings, loc);
@@ -124,9 +117,3 @@ export const Match = createSpecial(<T extends object>(props: Match.Props<T>): Ba
     name: "Match",
   };
 });
-
-function allocateSkeletonsIfNeeded(target: PropChildren, key: object | null): PropChildren {
-  if (isJSXElement(target))
-    allocateSkeletons(target, key);
-  return target;
-}

@@ -8,7 +8,7 @@ export interface Skeleton {
 
 /**
  * Collect the skeletons for the given JSXNode.
- * IMPORTANT This must be coresspondent with how assemble() consumes skeletons.
+ * IMPORTANT This must be coresspondent with codeOf() and how assemble() consumes skeletons
  */
 function collectSkeletonsImpl(acc: Skeleton[], target: JSXNode | { [key: string]: any }, path: (number | string)[], parent: Node | null = null): void {
   if (typeof target === "string" && parent) {
@@ -61,44 +61,47 @@ function assignSkeletons(skels: Skeleton[], jnode: JSXNode): void {
   }
 }
 
-// For development build. NOT YET used.
-//
-// function matchAttrs(lhs: Attributes, rhs: Attributes): boolean {
-//   const lt = typeof lhs;
-//   if (lt !== typeof rhs) return false;
-//   if (lhs === rhs || lt === "function") return true;
-//   if (lt !== "object" || !lhs) return false;
-//   const le = objEntries(lhs), re = objEntries(rhs);
-//   return (le.length === re.length && le.every((e, i) => matchAttrs(e, re[i])));
-// }
-//
-// function matchElement(lhs: JSXElement, rhs: JSXElement): boolean {
-//   const lc = lhs.children, rc = rhs.children;
-//   return (
-//     lhs.name === rhs.name &&
-//     matchAttrs(lhs.attrs, rhs.attrs) &&
-//     lc.length === rc.length &&
-//     lc.every((c, i) => matchNode(c, rc[i]))
-//   );
-// }
-//
-// function matchNode(lhs: JSXNode, rhs: JSXNode): boolean {
-//   return (typeof lhs === typeof rhs) && (
-//     isJSXElement(lhs) && isJSXElement(rhs) && matchElement(lhs, rhs) ||
-//     isStrOrNum(lhs) ||
-//     typeof lhs === "function" ||
-//     isPromise(lhs) && isPromise(rhs) ||
-//     (lhs == null && rhs == null)
-//   );
-// }
+function codeOfEntries(entries: [string, JSXNode | { [key: string]: any }][], prefix: string = "", postfix: string = ""): string {
+   const ret = entries.map(([k, v]) => codeOf(v, k + ":")).join(",");
+   return ret && prefix + ret + postfix;
+}
 
-const skelTable: WeakMap<object, Skeleton[]> = new WeakMap();
+function codeOfChildren(children: JSXNode[], prefix: string = "", postfix: string = "", hasParent?: boolean): string {
+  const ret = children.map(c => codeOf(c, "", hasParent)).join(",");
+  return ret && prefix + ret + postfix;
+}
+
+// IMPORTANT This must be coresspondent with how collectSkeletons() creates Node hierarchy.
+function codeOf(target: JSXNode | { [key: string]: any }, prefix: string = "", hasParent?: boolean): string {
+  if (typeof target === "string" && hasParent)
+    return prefix + "T"; // "T" has no meaning. just to indicate a text node.
+
+  if (!isJSXElement(target)) {
+    return (typeof target === "object" && target) ?
+      codeOfEntries(objEntries(target), prefix + "{", "}") :
+      "";
+  }
+
+  if (target.el)
+    return "";
+
+  const { name, attrs, children } = target;
+  if (typeof name !== "string") {
+    const a = codeOfEntries(objEntries(attrs)), c = codeOfChildren(children, "|");
+    // "." has no meaning. just to correspond to $noel in collectSkeletonsImpl().
+    const ret = `${hasParent ? "" : "."}${(a || c) ? `(${a}${c})` : ""}`;
+    return ret && prefix + ret;
+  }
+
+  return `${prefix}${name}${codeOfChildren(children, "(", ")", true)}`;
+}
+
+const skelTable: Map<object | string, Skeleton[]> = new Map();
 
 export function allocateSkeletons(jnode: JSXNode, key?: object | null): JSXNode {
   if (isJSXElement(jnode)) {
-    const skels = key
-      ? (skelTable.get(key) ?? skelTable.set(key, collectSkeletons(jnode)).get(key)!)
-      : collectSkeletons(jnode);
+    const code = key ?? codeOf(jnode);
+    const skels = skelTable.get(code) ?? skelTable.set(code, collectSkeletons(jnode)).get(code)!;
     assignSkeletons(skels, jnode);
   }
   return jnode;
