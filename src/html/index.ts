@@ -11,6 +11,7 @@ export { createContext } from "./special/context";
 export type { ContextPair, ContextProviderProps } from "./special/context";
 export { Dynamic } from "./special/dynamic";
 export { For } from "./special/for";
+export { Fragment } from "./special/fragment";
 export { Head } from "./special/head";
 export { Portal } from "./special/portal";
 export { Show } from "./special/show";
