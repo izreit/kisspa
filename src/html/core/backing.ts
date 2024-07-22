@@ -1,7 +1,7 @@
 import { autorun } from "../../reactive";
 import { allocateSkeletons } from "./skeleton";
 import { $noel, Component, JSXNode, Ref, isJSXElement } from "./types";
-import { arrayify, isPromise, lastOf } from "./util";
+import { arrayify, isPromise, lastOf, objEntries } from "./util";
 
 export interface Backing {
   insert(loc: BackingLocation | null | undefined): void;
@@ -31,6 +31,10 @@ export function assignLocation(self: BackingLocation, loc: BackingLocation | nul
 
 function isNode(v: any): v is Node {
   return "nodeName" in v;
+}
+
+function isStrOrNum(v: any): v is number | string {
+  return typeof v === "string" || typeof v === "number";
 }
 
 export function tailOf(p: Backing | Node | null | undefined): Node | null | undefined {
@@ -149,21 +153,24 @@ function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?: Node 
     let refVal: (Ref<HTMLElement> | ((v: HTMLElement) => void))[] | null = null;
     const disposers: (() => void)[] = [];
 
-    for (let [k, v] of Object.entries(attrs)) {
+    for (const [k, v] of objEntries(attrs)) {
       if (k === "ref" && v) {
         refVal = arrayify(v);
         continue;
       }
-
-      if (typeof v === "function") {
+      if (isStrOrNum(v)) {
+        (el as any)[k] = v;
+      } else if (typeof v === "function") {
         if (k[0] === "o" && k[1] === "n") {
           (el as any)[k.toLowerCase()] = v;
         } else {
           disposers.push(autorun(() => { assignAttribute(el as HTMLElement, k, v()); }));
         }
       } else if (typeof v === "object" && v) {
-        for (const [vk, vv] of Object.entries(v)) {
-          if (typeof vv === "function") {
+        for (const [vk, vv] of objEntries(v)) {
+          if (isStrOrNum(vv)) {
+            (el as any)[k][vk] = vv;
+          } else if (typeof vv === "function") {
             disposers.push(autorun(() => { (el as any)[k][vk] = vv(); }));
           }
         }

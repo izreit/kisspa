@@ -1,10 +1,6 @@
 import { $noel, JSXElement, JSXNode, isJSXElement } from "./types";
 import { objEntries } from "./util";
 
-function isStrOrNum(v: any): v is number | string {
-  return typeof v === "string" || typeof v === "number";
-}
-
 export interface Skeleton {
   el: Node | typeof $noel;
   path: (number | string)[];
@@ -43,16 +39,6 @@ function collectSkeletonsImpl(acc: Skeleton[], target: JSXNode | { [key: string]
 
   const e = document.createElement(name);
   parent?.appendChild(e) ?? acc.push({ el: e, path });
-  for (const [k, v] of objEntries(attrs)) {
-    if (isStrOrNum(v)) {
-      (e as any)[k] = v;
-    } else if (typeof v === "object" && v) {
-      for (const [vk, vv] of Object.entries(v)) {
-        if (isStrOrNum(vv))
-          (e as any)[k][vk] = vv;
-      }
-    }
-  }
   for (let i = 0; i < children.length; ++i)
     collectSkeletonsImpl(acc, children[i], path.concat(i), e);
 }
