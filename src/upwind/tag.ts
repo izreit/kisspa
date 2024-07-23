@@ -122,7 +122,7 @@ function replaceValue(val: string[], config: Tag.Config): void {
     if (!colorRe) continue;
     const m = v.match(colorRe);
     if (!m) continue;
-    const alpha = Math.ceil(255 * parseInt(m[3]) / 100).toString(16);
+    const alpha = m[3] ? Math.ceil(255 * parseInt(m[3]) / 100).toString(16) : "";
     val[i] = `${color[m[1]][m[2]]}${alpha}`;
   }
 }
@@ -254,7 +254,7 @@ export function createTag(target?: Tag.TargetStyleSheet): Tag {
       copyProps(config.colors, colors);
       const colorNames = objKeys(config.colors)
         .map(name => name.replace(/[^a-zA-Z0-9]/g, "")); // sanitize for safety
-      config.colorRe = new RegExp(`^(${colorNames.join("|")})-(\\d{1,3})(?:/(\\d{1,2}))$`);
+      config.colorRe = new RegExp(`^(${colorNames.join("|")})-(\\d{1,3})(?:/(\\d{1,2}))?$`);
     }
 
     if (num)
