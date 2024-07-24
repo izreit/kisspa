@@ -1,7 +1,9 @@
+import { dceNeverReach } from "./assert";
 import type { Key } from "./core";
 
 export namespace cloneutil {
   export function cloneDeep<T>(val: T): T {
+    if (__DCE_DISABLE_WATCH__) return dceNeverReach();
     return (
       (Array.isArray(val)) ?
         val.map(v => cloneDeep(v)) as any as T :
@@ -12,6 +14,7 @@ export namespace cloneutil {
   }
 
   export function assign(target: any, path: readonly Key[], val: any, del?: boolean): void {
+    if (__DCE_DISABLE_WATCH__) return dceNeverReach();
     for (let i = 0; i < path.length - 1; ++i)
       target = target[path[i]];
     if (!del) {
@@ -22,6 +25,7 @@ export namespace cloneutil {
   }
 
   export function apply(target: any, path: readonly Key[], fun: Function, args: any[]): void {
+    if (__DCE_DISABLE_WATCH__) return dceNeverReach();
     for (let i = 0; i < path.length; ++i)
       target = target[path[i]];
     fun.apply(target, args);

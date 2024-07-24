@@ -1,4 +1,4 @@
-import { assert } from "./assert";
+import { assert, dceNeverReach } from "./assert";
 import { decimated } from "./decimated";
 import { Trie } from "./internal/trie";
 import { Mapset } from "./internal/mapset";
@@ -340,6 +340,7 @@ function watchImpl<T extends object>(target: T, opts: PropWatcherEntry): PropWat
 export type WatchDeepOptions = Omit<PropWatcherEntry, "deep">;
 
 export function watchDeep<T extends object>(target: T, opts: WatchDeepOptions | ((path: readonly Key[], val: any, deleted: boolean) => void)): PropWatcherId {
+  if (__DCE_DISABLE_WATCH__) return dceNeverReach();
   return watchImpl(target, (typeof opts === "function") ? { onAssign: opts, deep: true } : { ...opts, deep: true });
 }
 
@@ -349,6 +350,7 @@ export type WatchShallowOptions = Omit<PropWatcherEntry, "deep" | "onAssign" | "
 }
 
 export function watchShallow<T extends object>(target: T, opts: WatchShallowOptions | ((path: Key, val: any, deleted: boolean) => void)): PropWatcherId {
+  if (__DCE_DISABLE_WATCH__) return dceNeverReach();
   opts = (typeof opts === "function") ? { onAssign: opts } as WatchShallowOptions : opts;
   const { onAssign: onAssignShallow, onApply: onApplyShallow } = opts;
   const onAssign = (path: readonly Key[], val: any, deleted: boolean) => onAssignShallow(path[0], val, deleted);
@@ -357,10 +359,12 @@ export function watchShallow<T extends object>(target: T, opts: WatchShallowOpti
 }
 
 export function unwatch(watcherId: PropWatcherId): void {
+  if (__DCE_DISABLE_WATCH__) return;
   propWatcherTable.delete(watcherId);
 }
 
 function hasPropWatcher(target: Wrapped): boolean {
+  if (__DCE_DISABLE_WATCH__) return false;
   return parentRefTable.has(target);
 }
 
@@ -392,11 +396,13 @@ function getPathTrie(wid: PropWatcherId, target: Wrapped): Trie<Key> | null{
 const flushingWatchers: Set<PropWatcherId> = new Set();
 
 function finishNotifyPropChange(): void {
+  if (__DCE_DISABLE_WATCH__) return;
   flushingWatchers.forEach(wid => { propWatcherTable.get(wid)?.onEndFlush?.(); });
   flushingWatchers.clear();
 }
 
 function notifyPropChange(target: Wrapped, prop: Key, val: any, prev: any): void {
+  if (__DCE_DISABLE_WATCH__) return;
   const tableFromChild = parentRefTable.get(target);
   if (!tableFromChild) return;
 

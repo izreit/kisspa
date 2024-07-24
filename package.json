@@ -8,11 +8,9 @@
   "main": "lib/index.js",
   "scripts": {
     "prepare": "npm run build",
-    "build": "npm run _build:ts && npm run _build:dist",
+    "build": "node ./scripts/build.mjs",
     "test": "vitest",
-    "cov": "vitest run --coverage",
-    "_build:ts": "tsc -p ./tsconfig.build.json",
-    "_build:dist": "vite build -- --clean -t reactive && vite build -- -t html && vite build -- -t whole && tsc -p ./tsconfig.decl.json"
+    "cov": "vitest run --coverage"
   },
   "files": [
     "dist/",
@@ -30,10 +28,12 @@
     "vitest": "^1.6.0"
   },
   "exports": {
-    ".": "./dist/upwind/bundle.js",
-    "./html": "./dist/html/bundle.js",
-    "./reactive": "./dist/reactive/index.js",
-    "./jsx-runtime": "./lib/html/index.js",
-    "./raw/*": "./lib/*.js"
+    ".": "./dist/normal/upwind/bundle.js",
+    "./html": "./dist/normal/html/bundle.js",
+    "./reactive": "./dist/normal/reactive/index.js",
+    "./full": "./dist/full/upwind/bundle.js",
+    "./html/full": "./dist/full/html/bundle.js",
+    "./reactive/full": "./dist/full/reactive/index.js",
+    "./jsx-runtime": "./dist/normal/html/index.js"
   }
 }

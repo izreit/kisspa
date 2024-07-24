@@ -10,6 +10,7 @@
     // "reactNamespace": "",                             /* Specify the object invoked for 'createElement'. This only applies when targeting 'react' JSX emit. */
   },
   "files": [
+    "./vite-env.d.ts",
     "./src/index.ts"
   ],
   "include": [

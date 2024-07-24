@@ -8,3 +8,7 @@ export function assert<U>(val: boolean, msgOrFun: string | ((arg: U) => string),
 export function unreachable(_: never): never {
   throw new Error("unreachable");
 }
+
+export function dceNeverReach(): never {
+  assert(false, "only available in the full build");
+}
