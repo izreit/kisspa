@@ -5,11 +5,13 @@
     "moduleResolution": "Bundler",
   },
   "files": [
+    "./vite-env.d.ts",
     "./src/index.ts",
     "./src/upwind/bundle.ts",
     "./src/html/bundle.ts"
   ],
   "exclude": [
-    "./src/**/*.test.ts"
+    "./src/**/*.test.ts",
+    "./src/**/*.test.tsx"
   ]
 }

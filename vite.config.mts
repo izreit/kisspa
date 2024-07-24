@@ -14,7 +14,7 @@ const opts = parseArgs({
   args,
   allowPositionals: false,
   options: {
-    clean: { type: "boolean" },
+    clean: { type: "boolean", short: "c" },
     target: { type: "string", short: "t" },
   },
 }).values;
@@ -25,12 +25,18 @@ const target = opts.target ?? "whole";
 // to make them independent each other. In other words, vite produces
 // chunk script file for the integrated big entry.
 const entryTable = {
-  whole: { "upwind/bundle": resolve(__dirname, "src", "upwind", "bundle.ts") },
-  reactive: { "reactive/index": resolve(__dirname, "src", "reactive", "index.ts") },
-  html: { "html/bundle": resolve(__dirname, "src", "html", "bundle.ts") },
+  reactive: { "normal/reactive/index": resolve(__dirname, "src", "reactive", "index.ts") },
+  html: { "normal/html/bundle": resolve(__dirname, "src", "html", "bundle.ts") },
+  whole: { "normal/upwind/bundle": resolve(__dirname, "src", "upwind", "bundle.ts") },
+  "reactive-full": { "full/reactive/index": resolve(__dirname, "src", "reactive", "index.ts") },
+  "html-full": { "full/html/bundle": resolve(__dirname, "src", "html", "bundle.ts") },
+  "whole-full": { "full/upwind/bundle": resolve(__dirname, "src", "upwind", "bundle.ts") },
 };
 
 export default defineConfig({
+  define: {
+    __DCE_DISABLE_WATCH__: !target.includes("full"),
+  },
   build: {
     emptyOutDir: clean,
     outDir: "dist",
