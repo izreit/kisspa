@@ -10,7 +10,7 @@ export function createRoot(parent: Element): BackingRoot {
   let b: Backing | null = null;
   const attach = (jnode: JSXNode) => {
     b?.dispose();
-    b = assemble(jnode);
+    b = assemble({ suspenseContext_: null }, jnode);
     b.insert({ parent, prev: null });
   };
   const detach = () => {

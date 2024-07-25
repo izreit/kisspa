@@ -1,5 +1,5 @@
 import { autorun, signal, watchProbe } from "../../reactive";
-import { assemble, assignLocation, Backing, BackingLocation, createLocation, createSpecial, tailOf } from "../core/backing";
+import { assemble, AssembleContext, assignLocation, Backing, BackingLocation, createLocation, createSpecial, tailOf } from "../core/backing";
 import { h } from "../core/h";
 import { disposeBackings, insertBackings, tailOfBackings } from "../core/specialHelper";
 import { JSXNode, PropChildren } from "../core/types";
@@ -41,25 +41,28 @@ export namespace Switch {
   }
 }
 
-export const Switch = createSpecial((props: Switch.Props): Backing => {
+export const Switch = createSpecial((actx: AssembleContext, props: Switch.Props): Backing => {
   const { fallback, children: rawChildren } = props;
   const children = arrayify(rawChildren);
-  const ctx = createSwitchContextValue();
+  const switchCtx = createSwitchContextValue();
 
   // Equivalent to <SwitchContextProvider value={ctx}> {children} <Show when={...}>{fallback}</Show> </SwitchContextProvider>
-  const b = switchContextProviderFun({
-    value: ctx,
-    children: (fallback && rawChildren) ? [
-      ...children,
-      h(Show, { when: () => ctx.active_() === -1 }, fallback),
-    ] : children
-  });
+  const b = switchContextProviderFun(
+    actx,
+    {
+      value: switchCtx,
+      children: (fallback && rawChildren) ? [
+        ...children,
+        h(Show, { when: () => switchCtx.active_() === -1 }, fallback),
+      ] : children
+    }
+  );
 
   return {
     ...b,
     dispose() {
       b.dispose();
-      ctx.dispose_();
+      switchCtx.dispose_();
     },
   }
 });
@@ -76,21 +79,21 @@ export namespace Match {
   export type Props<T extends object> = WhenProps | GuardProps<T>;
 }
 
-export const Match = createSpecial(<T extends object>(props: Match.Props<T>): Backing => {
+export const Match = createSpecial(<T extends object>(actx: AssembleContext, props: Match.Props<T>): Backing => {
   let childrenBackings: Backing[] | null = null;
   let showing = false;
   let loc = createLocation();
 
-  const ctx = useSwitchContext();
+  const switchCtx = useSwitchContext();
   const when = "when" in props ? props.when : () => !!props.guard();
-  const index = ctx.register_(when);
-  const cond = () => ctx.active_() === index;
+  const index = switchCtx.register_(when);
+  const cond = () => switchCtx.active_() === index;
 
   function update(): void {
     if (showing) {
       if (!childrenBackings && props.children) {
         const cs = "when" in props ? props.children : props.children(props.guard() as T); // `as T` is valid since guard() is true here
-        childrenBackings = mapCoerce(cs, c => assemble(c));
+        childrenBackings = mapCoerce(cs, c => assemble(actx, c));
       }
       insertBackings(childrenBackings, loc);
     } else {
