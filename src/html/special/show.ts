@@ -1,5 +1,5 @@
 import { watchProbe } from "../../reactive";
-import { Backing, BackingLocation, assemble, assignLocation, createLocation, createSpecial, tailOf } from "../core/backing";
+import { AssembleContext, Backing, BackingLocation, assemble, assignLocation, createLocation, createSpecial, tailOf } from "../core/backing";
 import { disposeBackings, insertBackings, tailOfBackings } from "../core/specialHelper";
 import { JSXNode, PropChildren } from "../core/types";
 import { mapCoerce } from "../core/util";
@@ -12,7 +12,7 @@ export namespace Show {
   }
 }
 
-export function ShowImpl(props: Show.Props): Backing {
+export function ShowImpl(actx: AssembleContext, props: Show.Props): Backing {
   const { when, fallback, children } = props;
   let thenBackings: Backing[] | null = null;
   let fallbackBacking: Backing | null = null;
@@ -24,14 +24,14 @@ export function ShowImpl(props: Show.Props): Backing {
       fallbackBacking?.dispose();
       fallbackBacking = null;
       if (!thenBackings)
-        thenBackings = mapCoerce(children, c => assemble(c));
+        thenBackings = mapCoerce(children, c => assemble(actx, c));
       insertBackings(thenBackings, loc);
     } else {
       disposeBackings(thenBackings);
       thenBackings = null;
       if (fallback) {
         if (!fallbackBacking)
-          fallbackBacking = assemble(fallback);
+          fallbackBacking = assemble(actx, fallback);
         fallbackBacking.insert(loc);
       }
     }

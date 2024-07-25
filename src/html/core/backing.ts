@@ -47,6 +47,12 @@ function insertAfter(node: Node, parent: Node, prev: Backing | Node | null): voi
   parent.insertBefore(node, after);
 }
 
+export interface AssembleContext {
+  suspenseContext_: Promise<void>[] | { push: (p: Promise<void>) => void } | null;
+  // TODO? Not yet considered but may be efficent to gather disposers
+  // disposeContext_: (() => void)[];
+}
+
 const doNothing = () => {};
 
 function createNodeBackingIfNeeded(node: Node, disposers: (() => void)[], staticParent: boolean): Backing | Node {
@@ -73,33 +79,19 @@ function createNodeBackingIfNeeded(node: Node, disposers: (() => void)[], static
   return { insert, dispose, tail, name: node };
 }
 
-const delayings: Promise<void>[][] = [];
-
-export function collectDelayings<T>(f: () => T): [T, Promise<void>[]] {
-  let ret: T;
-  let collected: Promise<void>[];
-  try {
-    delayings.push([]);
-    ret = f(); // promises are collected by delayAssemble() which may be called from f().
-  } finally {
-    collected = delayings.pop()!;
-  }
-  return [ret, collected];
-}
-
-function delayAssemble(jnode: Promise<JSXNode>, l: BackingLocation | null | undefined): Backing {
+function delayAssemble(actx: AssembleContext, jnode: Promise<JSXNode>, l: BackingLocation | null | undefined): Backing {
   let loc = createLocation();
   let backing: Backing | null = null;
   let disposed = false;
 
   const p = jnode.then((j) => {
     if (disposed) return;
-    backing = assemble(j);
+    backing = assemble(actx, j);
     if (loc)
       backing.insert(loc);
   });
 
-  lastOf(delayings)?.push(p);
+  actx.suspenseContext_?.push(p);
   assignLocation(loc, l);
 
   const insert = (l: BackingLocation | null | undefined): void => {
@@ -122,11 +114,11 @@ function assignAttribute(el: HTMLElement, k: string, v: string | null): void {
   (v != null) ? el.setAttribute(k, v) : el.removeAttribute(k);
 }
 
-function assembleImpl(jnode: JSXNode): Backing;
-function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node;
-function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node {
+function assembleImpl(actx: AssembleContext, jnode: JSXNode): Backing;
+function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node;
+function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node {
   if (isPromise(jnode))
-    return delayAssemble(jnode, loc);
+    return delayAssemble(actx, jnode, loc);
 
   const staticParent = !!node?.parentNode;
   const el =
@@ -183,10 +175,10 @@ function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?: Node 
       let ch: Backing | Node;
       // IMPORTANT This condition, for consuming the skeleton, must be correspondent with collectSkeletons().
       if (typeof v === "string" || (isJSXElement(v) && !v.el && typeof v.name === "string")) {
-        ch = assembleImpl(v, null, skelCh);
+        ch = assembleImpl(actx, v, null, skelCh);
         skelCh = skelCh?.nextSibling ?? null;
       } else {
-        ch = assembleImpl(v, chLoc);
+        ch = assembleImpl(actx, v, chLoc);
       }
       chLoc.prev = ch;
       if (!isNode(ch))
@@ -200,14 +192,14 @@ function assembleImpl(jnode: JSXNode, loc?: BackingLocation | null, node?: Node 
 
   } else if (specials.has(name)) {
     const special = specials.get(name)!;
-    const b = special({ ...attrs, children: rawChildren });
+    const b = special(actx, { ...attrs, children: rawChildren });
     b.insert(loc);
     return b;
 
   } else {
     const expanded = name({ ...attrs, children: rawChildren });
     // TODO check isPromise(expanded) to force delayAssemble() to cache the skeletons
-    return assembleImpl(allocateSkeletons(expanded, name), loc);
+    return assembleImpl(actx, allocateSkeletons(expanded, name), loc);
   }
 }
 
@@ -241,12 +233,12 @@ export function useComponentMethods(): ComponentMethods {
   return m;
 }
 
-export function assemble(jnode: JSXNode): Backing {
+export function assemble(actx: AssembleContext, jnode: JSXNode): Backing {
   componentContexts.push(null);
 
   if (isJSXElement(jnode) && !jnode.el)
     allocateSkeletons(jnode);
-  const b = assembleImpl(jnode);
+  const b = assembleImpl(actx, jnode);
 
   const cctx = lastOf(componentContexts);
   if (!cctx)
@@ -273,11 +265,11 @@ export function assemble(jnode: JSXNode): Backing {
   return { ...b, insert, dispose };
 }
 
-const specials: WeakMap<Component<any, any>, (props: any) => Backing> = new WeakMap();
+const specials: WeakMap<Component<any, any>, (actx: AssembleContext, props: any) => Backing> = new WeakMap();
 
 export type MemberType<P, Key> = Key extends keyof P ? P[Key] : never;
 
-export function createSpecial<P>(impl: (props: P) => Backing): Component<P, MemberType<P, "children">> {
+export function createSpecial<P>(impl: (actx: AssembleContext, props: P) => Backing): Component<P, MemberType<P, "children">> {
   const ret: Component<P, MemberType<P, "children">> = () => 0; // Dummy. Never called but must be unique for each call.
   specials.set(ret, impl);
   return ret;

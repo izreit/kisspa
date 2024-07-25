@@ -1,4 +1,4 @@
-import { Backing, assemble, assignLocation, createLocation, createSpecial } from "../core/backing";
+import { AssembleContext, Backing, assemble, assignLocation, createLocation, createSpecial } from "../core/backing";
 import { disposeBackings, insertBackings, tailOfBackings } from "../core/specialHelper";
 import { Component, PropChildren } from "../core/types";
 import { mapCoerce } from "../core/util";
@@ -9,18 +9,18 @@ export interface ContextProviderProps<T> {
 }
 
 export type ContextFunPair<T> = {
-  ProviderFun: (props: ContextProviderProps<T>) => Backing;
+  ProviderFun: (actx: AssembleContext, props: ContextProviderProps<T>) => Backing;
   useContext: () => T;
 };
 
 export function createContextFun<T>(initial: T): ContextFunPair<T> {
   const stack: T[] = [initial];
 
-  function ProviderImpl(props: ContextProviderProps<T>): Backing {
+  function ProviderImpl(actx: AssembleContext, props: ContextProviderProps<T>): Backing {
     let bs: Backing[];
     try {
       stack.push(props.value);
-      bs = mapCoerce(props.children, c => assemble(c));
+      bs = mapCoerce(props.children, c => assemble(actx, c));
     } finally {
       stack.pop();
     }

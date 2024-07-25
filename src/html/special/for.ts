@@ -1,5 +1,5 @@
 import { autorun, signal } from "../../reactive";
-import { Backing, assemble, assignLocation, createLocation, createSpecial } from "../core/backing";
+import { AssembleContext, Backing, assemble, assignLocation, createLocation, createSpecial } from "../core/backing";
 import { disposeBackings, insertBackings, tailOfBackings } from "../core/specialHelper";
 import { JSXNode } from "../core/types";
 import { arrayify } from "../core/util";
@@ -15,7 +15,7 @@ export namespace For {
   }
 }
 
-export const For = createSpecial(function For<E>(props: For.Props<E>): Backing {
+export const For = createSpecial(function For<E>(actx: AssembleContext, props: For.Props<E>): Backing {
   const { each, key, children } = props;
   const fun = arrayify(children)[0];
 
@@ -34,7 +34,7 @@ export const For = createSpecial(function For<E>(props: For.Props<E>): Backing {
       } else {
         const ixSignal = signal(i);
         const jnode = fun(e as E, ixSignal[0]);
-        b = assemble(jnode);
+        b = assemble(actx, jnode);
         ixTable.set(b, ixSignal);
       }
       nextTable.set(k, b);

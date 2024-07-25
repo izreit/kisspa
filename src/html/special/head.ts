@@ -1,4 +1,4 @@
-import { Backing, createLocation, createSpecial } from "../core/backing";
+import { AssembleContext, Backing, createLocation, createSpecial } from "../core/backing";
 import type { PropChildren } from "../core/types";
 import { createPortalSrcBacking, destBackingFor, hasPortalDestBackingFor } from "./portal";
 
@@ -25,9 +25,9 @@ const headKey = {};
  *
  * [spec]: https://html.spec.whatwg.org/multipage/semantics.html#the-title-element
  */
-export const Head = createSpecial((props: Head.Props): Backing => {
+export const Head = createSpecial((actx: AssembleContext, props: Head.Props): Backing => {
   if (!hasPortalDestBackingFor(headKey))
     destBackingFor(headKey).insert(createLocation(document.head));
 
-  return createPortalSrcBacking({ to: headKey, children: props.children });
+  return createPortalSrcBacking(actx, { to: headKey, children: props.children });
 });

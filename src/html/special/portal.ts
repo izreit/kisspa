@@ -1,4 +1,4 @@
-import { Backing, assemble, assignLocation, createLocation, createSpecial, tailOf } from "../core/backing";
+import { AssembleContext, Backing, assemble, assignLocation, createLocation, createSpecial, tailOf } from "../core/backing";
 import { disposeBackings, insertBackings, tailOfBackings } from "../core/specialHelper";
 import { PropChildren } from "../core/types";
 import { lastOf, mapCoerce } from "../core/util";
@@ -54,7 +54,7 @@ export function destBackingFor(key: object): PortalDestBacking {
   return destBackings.get(key) ?? (destBackings.set(key, createPortalDestBacking()).get(key)!);
 }
 
-export function createPortalSrcBacking(props: Portal.SrcProps): Backing {
+export function createPortalSrcBacking(actx: AssembleContext, props: Portal.SrcProps): Backing {
   const { to, children } = props;
 
   let childBackings: Backing[] | null = null;
@@ -68,7 +68,7 @@ export function createPortalSrcBacking(props: Portal.SrcProps): Backing {
     showing = toShow;
     if (toShow) {
       if (!childBackings)
-        childBackings = mapCoerce(children, c => assemble(c));
+        childBackings = mapCoerce(children, c => assemble(actx, c));
       insertBackings(childBackings, physicalLoc);
     } else {
       disposeBackings(childBackings);
@@ -101,6 +101,6 @@ export function createPortalSrcBacking(props: Portal.SrcProps): Backing {
   };
 }
 
-export const Portal = createSpecial((props: Portal.Props): Backing => {
-  return ("to" in props) ? createPortalSrcBacking(props) : destBackingFor(props.from);
+export const Portal = createSpecial((actx: AssembleContext, props: Portal.Props): Backing => {
+  return ("to" in props) ? createPortalSrcBacking(actx, props) : destBackingFor(props.from);
 });
