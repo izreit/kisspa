@@ -1,3 +1,5 @@
+export type Arrayify<T> = T extends undefined | null ? [] : T;
+
 export const isArray = Array.isArray;
 
 export function arrayify<T>(v: T | T[] | null | undefined): T[] {

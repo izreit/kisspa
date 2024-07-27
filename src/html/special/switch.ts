@@ -1,6 +1,6 @@
 import { autorun, signal, watchProbe } from "../../reactive";
 import { assemble, AssembleContext, assignLocation, Backing, BackingLocation, createLocation, createSpecial, tailOf } from "../core/backing";
-import { h } from "../core/h";
+import { jsx } from "../core/h";
 import { disposeBackings, insertBackings, tailOfBackings } from "../core/specialHelper";
 import { JSXNode, PropChildren } from "../core/types";
 import { arrayify, mapCoerce } from "../core/util";
@@ -53,7 +53,7 @@ export const Switch = createSpecial((actx: AssembleContext, props: Switch.Props)
       value: switchCtx,
       children: (fallback && rawChildren) ? [
         ...children,
-        h(Show, { when: () => switchCtx.active_() === -1 }, fallback),
+        jsx(Show, { when: () => switchCtx.active_() === -1, children: fallback }),
       ] : children
     }
   );

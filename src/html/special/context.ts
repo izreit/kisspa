@@ -45,7 +45,7 @@ export function createContextFun<T>(initial: T): ContextFunPair<T> {
 }
 
 export type ContextPair<T> = {
-  Provider: Component<ContextProviderProps<T>, ContextProviderProps<T>["children"]>;
+  Provider: Component<ContextProviderProps<T>>
   useContext: () => T;
 };
 
