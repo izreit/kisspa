@@ -1,6 +1,6 @@
 import type { JSXInternal } from "./core/jsx";
 export { assemble, assignLocation, createSpecial, lazy, tailOf, useComponentMethods } from "./core/backing";
-export type { Backing, BackingLocation, ComponentMethods, MemberType } from "./core/backing";
+export type { Backing, BackingLocation, ComponentMethods } from "./core/backing";
 export { h, jsx, jsxs } from "./core/h";
 export { attach, createRoot } from "./core/root";
 export type { BackingRoot } from "./core/root";
