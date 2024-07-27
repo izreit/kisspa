@@ -189,18 +189,29 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
       refVal.forEach(r => resolveRef(el as HTMLElement, r));
 
     return createNodeBackingIfNeeded(el!, disposers, staticParent);
+  }
 
-  } else if (specials.has(name)) {
-    const special = specials.get(name)!;
+  // Accept Promise directly as a component. Seems useful and possible,
+  // but TypeScript doesn't accept Promises as components. Use `lazy()` instead.
+  // (ref. https://www.typescriptlang.org/docs/handbook/jsx.html#value-based-elements)
+  //
+  // if (isPromise(name))
+  //   return delayAssemble(actx, name.then(c => ({ ...jnode, name: c })), loc);
+
+  const special = specials.get(name);
+  if (special) {
     const b = special(actx, { ...attrs, children: rawChildren });
     b.insert(loc);
     return b;
-
-  } else {
-    const expanded = name({ ...attrs, children: rawChildren });
-    // TODO check isPromise(expanded) to force delayAssemble() to cache the skeletons
-    return assembleImpl(actx, allocateSkeletons(expanded, name), loc);
   }
+
+  const expanded = name({ ...attrs, children: rawChildren });
+  // TODO check isPromise(expanded) to force delayAssemble() to cache the skeletons
+  return assembleImpl(actx, allocateSkeletons(expanded, name), loc);
+}
+
+export function lazy<C extends Component<any>>(p: Promise<{ default: C }>): C {
+  return (props => p.then(c => c.default(props))) as C;
 }
 
 interface ComponentMethodState {
@@ -265,12 +276,12 @@ export function assemble(actx: AssembleContext, jnode: JSXNode): Backing {
   return { ...b, insert, dispose };
 }
 
-const specials: WeakMap<Component<any, any>, (actx: AssembleContext, props: any) => Backing> = new WeakMap();
+const specials: WeakMap<Component<any>, (actx: AssembleContext, props: any) => Backing> = new WeakMap();
 
 export type MemberType<P, Key> = Key extends keyof P ? P[Key] : never;
 
-export function createSpecial<P>(impl: (actx: AssembleContext, props: P) => Backing): Component<P, MemberType<P, "children">> {
-  const ret: Component<P, MemberType<P, "children">> = () => 0; // Dummy. Never called but must be unique for each call.
+export function createSpecial<P>(impl: (actx: AssembleContext, props: P) => Backing): Component<P> {
+  const ret: Component<P> = () => 0; // Dummy. Never called but must be unique for each call.
   specials.set(ret, impl);
   return ret;
 }

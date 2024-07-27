@@ -1,24 +1,22 @@
 import { autorun } from "../../reactive";
 import { assemble, AssembleContext, assignLocation, Backing, BackingLocation, createLocation, createSpecial, tailOf } from "../core/backing";
-import { makeJSXElement } from "../core/h";
+import { jsx } from "../core/h";
 import { Component } from "../core/types";
-import { arrayify } from "../core/util";
 
 export namespace Dynamic {
-  export type Props<T, C> = T & {
-    children?: C;
-    component?: () => Component<T, C> | string | keyof JSX.IntrinsicElements;
+  export type Props<T> = T & {
+    component?: () => Component<T>;
   }
 }
 
-export const Dynamic = createSpecial(<T, C>(actx: AssembleContext, props: Dynamic.Props<T, C>): Backing => {
+export const Dynamic = createSpecial(<T>(actx: AssembleContext, props: Dynamic.Props<T>): Backing => {
   let backing: Backing | null = null;
   let loc = createLocation();
 
   const cancelUpdate = autorun(() => {
     if (!props.component) return;
     backing?.dispose();
-    backing = assemble(actx, makeJSXElement(props.component(), props, arrayify(props.children)));
+    backing = assemble(actx, jsx(props.component(), props));
     backing.insert(loc);
   });
 

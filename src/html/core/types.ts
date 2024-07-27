@@ -23,7 +23,7 @@ export interface JSXElement {
    */
   el: Node | typeof $noel | null;
 
-  name: string | Component<any, any>;
+  name: string | Component<any>;
   attrs: Attributes;
 
   /**
@@ -50,8 +50,8 @@ export type JSXNode =
   | JSXElement
   | Promise<null | string | number | Accessor<null | string | number> | JSXElement>;
 
-type OmitNever<T> = { [K in keyof T as T[K] extends never ? never : K]: T[K] };
-export type Component<P, C extends any> = (props: OmitNever<P & { children?: C }>) => JSXNode;
+// export type OmitNever<T> = { [K in keyof T as T[K] extends never ? never : K]: T[K] };
+export type Component<P> = (props: P) => JSXNode;
 
 export function isJSXElement(v: any): v is JSXElement {
   return v?.[$h];

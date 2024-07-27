@@ -1,10 +1,12 @@
 import { JSXInternal } from "./jsx";
 import { $h, Attributes, Component, JSXElement, JSXNode } from "./types";
+import { Arrayify, arrayify } from "./util";
 
 export function h(name: string, attrs?: JSXInternal.HTMLAttributes | null, ...children: (JSXNode | JSXNode[])[]): JSXElement;
-export function h<P, C extends any[]>(name: Component<P, C>, attrs?: P, ...children: C): JSXElement;
-export function h<P, C extends any[]>(name: string | Component<P, C>, attrs?: JSXInternal.HTMLAttributes | P | null, ...children: C): JSXElement {
-  return makeJSXElement(name, attrs ?? {}, children);
+export function h<P extends { children?: any[] }>(name: Component<P>, attrs?: P, ...children: Arrayify<P["children"]>): JSXElement;
+export function h<P>(name: string | Component<P>, attrs?: JSXInternal.HTMLAttributes | P | null, ...children: any): JSXElement {
+  const rawChildren = children.length === 1 ? children[0] : children; // unwrap if singular, forced to be array by ...args
+  return makeJSXElement(name, attrs ?? {}, children, rawChildren);
 }
 
 export namespace h {
@@ -12,19 +14,19 @@ export namespace h {
 }
 
 export function jsx(name: string, attrs?: ((JSXInternal.HTMLAttributes & { children?: JSXNode | JSXNode[]; }) | null)): JSXElement;
-export function jsx<P extends { children?: any; }>(name: Component<Omit<P, "children">, P["children"]>, attrs?: P): JSXElement;
-export function jsx<P extends { children?: any; }>(
-  name: string | Component<Omit<P, "children">, P["children"]>,
-  attrs?: ((JSXInternal.HTMLAttributes & { children?: (JSXNode | JSXNode[])[]; }) | null) | P | null
+export function jsx<P>(name: Component<P>, attrs?: P): JSXElement;
+export function jsx<P>(
+  name: string | Component<P>,
+  attrs?: ((JSXInternal.HTMLAttributes & { children?: JSXNode | JSXNode[]; }) | null) | P | null
 ): JSXElement {
-  const a = { ...(attrs ?? {}) } as Exclude<typeof attrs, null | undefined>;
+  const a = { ...(attrs ?? {}) } as (Exclude<typeof attrs, null | undefined> & { children?: any });
   delete a.children;
-  return makeJSXElement(name, a, attrs?.children);
+  const cs = (attrs as any)?.children;
+  return makeJSXElement(name, a, arrayify(cs), cs);
 }
 
 export const jsxs = jsx;
 
-export function makeJSXElement(name: string | Component<any, any>, attrs: Attributes, children: any[]): JSXElement {
-  const rawChildren = children.length === 1 ? children[0] : children; // unwrap if singular, forced to be array by ...args
+export function makeJSXElement(name: string | Component<any>, attrs: Attributes, children: any[], rawChildren: any): JSXElement {
   return { [$h]: 1, el: null, name, attrs, children: children.flat(), rawChildren };
 }
