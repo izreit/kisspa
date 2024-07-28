@@ -10,7 +10,7 @@ export interface Skeleton {
  * Collect the skeletons for the given JSXNode.
  * IMPORTANT This must be coresspondent with codeOf() and how assemble() consumes skeletons
  */
-function collectSkeletonsImpl(acc: Skeleton[], target: JSXNode | { [key: string]: any }, path: (number | string)[], parent: Node | null = null): void {
+function collectSkeletonsImpl(acc: Skeleton[], target: JSXNode | { [key: string]: any }, path: (number | string)[], parent?: Node | null): void {
   if (typeof target === "string" && parent) {
     parent.appendChild(document.createTextNode(""));
     return;

@@ -179,7 +179,7 @@ export function createTag(target?: Tag.TargetStyleSheet): Tag {
       const { mods: modifiers, name, value, begin, end } = decl;
 
       // no value (classname without ':') is treated as-is.
-      if (value == null) {
+      if (!value) {
         const n = name.join("-");
         return aliasTable[n] ?? n;
       }

@@ -11,16 +11,16 @@ export function tailOfBackings(bs: Backing[] | null | undefined, prev?: Backing 
   return tailOf(prev);
 }
 
-export function insertBackings(bs: Backing[] | null, loc: BackingLocation | null | undefined): void {
+export function insertBackings(bs: Backing[] | null | undefined, loc: BackingLocation | null | undefined): void {
   if (!bs) return;
   if (loc?.parent) {
     const parent = loc.parent;
     bs.reduce((prev, b) => (b.insert({ parent, prev }), b), loc.prev);
   } else {
-    bs.forEach(b => b.insert(null));
+    bs.forEach(b => b.insert());
   }
 }
 
-export function disposeBackings(bs: Backing[] | null): void {
+export function disposeBackings(bs: Backing[] | null | undefined): void {
   bs?.forEach(b => b.dispose());
 }

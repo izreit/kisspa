@@ -68,7 +68,7 @@ export function lcs<T>(xs: T[], ys: T[]): T[] {
   }
 
   const longestRev: SuccessiveRange[] = [];
-  for (let n: LCSNode = ends[ends.length - 1]; n.prev_ != null; n = n.prev_)
+  for (let n: LCSNode = ends[ends.length - 1]; n.prev_; n = n.prev_)
     longestRev.push(n.end_);
 
   const ret: T[] = [];

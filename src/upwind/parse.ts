@@ -1,7 +1,7 @@
 
 export type Mod = {
   modKey: string;
-  target: { name: string, rel: string | null } | null;
+  target: { name: string, rel: string | null | undefined } | null | undefined;
   begin: number;
   end: number;
 };
@@ -9,7 +9,7 @@ export type Mod = {
 export type Decl = {
   mods: Mod[];
   name: string[];
-  value: string[] | null;
+  value: string[] | null | undefined;
   begin: number;
   end: number;
 };
@@ -93,7 +93,7 @@ function parseDecl(src: string, ix: number): ParseResult<Decl[]> | ParseFailure 
   if (!mName) return skipToDelim(src, ix);
   ix = mName.end_;
 
-  let value: string[] | null = null;
+  let value: string[] | undefined;
   if (src[mName.end_] === ":") {
     ++ix;
     const mVal = parseVal(src, ix);
@@ -112,10 +112,10 @@ function skipToDelim(src: string, ix: number): ParseFailure {
 // MOD := beginpos=@ v=':*[^/_:\s]+' target={'_' name='[^/:\s~\+]+' rel='[~\+]'?}? endpos=@
 function parseMod(src: string, ix: number): ParseResult<Mod> | null {
   const begin = ix;
-  let target: Mod["target"] = null;
+  let target: Mod["target"];
 
   const mMod = matchRe(src, ix, /:*[^/_:\s\(\)]+/y);
-  if (!mMod) return null;
+  if (!mMod) return mMod;
   ix = mMod.end_;
   const modKey = mMod.val_[0];
 
@@ -145,7 +145,7 @@ function parseName(src: string, ix: number): ParseResult<string[]> | null {
   }
 
   const mCar = matchRe(src, ix, reFrag);
-  if (!mCar) return null;
+  if (!mCar) return mCar;
   val.push(mCar.val_[0]);
   ix = mCar.end_;
 
@@ -172,7 +172,7 @@ function parseVal(src: string, ix: number): ParseResult<string[]> | null {
   ix = matchRe(src, ix, /_*/y)!.end_;
 
   const mCar = parseValSegment(src, ix);
-  if (!mCar) return null;
+  if (!mCar) return mCar;
   val.push(mCar.val_);
   ix = mCar.end_;
 
@@ -198,12 +198,12 @@ function parseValSegment(src: string, ix: number): ParseResult<string> | null {
   if (mn)
     return { val_: mn.val_[0].replace(/\\_/g, "_"), begin_: begin, end_: mn.end_  };
   const mq = matchRe(src, ix, /'((?:\\'|[^'])*)'/y);
-  return mq ? { val_: mq.val_[1].replace(/\\'/g, "'"), begin_: begin, end_: mq.end_ } : null;
+  return mq && { val_: mq.val_[1].replace(/\\'/g, "'"), begin_: begin, end_: mq.end_ };
 }
 
 function matchRe(src: string, ix: number, re: RegExp): ParseResult<RegExpMatchArray> | null {
   const begin = ix;
   re.lastIndex = ix;
   const m = re.exec(src);
-  return m ? { val_: m, begin_: begin, end_: ix + m[0].length } : null;
+  return m && { val_: m, begin_: begin, end_: ix + m[0].length };
 }

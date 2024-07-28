@@ -2,14 +2,14 @@ import { Backing, createLocation, assignLocation } from "../core/backing";
 import { insertBackings, disposeBackings, tailOfBackings } from "../core/specialHelper";
 
 export interface BackingBase extends Backing {
-  extractBackings_: () => Backing[] | null;
-  setBackings_: (bs: Backing[] | null) => void;
+  extractBackings_: () => Backing[] | null | undefined;
+  setBackings_: (bs: Backing[] | null | undefined) => void;
   addDisposer_: (f: () => void) => void;
 }
 
 export function createBackingBase(name: string): BackingBase {
   const loc = createLocation();
-  let backings: Backing[] | null = null;
+  let backings: Backing[] | null | undefined;
   const disposers: (() => void)[] = [];
   return {
     extractBackings_: () => {
