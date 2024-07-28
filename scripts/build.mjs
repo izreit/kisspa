@@ -14,7 +14,8 @@ function run(s) {
   execSync(s, { stdio: "inherit" });
 }
 
-run(`npx vite build -- -ct reactive-full`);
+run(`npx vite build -- -ct upwind-preset`);
+run(`npx vite build -- -t reactive-full`);
 run(`npx vite build -- -t html-full`);
 run(`npx vite build -- -t whole-full`);
 run(`npx vite build -- -t reactive`);

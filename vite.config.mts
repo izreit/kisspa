@@ -31,6 +31,9 @@ const entryTable = {
   "reactive-full": { "full/reactive/index": resolve(__dirname, "src", "reactive", "index.ts") },
   "html-full": { "full/html/bundle": resolve(__dirname, "src", "html", "bundle.ts") },
   "whole-full": { "full/upwind/bundle": resolve(__dirname, "src", "upwind", "bundle.ts") },
+  "upwind-preset": {
+    "full/upwind/preset/colors": resolve(__dirname, "src", "upwind", "preset", "colors.ts")
+  },
 };
 
 export default defineConfig({
