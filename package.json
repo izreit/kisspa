@@ -34,6 +34,7 @@
     "./full": "./dist/full/upwind/bundle.js",
     "./html/full": "./dist/full/html/bundle.js",
     "./reactive/full": "./dist/full/reactive/index.js",
+    "./preset/colors": "./dist/full/upwind/preset/colors.js",
     "./jsx-runtime": "./dist/normal/html/index.js"
   }
 }
