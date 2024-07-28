@@ -1,6 +1,7 @@
-import { AssembleContext, Backing, createSpecial } from "../core/backing";
+import { assemble, AssembleContext, Backing, createSpecial } from "../core/backing";
 import { PropChildren } from "../core/types";
-import { ShowImpl } from "./show";
+import { mapCoerce } from "../core/util";
+import { createBackingBase } from "./base";
 
 export namespace Fragment {
   export interface Props {
@@ -8,5 +9,8 @@ export namespace Fragment {
   }
 }
 
-// To reduce file size, `<Fragment>...</Fragment>` is treated as just an `<Show when={() => true}>...</Show>`.
-export const Fragment = createSpecial((actx: AssembleContext, { children }: Fragment.Props): Backing => ShowImpl(actx, { when: () => true, children }));
+export const Fragment = createSpecial((actx: AssembleContext, { children }: Fragment.Props): Backing => {
+  const base = createBackingBase("Fragment");
+  base.setBackings_(mapCoerce(children, c => assemble(actx, c)));
+  return base;
+});

@@ -26,7 +26,7 @@ function createPortalDestBacking(): PortalDestBacking {
   return {
     insert: (l): void => {
       if (assignLocation(loc, l))
-        insertBackings(childBackings, l?.parent ? l : null);
+        insertBackings(childBackings, l);
     },
     tail: () => tailOfBackings(childBackings, loc?.prev),
     dispose: () => disposeBackings(childBackings),

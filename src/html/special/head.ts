@@ -15,7 +15,7 @@ const headKey = {};
  * `<Portal />` to `document.head`.
  *
  * The children of this component will be inserted to `document.head`.
- * Unlike <Portal />, you don't need to place <Portal from={} /> explicitly.
+ * Unlike normal <Portal />, you don't need to place <Portal from={} /> explicitly.
  *
  * Any elements allowed under HTMLHeadElement are valid but <title /> is not
  * recommended because "there must be no more than one title element per document,"

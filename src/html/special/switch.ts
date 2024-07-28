@@ -1,14 +1,14 @@
 import { autorun, signal, watchProbe } from "../../reactive";
-import { assemble, AssembleContext, assignLocation, Backing, BackingLocation, createLocation, createSpecial, tailOf } from "../core/backing";
+import { assemble, AssembleContext, Backing, createSpecial } from "../core/backing";
 import { jsx } from "../core/h";
-import { disposeBackings, insertBackings, tailOfBackings } from "../core/specialHelper";
 import { JSXNode, PropChildren } from "../core/types";
 import { arrayify, mapCoerce } from "../core/util";
+import { createBackingBase } from "./base";
 import { createContextFun } from "./context";
 import { Show } from "./show";
 
 interface SwitchContextValue {
-  register_(cond: () => boolean): number;
+  register_(cond: () => unknown): number;
   active_(): number;
   dispose_():void;
 }
@@ -22,7 +22,7 @@ function createSwitchContextValue(): SwitchContextValue {
     register_(cond) {
       const idx = stats.push(false) - 1;
       disposers.push(autorun(() => {
-        stats[idx] = cond();
+        stats[idx] = !!cond();
         setActiveIndex(stats.findIndex(v => v));
       }));
       return idx;
@@ -73,50 +73,32 @@ export namespace Match {
     children?: PropChildren;
   }
   export interface GuardProps<T extends object> {
-    guard: () => T | false;
+    when: () => T | false;
     children?: (v: T) => PropChildren;
   }
   export type Props<T extends object> = WhenProps | GuardProps<T>;
 }
 
 export const Match = createSpecial(<T extends object>(actx: AssembleContext, props: Match.Props<T>): Backing => {
-  let childrenBackings: Backing[] | null = null;
+  const { when, children } = props;
   let showing = false;
-  let loc = createLocation();
-
   const switchCtx = useSwitchContext();
-  const when = "when" in props ? props.when : () => !!props.guard();
   const index = switchCtx.register_(when);
-  const cond = () => switchCtx.active_() === index;
 
-  function update(): void {
-    if (showing) {
-      if (!childrenBackings && props.children) {
-        const cs = "when" in props ? props.children : props.children(props.guard() as T); // `as T` is valid since guard() is true here
-        childrenBackings = mapCoerce(cs, c => assemble(actx, c));
+  const base = createBackingBase("Match");
+
+  base.addDisposer_(watchProbe(
+    () => (switchCtx.active_() === index),
+    toShow => {
+      showing = toShow;
+      let bs: Backing[] | null = null;
+      if (showing && children) {
+        const cs = typeof children !== "function" ? children : children(when() as T); // `as T` is valid since guard() is true here
+        bs = mapCoerce(cs, c => assemble(actx, c));
       }
-      insertBackings(childrenBackings, loc);
-    } else {
-      disposeBackings(childrenBackings);
-      childrenBackings = null;
+      base.setBackings_(bs);
     }
-  }
+  ));
 
-  const cancelUpdate = watchProbe(cond, toShow => {
-    showing = toShow;
-    update();
-  });
-
-  return {
-    insert(l: BackingLocation | null | undefined) {
-      assignLocation(loc, l);
-      update();
-    },
-    tail: () => showing ? tailOfBackings(childrenBackings, loc.prev) : tailOf(loc.prev),
-    dispose() {
-      cancelUpdate();
-      disposeBackings(childrenBackings);
-    },
-    name: "Match",
-  };
+  return base;
 });

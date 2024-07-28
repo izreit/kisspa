@@ -1,8 +1,8 @@
 import { watchProbe } from "../../reactive";
-import { AssembleContext, Backing, BackingLocation, assemble, assignLocation, createLocation, createSpecial, tailOf } from "../core/backing";
-import { disposeBackings, insertBackings, tailOfBackings } from "../core/specialHelper";
+import { AssembleContext, Backing, assemble, createSpecial } from "../core/backing";
 import { JSXNode, PropChildren } from "../core/types";
 import { mapCoerce } from "../core/util";
+import { createBackingBase } from "./base";
 
 export namespace Show {
   export interface Props {
@@ -12,51 +12,16 @@ export namespace Show {
   }
 }
 
-export function ShowImpl(actx: AssembleContext, props: Show.Props): Backing {
+export const Show = createSpecial(function ShowImpl(actx: AssembleContext, props: Show.Props): Backing {
   const { when, fallback, children } = props;
-  let thenBackings: Backing[] | null = null;
-  let fallbackBacking: Backing | null = null;
   let showing = false;
-  let loc = createLocation();
 
-  function update(): void {
-    if (showing) {
-      fallbackBacking?.dispose();
-      fallbackBacking = null;
-      if (!thenBackings)
-        thenBackings = mapCoerce(children, c => assemble(actx, c));
-      insertBackings(thenBackings, loc);
-    } else {
-      disposeBackings(thenBackings);
-      thenBackings = null;
-      if (fallback) {
-        if (!fallbackBacking)
-          fallbackBacking = assemble(actx, fallback);
-        fallbackBacking.insert(loc);
-      }
-    }
-  }
-
-  const cancelUpdate = watchProbe(when, toShow => {
+  const base = createBackingBase("Show");
+  base.addDisposer_(watchProbe(when, toShow => {
     showing = toShow;
-    update();
-  });
+    const bs = showing ? mapCoerce(children, c => assemble(actx, c)) : (fallback ? [assemble(actx, fallback)] : null);
+    base.setBackings_(bs);
+  }));
 
-  const insert = (l: BackingLocation | null | undefined) => {
-    assignLocation(loc, l);
-    update();
-  };
-  const tail = (): Node | null | undefined => {
-    return showing ?
-      tailOfBackings(thenBackings, loc.prev) :
-      (fallbackBacking?.tail() ?? tailOf(loc.prev));
-  };
-  const dispose = () => {
-    cancelUpdate();
-    disposeBackings(thenBackings);
-    fallbackBacking?.dispose();
-  };
-  return { insert, tail, dispose, name: "Show" };
-}
-
-export const Show = createSpecial(ShowImpl);
+  return base;
+});
