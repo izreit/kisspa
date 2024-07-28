@@ -1,10 +1,9 @@
 import type { JSXInternal } from "./core/jsx";
-export { assemble, assignLocation, createSpecial, lazy, tailOf, useComponentMethods } from "./core/backing";
+export { assemble, assignLocation, createSpecial, disposeBackings, insertBackings, lazy, tailOf, tailOfBackings, useComponentMethods } from "./core/backing";
 export type { Backing, BackingLocation, ComponentMethods } from "./core/backing";
 export { h, jsx, jsxs } from "./core/h";
 export { attach, createRoot } from "./core/root";
 export type { BackingRoot } from "./core/root";
-export { disposeBackings, insertBackings, tailOfBackings } from "./core/specialHelper";
 export { $h, createRef } from "./core/types";
 export type { Accessor, AccessorOr, Attributes, Component, JSXElement, JSXNode, JSXNodeAsync, JSXNodeSync, PropChildren, PropRef, Ref } from "./core/types";
 export { createContext } from "./special/context";
@@ -18,3 +17,4 @@ export { Show } from "./special/show";
 export { Suspense } from "./special/suspense";
 export { Match, Switch } from "./special/switch";
 export type { JSXInternal as JSX };
+

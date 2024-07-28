@@ -1,6 +1,5 @@
 import { autorun, signal } from "../../reactive";
-import { AssembleContext, Backing, assemble, assignLocation, createLocation, createSpecial } from "../core/backing";
-import { disposeBackings, insertBackings, tailOfBackings } from "../core/specialHelper";
+import { AssembleContext, Backing, assemble, assignLocation, createLocation, createSpecial, disposeBackings, insertBackings, tailOfBackings } from "../core/backing";
 import { JSXNode } from "../core/types";
 import { arrayify } from "../core/util";
 import { lcs } from "./internal/lcs";

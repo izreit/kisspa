@@ -1,5 +1,4 @@
-import { AssembleContext, Backing, assemble, assignLocation, createLocation, createSpecial, tailOf } from "../core/backing";
-import { disposeBackings, insertBackings, tailOfBackings } from "../core/specialHelper";
+import { AssembleContext, Backing, assemble, assignLocation, createLocation, createSpecial, disposeBackings, insertBackings, tailOf, tailOfBackings } from "../core/backing";
 import { PropChildren } from "../core/types";
 import { lastOf, mapCoerce } from "../core/util";
 
