@@ -1,31 +1,32 @@
-export class Trie<T> {
-  readonly parent_: Trie<T> | null;
-  readonly key_: T | null;
-  protected children_: Map<T, WeakRef<Trie<T>>> = new Map();
-  protected cache_: WeakRef<T[]> | null = null;
+export interface Trie<T> {
+  childFor_(v: T): Trie<T>;
+  trace_(): readonly T[];
+}
 
-  constructor();
-  constructor(parent: Trie<T>, key: T);
-  constructor(parent?: Trie<T>, key?: T) {
-    this.parent_ = parent ?? null;
-    this.key_ = key ?? null;
-  }
+export function createTrie<T>(): Trie<T>;
+export function createTrie<T>(parent: Trie<T>, key: T): Trie<T>;
+export function createTrie<T>(parent?: Trie<T>, key?: T): Trie<T> {
+  const children: Map<T, WeakRef<Trie<T>>> = new Map();
+  let cache: WeakRef<T[]> | null = null;
 
-  childFor_(v: T): Trie<T> {
-    const cache = this.children_.get(v)?.deref();
-    if (cache) return cache;
+  const ret = {
+    childFor_(v: T): Trie<T> {
+      const childCache = children.get(v)?.deref();
+      if (childCache) return childCache;
 
-    const c = new Trie(this, v);
-    this.children_.set(v, new WeakRef(c));
-    return c;
-  }
+      const c = createTrie(ret, v);
+      children.set(v, new WeakRef(c));
+      return c;
+    },
 
-  trace_(): readonly T[] {
-    const c = this.cache_?.deref();
-    if (c) return c;
-
-    const ret = this.parent_?.trace_().concat(this.key_!) ?? [];
-    this.cache_ = new WeakRef(ret);
-    return ret;
-  }
+    trace_(): readonly T[] {
+      let ret = cache?.deref();
+      if (!ret) {
+        ret = parent?.trace_().concat(key!) ?? [];
+        cache = new WeakRef(ret);
+      }
+      return ret;
+    }
+  };
+  return ret;
 }

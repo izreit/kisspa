@@ -13,15 +13,16 @@ export function decimated(fun: () => void): DecimatedFun {
   let f: (() => void) | null = fun;
   let p: Promise<void> | null = null;
 
-  function fire() {
-    if (!p) return;
-    p = null;
-    f?.();
+  const fire = () => {
+    if (p) {
+      p = null;
+      f?.();
+    }
   }
 
-  const ret = function decimatedFun() {
+  const ret = (() => {
     return p ?? (p = Promise.resolve().then(fire));
-  } as DecimatedFun;
+  }) as DecimatedFun;
 
   ret.immediate = () => {
     p = null;
