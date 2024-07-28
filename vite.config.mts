@@ -51,8 +51,11 @@ export default defineConfig({
         minifyInternalExports: true,
       }
     },
+
     minify: "terser",
     terserOptions: {
+      // Mangle any property names ends with '_' (e.g. insert_, name_).
+      // Use them only for internal properties.
       mangle: {
         properties: {
           regex: /.*_$/,
