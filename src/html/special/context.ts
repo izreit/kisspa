@@ -1,7 +1,6 @@
-import { AssembleContext, Backing, assemble, createSpecial } from "../core/backing";
+import { AssembleContext, Backing, assemble, createBackingBase, createSpecial } from "../core/backing";
 import { Component, PropChildren } from "../core/types";
 import { lastOf, mapCoerce } from "../core/util";
-import { createBackingBase } from "./base";
 
 export interface ContextProviderProps<T> {
   value: T;

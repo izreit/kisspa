@@ -1,5 +1,4 @@
-import { AssembleContext, Backing, BackingLocation, assemble, assignLocation, createLocation, createSpecial } from "../core/backing";
-import { disposeBackings, insertBackings, tailOfBackings } from "../core/specialHelper";
+import { AssembleContext, Backing, BackingLocation, assemble, assignLocation, createLocation, createSpecial, disposeBackings, insertBackings, tailOfBackings } from "../core/backing";
 import { JSXNode, PropChildren } from "../core/types";
 import { arrayify, mapCoerce } from "../core/util";
 
