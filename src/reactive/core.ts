@@ -1,8 +1,8 @@
 import { assert, dceNeverReach, throwError } from "./assert";
 import { decimated } from "./decimated";
-import { Trie } from "./internal/trie";
-import { Mapset } from "./internal/mapset";
-import { LayeredSet } from "./internal/layeredset";
+import { createTrie, Trie } from "./internal/trie";
+import { createMapset, Mapset } from "./internal/mapset";
+import { createLayeredSet, LayeredSet } from "./internal/layeredset";
 
 export type Key = string | symbol | number;
 type Target = any;
@@ -35,7 +35,7 @@ const valueCacheTable: WeakMap<Wrapped, Map<Key, any>> = new WeakMap();
 
 /** Wrapped values retrieved inside the ongoing setter callbacks. Modifications are rejected unless through the values registered here. */
 // NOTE not WeakSet, to use clear(). Never causes leak since it always be cleared at the finally clause in setter.
-const writings: LayeredSet<Wrapped> = new LayeredSet();
+const writings: LayeredSet<Wrapped> = createLayeredSet();
 
 /** Stack of the current observers, used to update refs/revRefs */
 // NOTE no need to be a stack?
@@ -123,7 +123,7 @@ function addRef(wrapped: any, prop: Key, value: any, observer: () => void): void
   (valueCacheTable.get(wrapped) ?? valueCacheTable.set(wrapped, new Map()).get(wrapped)!).set(prop, value);
 }
 
-const rejectionMessageWrite = (p: string | symbol) => `can't modify/delete property ${String(p)} outside a writing context`;
+const rejectionMessageWrite = (p: string | symbol) => `can't set/delete property ${String(p)} without setter`;
 
 export function observe<T extends object>(initial: T): [T, StoreSetter<T>] {
   if (memoizedTable.has(initial))
@@ -302,7 +302,12 @@ function registerParentRef(wid: PropWatcherId, target: object, key: Key, child: 
   child = observe(child)[0];
 
   const tableFromChild = (parentRefTable.has(child) ? parentRefTable : (parentRefTable.set(child, new Map()))).get(child)!;
-  const pref = (tableFromChild.has(wid) ? tableFromChild : tableFromChild.set(wid, { locations_: new Mapset(), minParent_: null, minKey_: null, minNorm_: Infinity })).get(wid)!;
+  const pref = (
+    tableFromChild.has(wid) ?
+      tableFromChild :
+      tableFromChild.set(wid, { locations_: createMapset(), minParent_: null, minKey_: null, minNorm_: Infinity })
+  ).get(wid)!;
+
   pref.locations_.add_(target, key);
   if (pref.minNorm_ > norm) {
     pref.minNorm_ = norm;
@@ -369,7 +374,7 @@ function hasPropWatcher(target: Wrapped): boolean {
   return parentRefTable.has(target);
 }
 
-const trieRoot = new Trie<Key>();
+const trieRoot = createTrie<Key>();
 
 function getPathTrie(wid: PropWatcherId, target: Wrapped): Trie<Key> | null{
   const pref = parentRefTable.get(target)?.get(wid);
