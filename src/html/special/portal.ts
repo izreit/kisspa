@@ -37,7 +37,7 @@ function createPortalDestBacking(): PortalDestBacking {
     },
     removeChild: (b: Backing): void => {
       const i = childBackings.indexOf(b);
-      b.insert(null);
+      b.insert();
       childBackings.splice(i, 1);
     },
     name: "PortalDest"
@@ -57,7 +57,7 @@ export function destBackingFor(key: object): PortalDestBacking {
 export function createPortalSrcBacking(actx: AssembleContext, props: Portal.SrcProps): Backing {
   const { to, children } = props;
 
-  let childBackings: Backing[] | null = null;
+  let childBackings: Backing[] | null | undefined;
   let showing = false;
   let virtualLoc = createLocation();
   let physicalLoc = createLocation();

@@ -1,5 +1,5 @@
 import { JSXNode } from "./types";
-import { Backing, assemble } from "./backing";
+import { Backing, assemble, createLocation } from "./backing";
 
 export interface BackingRoot {
   attach(jnode: JSXNode): void;
@@ -7,11 +7,11 @@ export interface BackingRoot {
 }
 
 export function createRoot(parent: Element): BackingRoot {
-  let b: Backing | null = null;
+  let b: Backing | null | undefined;
   const attach = (jnode: JSXNode) => {
     b?.dispose();
     b = assemble({ suspenseContext_: null }, jnode);
-    b.insert({ parent, prev: null });
+    b.insert(createLocation(parent));
   };
   const detach = () => {
     b?.dispose();

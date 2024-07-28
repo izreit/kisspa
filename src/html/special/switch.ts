@@ -91,7 +91,7 @@ export const Match = createSpecial(<T extends object>(actx: AssembleContext, pro
     () => (switchCtx.active_() === index),
     toShow => {
       showing = toShow;
-      let bs: Backing[] | null = null;
+      let bs: Backing[] | null | undefined;
       if (showing && children) {
         const cs = typeof children !== "function" ? children : children(when() as T); // `as T` is valid since guard() is true here
         bs = mapCoerce(cs, c => assemble(actx, c));

@@ -4,18 +4,18 @@ import { $noel, Component, JSXNode, Ref, isJSXElement } from "./types";
 import { arrayify, isPromise, lastOf, objEntries } from "./util";
 
 export interface Backing {
-  insert(loc: BackingLocation | null | undefined): void;
+  insert(loc?: BackingLocation | null | undefined): void;
   tail(): Node | null | undefined;
   dispose(): void;
   name: Node | string;
 }
 
 export interface BackingLocation {
-  parent: Node | null;
-  prev: Backing | Node | null;
+  parent: Node | null | undefined;
+  prev: Backing | Node | null | undefined;
 }
 
-export function createLocation(parent: Node | null = null, prev: Backing | Node | null = null): BackingLocation {
+export function createLocation(parent?: Node | null, prev?: Backing | Node | null): BackingLocation {
   return { parent, prev };
 }
 
@@ -29,7 +29,7 @@ export function assignLocation(self: BackingLocation, loc: BackingLocation | nul
   return true;
 }
 
-function isNode(v: any): v is Node {
+function isNode(v: object): v is Node {
   return "nodeName" in v;
 }
 
@@ -38,10 +38,10 @@ function isStrOrNum(v: any): v is number | string {
 }
 
 export function tailOf(p: Backing | Node | null | undefined): Node | null | undefined {
-  return p ? (isNode(p) ? p : p.tail()) : null;
+  return p && (isNode(p) ? p : p.tail());
 }
 
-function insertAfter(node: Node, parent: Node, prev: Backing | Node | null): void {
+function insertAfter(node: Node, parent: Node, prev: Backing | Node | null | undefined): void {
   const rawPrev = tailOf(prev);
   const after = rawPrev ? rawPrev.nextSibling : parent.firstChild;
   parent.insertBefore(node, after);
@@ -65,7 +65,7 @@ function createNodeBackingIfNeeded(node: Node, disposers: (() => void)[], static
     return { insert: doNothing, dispose, tail, name: node };
   }
 
-  const insert = (pos: BackingLocation | null | undefined) => {
+  const insert = (pos?: BackingLocation | null | undefined) => {
     if (pos?.parent) {
       insertAfter(node, pos.parent, pos.prev);
     } else {
@@ -73,7 +73,7 @@ function createNodeBackingIfNeeded(node: Node, disposers: (() => void)[], static
     }
   };
   const dispose = () => {
-    insert(null);
+    insert();
     disposers.forEach(d => d());
   };
   return { insert, dispose, tail, name: node };
@@ -81,7 +81,7 @@ function createNodeBackingIfNeeded(node: Node, disposers: (() => void)[], static
 
 function delayAssemble(actx: AssembleContext, jnode: Promise<JSXNode>, l: BackingLocation | null | undefined): Backing {
   let loc = createLocation();
-  let backing: Backing | null = null;
+  let backing: Backing | null | undefined;
   let disposed = false;
 
   const p = jnode.then((j) => {
@@ -130,11 +130,11 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
   if (el && !el.parentNode && loc?.parent)
     insertAfter(el, loc.parent, loc.prev);
 
-  if (typeof jnode !== "object" || jnode == null) {
+  if (typeof jnode !== "object" || !jnode) {
     let disposers: (() => void)[] = [];
     if (typeof jnode === "function") {
       disposers.push(autorun(() => { el!.nodeValue = jnode() + ""; }));
-    } else if (jnode != null) {
+    } else if (jnode) {
       el!.nodeValue = jnode + "";
     }
     return createNodeBackingIfNeeded(el!, disposers, staticParent);
@@ -142,7 +142,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
 
   const { name, attrs, children, rawChildren } = jnode;
   if (typeof name === "string") {
-    let refVal: (Ref<HTMLElement> | ((v: HTMLElement) => void))[] | null = null;
+    let refVal: (Ref<HTMLElement> | ((v: HTMLElement) => void))[] | null | undefined;
     const disposers: (() => void)[] = [];
 
     for (const [k, v] of objEntries(attrs)) {
@@ -169,14 +169,14 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
       }
     }
 
-    let skelCh: Node | null = el!.firstChild;
+    let skelCh: Node | null | undefined = el!.firstChild;
     let chLoc = createLocation(el!);
     for (const v of children) {
       let ch: Backing | Node;
       // IMPORTANT This condition, for consuming the skeleton, must be correspondent with collectSkeletons().
       if (typeof v === "string" || (isJSXElement(v) && !v.el && typeof v.name === "string")) {
         ch = assembleImpl(actx, v, null, skelCh);
-        skelCh = skelCh?.nextSibling ?? null;
+        skelCh = skelCh?.nextSibling;
       } else {
         ch = assembleImpl(actx, v, chLoc);
       }

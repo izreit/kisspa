@@ -60,7 +60,7 @@ export function debugGetInternal() {
 }
 
 function isWrappable(v: any): v is object {
-  return (typeof v === "object" && v != null) || typeof v === "function";
+  return (typeof v === "object" && v) || typeof v === "function";
 }
 
 export function cancelAutorun(fun: Observer): void {
@@ -249,7 +249,7 @@ export function autorun(fun: () => void): () => void {
 
 export function bindObserver<A extends [...any], R>(fun: (...args: A) => R, observer?: () => void): (...args: A) => R {
   const olen = activeObserverStack.length;
-  assert(observer != null || olen > 0, "bindObserver(): neither inside of autorun() nor called with observer");
+  assert(!!observer || olen > 0, "bindObserver(): neither in autorun() nor observer is given");
   const resolvedObserver = observer ?? activeObserverStack[olen - 1];
 
   return (...args: A) => {
@@ -376,12 +376,12 @@ function hasPropWatcher(target: Wrapped): boolean {
 
 const trieRoot = createTrie<Key>();
 
-function getPathTrie(wid: PropWatcherId, target: Wrapped): Trie<Key> | null{
+function getPathTrie(wid: PropWatcherId, target: Wrapped): Trie<Key> | null | undefined {
   const pref = parentRefTable.get(target)?.get(wid);
   if (!pref) return null; // unwatched
 
   // calculate minKey if invalidated
-  if (pref.minParent_ == null) {
+  if (!pref.minParent_) {
     let n = Infinity;
     pref.locations_.forEach_((keys, parent) => {
       const ppref = parentRefTable.get(parent)?.get(wid);
@@ -396,7 +396,7 @@ function getPathTrie(wid: PropWatcherId, target: Wrapped): Trie<Key> | null{
   if (pref.minKey_ === DUMMY_SYMBOL)
     return trieRoot;
 
-  return getPathTrie(wid, pref.minParent_)?.childFor_(pref.minKey_!) ?? null;
+  return getPathTrie(wid, pref.minParent_)?.childFor_(pref.minKey_!);
 }
 
 const flushingWatchers: Set<PropWatcherId> = new Set();

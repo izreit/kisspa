@@ -86,8 +86,8 @@ describe("parse", () => {
           begin: 10,
           end: 24,
           mods: [
-            { begin: 3, end: 9, modKey: ":hover", target: null },
-            { begin: 0, end: 2, modKey: "sm", target: null },
+            { begin: 3, end: 9, modKey: ":hover", target: undefined },
+            { begin: 0, end: 2, modKey: "sm", target: undefined },
           ],
           name: ["border", "top"],
           value: ["10%"]
@@ -144,8 +144,8 @@ describe("parse", () => {
           begin: 11,
           end: 25,
           mods: [
-            { begin: 3, end: 9, modKey: ":hover", target: null },
-            { begin: 0, end: 2, modKey: "sm", target: null },
+            { begin: 3, end: 9, modKey: ":hover", target: undefined },
+            { begin: 0, end: 2, modKey: "sm", target: undefined },
           ],
           name: ["border", "top"],
           value: ["10%"]
@@ -154,8 +154,8 @@ describe("parse", () => {
           begin: 26,
           end: 35,
           mods: [
-            { begin: 3, end: 9, modKey: ":hover", target: null },
-            { begin: 0, end: 2, modKey: "sm", target: null },
+            { begin: 3, end: 9, modKey: ":hover", target: undefined },
+            { begin: 0, end: 2, modKey: "sm", target: undefined },
           ],
           name: ["color"],
           value: ["red"]
@@ -178,7 +178,7 @@ describe("parse", () => {
       end_: src.length,
       val_: [
         { begin: 0, end: 3, mods: [], name: ["m"], value: ["1"] },
-        { begin: 4, end: src.length, mods: [], name: ["ordinally", "classname"], value: null },
+        { begin: 4, end: src.length, mods: [], name: ["ordinally", "classname"], value: undefined },
       ],
     });
   });
@@ -203,7 +203,7 @@ describe("parse", () => {
         {
           begin: 3,
           end: 23,
-          mods: [{ begin: 0, end: 2, modKey: "sm", target: null }],
+          mods: [{ begin: 0, end: 2, modKey: "sm", target: undefined }],
           name: ["text", "decoration"],
           value: ["auto"]
         },

@@ -49,12 +49,12 @@ function createAllWaiter(): AllWaiter {
 export const Suspense = createSpecial(function Suspense(actx: AssembleContext, props: Suspense.Props): Backing {
   const { fallback, errorFallback, children } = props;
   let loc = createLocation();
-  let fallbackBackings: Backing[] | null = null;
-  let errorFallbackBackings: Backing[] | null = null;
+  let fallbackBackings: Backing[] | null | undefined;
+  let errorFallbackBackings: Backing[] | null | undefined;
   let backings: Backing[];
 
-  let currentBackings: Backing[] | null = null;
-  const setCurrent = (bs: Backing[] | null): void => {
+  let currentBackings: Backing[] | null | undefined;
+  const setCurrent = (bs: Backing[] | null | undefined): void => {
     insertBackings(currentBackings, null);
     insertBackings(bs, loc);
     currentBackings = bs;

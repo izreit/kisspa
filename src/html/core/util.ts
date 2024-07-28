@@ -9,7 +9,7 @@ export function arrayify<T>(v: T | T[] | null | undefined): T[] {
 
 export function lastOf<T>(vs: T[]): T | null {
   const l = vs.length;
-  return (l > 0) ? vs[l - 1] : null;
+  return l ? vs[l - 1] : null;
 }
 
 export function mapCoerce<T, U>(xs: T | T[] | null | undefined, f: (x: T) => U): U[] {
