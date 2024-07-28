@@ -1,14 +1,16 @@
-export function assert(val: boolean, msg: string | (() => string)): asserts val;
-export function assert<U>(val: boolean, msgFun: (arg: U) => string, errorInfoObj: U): asserts val;
-export function assert<U>(val: boolean, msgOrFun: string | ((arg: U) => string), errorInfoObj?: U): asserts val {
+export function throwError(s: string): never {
+  throw new Error(s);
+}
+
+export function assert(val: boolean, msg: string): asserts val {
   if (!val)
-    throw new Error((typeof msgOrFun === "string") ? msgOrFun : msgOrFun(errorInfoObj!));
+    throwError(msg)
 }
 
 export function unreachable(_: never): never {
-  throw new Error("unreachable");
+  throwError("unreachable");
 }
 
 export function dceNeverReach(): never {
-  assert(false, "only available in the full build");
+  throwError("only available in the full build");
 }

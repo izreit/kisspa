@@ -11,13 +11,13 @@ export namespace Suspense {
   }
 }
 
-interface DynamicPromiseAll {
+interface AllWaiter {
   push(p: Promise<void>): void;
   then(f: () => void): this;
   catch(f: (e: unknown) => void): this;
 }
 
-function createDynamicPromiseAll(): DynamicPromiseAll {
+function createAllWaiter(): AllWaiter {
   let generation = 0;
   let waiting = 0;
   let allPromise: Promise<void>, resolve: () => void, reject: (e: unknown) => void;
@@ -32,7 +32,7 @@ function createDynamicPromiseAll(): DynamicPromiseAll {
     allPromise = new Promise<void>((res, rej) => { resolve = res; reject = rej; });
   }
 
-  const ret: DynamicPromiseAll = {
+  const ret: AllWaiter = {
     push(promise: Promise<void>): void {
       if (waiting++ === 0) start();
       const genStart = generation;
@@ -67,7 +67,7 @@ export const Suspense = createSpecial(function Suspense(actx: AssembleContext, p
     setCurrent(errorFallbackBackings);
   };
 
-  const waiter = createDynamicPromiseAll();
+  const waiter = createAllWaiter();
 
   const push = (p: Promise<void> | Promise<void>[]) => {
     const ps = arrayify(p);

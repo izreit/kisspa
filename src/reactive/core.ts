@@ -1,4 +1,4 @@
-import { assert, dceNeverReach } from "./assert";
+import { assert, dceNeverReach, throwError } from "./assert";
 import { decimated } from "./decimated";
 import { Trie } from "./internal/trie";
 import { Mapset } from "./internal/mapset";
@@ -123,6 +123,8 @@ function addRef(wrapped: any, prop: Key, value: any, observer: () => void): void
   (valueCacheTable.get(wrapped) ?? valueCacheTable.set(wrapped, new Map()).get(wrapped)!).set(prop, value);
 }
 
+const rejectionMessageWrite = (p: string | symbol) => `can't modify/delete property ${String(p)} outside a writing context`;
+
 export function observe<T extends object>(initial: T): [T, StoreSetter<T>] {
   if (memoizedTable.has(initial))
     return memoizedTable.get(initial)!;
@@ -164,9 +166,8 @@ export function observe<T extends object>(initial: T): [T, StoreSetter<T>] {
     },
 
     set(target, prop, value, receiver) {
-      if (!writings.has_(proxy)) {
-        throw new Error(`cannot write to property ${String(prop)} outside a writing context`);
-      }
+      if (!writings.has_(proxy))
+        throwError(rejectionMessageWrite(prop));
       const v: any = unwrap(value);
 
       // Request flush only if the writing value 'v' is not identical to the cached value.
@@ -189,7 +190,7 @@ export function observe<T extends object>(initial: T): [T, StoreSetter<T>] {
 
     deleteProperty(target, prop) {
       if (!writings.has_(proxy))
-        throw new Error(`cannot delete a property ${String(prop)} outside a writing context`);
+        throwError(rejectionMessageWrite(prop));
 
       const cacheEntry = valueCacheTable.get(proxy);
       const cache = cacheEntry?.has(prop) ? cacheEntry.get(prop) : Reflect.get(target, prop);
