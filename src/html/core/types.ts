@@ -38,17 +38,13 @@ export interface JSXElement {
 }
 
 export type JSXNodeSync =
-  | null | string | number
-  | Accessor<null | string | number>
-  | JSXElement;
+  | null | string | number | JSXElement | (() => JSXNodeSync);
 
-export type JSXNodeAsync = Promise<JSXNodeSync>;
+export type JSXNodeAsync = Promise<null | string | number | JSXElement | (() => JSXNode)>;
 
 export type JSXNode =
-  | null | string | number
-  | Accessor<null | string | number>
-  | JSXElement
-  | Promise<null | string | number | Accessor<null | string | number> | JSXElement>;
+  | null | string | number | JSXElement | (() => JSXNode)
+  | Promise<null | string | number | JSXElement | (() => JSXNode)>;
 
 // export type OmitNever<T> = { [K in keyof T as T[K] extends never ? never : K]: T[K] };
 export type Component<P> = (props: P) => JSXNode;
