@@ -308,6 +308,38 @@ describe("microstore", function () {
     expect(joined).toBe("fee,BAR,zoo");
   });
 
+  it("cancels nested autorun() when the parent is reevaluated.", async function () {
+    const [store1, setStore1] = observe({ x: 1 });
+    const [store2, setStore2] = observe({ y: 2 });
+    void store1;
+
+    let acc1 = 0;
+    let acc2 = 0;
+    autorun(() => {
+      acc1 += store1.x;
+      autorun(() => {
+        acc2 += store2.y;
+      });
+    });
+    expect(acc1).toBe(1);
+    expect(acc2).toBe(2);
+
+    // store2 affects inside autorun() only
+    setStore2(s => { s.y = 3 });
+    expect(acc1).toBe(1); // unchanged
+    expect(acc2).toBe(5); // changed
+
+    // store1 cancels nested autorun()
+    setStore1(s => { s.x = 5; });
+    expect(acc1).toBe(6);
+    expect(acc2).toBe(8); // += 3 once by new autorun() call
+
+    // so changing store2 causes += 7 just once.
+    setStore2(s => { s.y = 7; });
+    expect(acc1).toBe(6);
+    expect(acc2).toBe(15);
+  });
+
   describe("watchDeep()", () => {
     it("can watch nested properties", async function () {
       const raw = {

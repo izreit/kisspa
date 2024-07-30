@@ -24,6 +24,8 @@ const refs: WeakMap<Wrapped, Map<Key, Set<Observer>>> = new WeakMap();
 /** Observer to Target table */
 const revRefs: WeakMap<Observer, Map<Wrapped, Set<Key>>> = new WeakMap();
 
+const childObservers: WeakMap<Observer, Set<Observer>> = new WeakMap();
+
 /** Memoized table */
 const memoizedTable: WeakMap<Target | Wrapped, [Wrapped, StoreSetter<Wrapped>]> = new WeakMap();
 
@@ -38,7 +40,6 @@ const valueCacheTable: WeakMap<Wrapped, Map<Key, any>> = new WeakMap();
 const writings: LayeredSet<Wrapped> = createLayeredSet();
 
 /** Stack of the current observers, used to update refs/revRefs */
-// NOTE no need to be a stack?
 let activeObserverStack: Observer[] = [];
 
 /** Properties that currently altered and not yet notified to its observers.  */
@@ -64,12 +65,21 @@ function isWrappable(v: any): v is object {
 }
 
 export function cancelAutorun(fun: Observer): void {
-  revRefs.get(fun)?.forEach((keys, wrapped) => {
-    const ref = refs.get(wrapped);
-    if (!ref) return;
-    keys.forEach(key => ref.get(key)?.delete(fun));
-  });
-  revRefs.delete(fun);
+  const revent = revRefs.get(fun);
+  if (revent?.size) {
+    revent.forEach((keys, wrapped) => {
+      const ref = refs.get(wrapped);
+      if (ref)
+        keys.forEach(key => ref.get(key)?.delete(fun));
+    });
+    revent.clear();
+  }
+
+  const ochildren = childObservers.get(fun);
+  if (ochildren?.size) {
+    ochildren.forEach(cancelAutorun);
+    ochildren.clear();
+  }
 }
 
 export const requestFlush = (() => {
@@ -106,8 +116,8 @@ export const requestFlush = (() => {
     finishNotifyPropChange();
 
     funs.forEach(fun => {
-      cancelAutorun(fun); // reset the references from fun
-      autorunImpl(fun, fun); // then re-run and re-register observer
+      cancelAutorun(fun); // reset the references to fun
+      callWithObserver(fun, fun); // then re-run and re-register observer
     });
     funs.clear();
   });
@@ -233,7 +243,7 @@ export function unwrap<T>(val: T): T {
   return unwrapTable.has(val) ? unwrapTable.get(val) : val;
 }
 
-function autorunImpl<T>(fun: () => T, observer: () => void): T {
+function callWithObserver<T>(fun: () => T, observer: () => void): T {
   try {
     activeObserverStack.push(observer);
     return fun();
@@ -242,21 +252,29 @@ function autorunImpl<T>(fun: () => T, observer: () => void): T {
   }
 }
 
+function autorunImpl<T>(fun: () => T, observer: () => void): T {
+  const parentObserver = activeObserverStack[activeObserverStack.length - 1];
+  if (parentObserver)
+    (childObservers.get(parentObserver) ?? (childObservers.set(parentObserver, new Set())).get(parentObserver))!.add(observer);
+  return callWithObserver(fun, observer);
+}
+
 export function autorun(fun: () => void): () => void {
   autorunImpl(fun, fun);
   return () => cancelAutorun(fun);
 }
 
 export function bindObserver<A extends [...any], R>(fun: (...args: A) => R, observer?: () => void): (...args: A) => R {
-  const olen = activeObserverStack.length;
-  assert(!!observer || olen > 0, "bindObserver(): neither in autorun() nor observer is given");
-  const resolvedObserver = observer ?? activeObserverStack[olen - 1];
+  const resolvedObserver = observer ?? activeObserverStack[activeObserverStack.length - 1];
+  assert(!!resolvedObserver, "bindObserver(): neither in autorun() nor observer is given");
 
   return (...args: A) => {
     return autorunImpl(() => fun(...args), resolvedObserver);
   };
 }
 
+// Impossible?
+/*
 export function withoutObserver<T>(fun: () => T): T {
   const os = activeObserverStack;
   try {
@@ -266,6 +284,7 @@ export function withoutObserver<T>(fun: () => T): T {
     activeObserverStack = os;
   }
 }
+*/
 
 // --- watch ----
 
