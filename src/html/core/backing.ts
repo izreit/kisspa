@@ -61,8 +61,8 @@ export interface BackingBase extends Backing {
   addDisposer_: (f: () => void) => void;
 }
 
-export function createBackingBase(name: string): BackingBase {
-  const loc = createLocation();
+export function createBackingBase(name: string, l?: BackingLocation | null): BackingBase {
+  const loc = l ? { ...l } : createLocation();
   let backings: Backing[] | null | undefined;
   const disposers: (() => void)[] = [];
   return {
@@ -91,14 +91,12 @@ export function createBackingBase(name: string): BackingBase {
   };
 }
 
-function createNodeBackingIfNeeded(node: Node, disposers: (() => void)[], staticParent: boolean): Backing | Node {
-  const tail = () => node;
-
+function createNodeBackingIfNeeded(node: Node, staticParent: boolean, disposers?: (() => void)[]): Backing | Node {
   if (staticParent) {
-    if (disposers.length === 0)
+    if (!disposers || !disposers.length)
       return node;
     const dispose = (disposers.length === 1) ? disposers[0] : () => disposers.forEach(d => d());
-    return { insert: doNothing, dispose, tail, name: node };
+    return { insert: doNothing, dispose, tail: () => node, name: node };
   }
 
   const insert = (pos?: BackingLocation | null | undefined) => {
@@ -110,24 +108,9 @@ function createNodeBackingIfNeeded(node: Node, disposers: (() => void)[], static
   };
   const dispose = () => {
     insert();
-    disposers.forEach(d => d());
+    disposers?.forEach(d => d());
   };
-  return { insert, dispose, tail, name: node };
-}
-
-function delayAssemble(actx: AssembleContext, jnode: Promise<JSXNode>, l: BackingLocation | null | undefined): Backing {
-  const base = createBackingBase("Delay");
-  let disposed: boolean | undefined;
-  base.insert(l);
-  base.addDisposer_(() => { disposed = true; });
-
-  const p = jnode.then((j) => {
-    if (disposed) return;
-    base.setBackings_([assemble(actx, j)]);
-  });
-
-  actx.suspenseContext_?.push(p);
-  return base;
+  return { insert, dispose, tail: () => node, name: node };
 }
 
 function resolveRef(el: HTMLElement, r: Ref<HTMLElement> | ((e: HTMLElement) => void)): void {
@@ -141,27 +124,38 @@ function assignAttribute(el: HTMLElement, k: string, v: string | null): void {
 function assembleImpl(actx: AssembleContext, jnode: JSXNode): Backing;
 function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node;
 function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node {
-  if (isPromise(jnode))
-    return delayAssemble(actx, jnode, loc);
+  if (isPromise(jnode)) {
+    let disposed: boolean | undefined;
+    const b = createBackingBase("Delay", loc);
+    b.addDisposer_(() => { disposed = true; });
+    const p = jnode.then((j) => {
+      disposed || b.setBackings_([assemble(actx, j)]);
+    });
+    actx.suspenseContext_?.push(p);
+    return b;
+  }
+
+  if (typeof jnode === "function") {
+    const b = createBackingBase("Fun", loc);
+    b.addDisposer_(autorun(() => {
+      b.setBackings_([assemble(actx, jnode())]);
+    }));
+    return b;
+  }
 
   const staticParent = !!node?.parentNode;
   const el =
     node ??
     ((jnode && typeof jnode === "object") ?
       (jnode.el !== $noel ? jnode.el?.cloneNode(true) : null) :
-      document.createTextNode((typeof jnode === "function") ? "" : (jnode + "")));
+      document.createTextNode(""));
 
   if (el && !el.parentNode && loc?.parent)
     insertAfter(el, loc.parent, loc.prev);
 
-  if (typeof jnode !== "object" || !jnode) {
-    let disposers: (() => void)[] = [];
-    if (typeof jnode === "function") {
-      disposers.push(autorun(() => { el!.nodeValue = jnode() + ""; }));
-    } else if (jnode) {
-      el!.nodeValue = jnode + "";
-    }
-    return createNodeBackingIfNeeded(el!, disposers, staticParent);
+  if (!(jnode && typeof jnode === "object")) {
+    el!.nodeValue = (jnode ?? "") + "";
+    return createNodeBackingIfNeeded(el!, staticParent);
   }
 
   const { name, attrs, children, rawChildren } = jnode;
@@ -212,15 +206,8 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
     if (refVal)
       refVal.forEach(r => resolveRef(el as HTMLElement, r));
 
-    return createNodeBackingIfNeeded(el!, disposers, staticParent);
+    return createNodeBackingIfNeeded(el!, staticParent, disposers);
   }
-
-  // Accept Promise directly as a component. Seems useful and possible,
-  // but TypeScript doesn't accept Promises as components. Use `lazy()` instead.
-  // (ref. https://www.typescriptlang.org/docs/handbook/jsx.html#value-based-elements)
-  //
-  // if (isPromise(name))
-  //   return delayAssemble(actx, name.then(c => ({ ...jnode, name: c })), loc);
 
   const special = specials.get(name);
   if (special) {
