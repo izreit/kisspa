@@ -42,31 +42,32 @@ export const For = createSpecial(function For<E>(actx: AssembleContext, props: F
     backingTable.clear();
     backingTable = nextTable;
 
-    if (!loc.parent) {
-      backings = nextBackings;
-      return;
-    }
-
-    let ci = 0;
-    let ni = 0;
-    let l = { ...loc };
-    const commonBackings = lcs(backings, nextBackings);
-    for (let cmi = 0; cmi < commonBackings.length; ++cmi) {
-      const commonBacking = commonBackings[cmi];
-      for (let cb = backings[ci]; ci < backings.length && backings[ci] !== commonBacking; ++ci, cb = backings[ci])
+    if (loc.parent) {
+      let ci = 0;
+      let ni = 0;
+      let l = { ...loc };
+      const commonBackings = lcs(backings, nextBackings);
+      for (let cmi = 0; cmi < commonBackings.length; ++cmi) {
+        const commonBacking = commonBackings[cmi];
+        for (let cb = backings[ci]; ci < backings.length && backings[ci] !== commonBacking; ++ci, cb = backings[ci])
+          cb.dispose();
+        for (let nb = nextBackings[ni]; ni < nextBackings.length && nb !== commonBacking; ++ni, nb = nextBackings[ni]) {
+          nb.insert(l);
+          l.prev = nb;
+        }
+        ++ci;
+        ++ni;
+        l.prev = commonBacking;
+      }
+      for (let cb = backings[ci]; ci < backings.length; ++ci, cb = backings[ci])
         cb.dispose();
-      for (let nb = nextBackings[ni]; ni < nextBackings.length && nb !== commonBacking; ++ni, nb = nextBackings[ni]) {
+      for (let nb = nextBackings[ni]; ni < nextBackings.length; ++ni, nb = nextBackings[ni]) {
         nb.insert(l);
         l.prev = nb;
       }
-      l.prev = commonBacking;
     }
-    for (let cb = backings[ci]; ci < backings.length; ++ci, cb = backings[ci])
-      cb.dispose();
-    for (let nb = nextBackings[ni]; ni < nextBackings.length; ++ni, nb = nextBackings[ni]) {
-      nb.insert(l);
-      l.prev = nb;
-    }
+
+    backings = nextBackings;
   });
 
   return {
