@@ -64,7 +64,18 @@ function isWrappable(v: any): v is object {
   return (typeof v === "object" && v) || typeof v === "function";
 }
 
-export function cancelAutorun(fun: Observer): void {
+function collectObserverDescendants(fun: Observer, acc: Set<Observer>): void {
+  const cs = childObservers.get(fun);
+  if (cs?.size) {
+    cs.forEach(c => {
+      acc.add(c);
+      collectObserverDescendants(c, acc);
+    });
+    cs.clear();
+  }
+}
+
+function clearRefsTo(fun: Observer): void {
   const revent = revRefs.get(fun);
   if (revent?.size) {
     revent.forEach((keys, wrapped) => {
@@ -74,16 +85,18 @@ export function cancelAutorun(fun: Observer): void {
     });
     revent.clear();
   }
+}
 
-  const ochildren = childObservers.get(fun);
-  if (ochildren?.size) {
-    ochildren.forEach(cancelAutorun);
-    ochildren.clear();
-  }
+export function cancelAutorun(fun: Observer): void {
+  const cos = new Set<Observer>();
+  collectObserverDescendants(fun, cos);
+  cos.forEach(clearRefsTo);
+  clearRefsTo(fun)
 }
 
 export const requestFlush = (() => {
-  const funs = new Set<() => void>();
+  const observers = new Set<Observer>();
+  const observerDescendants = new Set<Observer>();
 
   return decimated(function flush() {
     if (!writtens.length) return;
@@ -102,7 +115,10 @@ export const requestFlush = (() => {
 
       if (key !== MUTATION_MARKER) {
         // collect watchers
-        refs.get(wrapped)?.get(key)?.forEach(fun => funs.add(fun));
+        refs.get(wrapped)?.get(key)?.forEach(fun => {
+          collectObserverDescendants(fun, observerDescendants);
+          observers.add(fun);
+        });
         // fire deep watchers
         if (hasPropObserver)
           notifyPropChange(wrapped, key, val, prev);
@@ -115,11 +131,14 @@ export const requestFlush = (() => {
     writtens.length = 0;
     finishNotifyPropChange();
 
-    funs.forEach(fun => {
-      cancelAutorun(fun); // reset the references to fun
-      callWithObserver(fun, fun); // then re-run and re-register observer
+    observerDescendants.forEach(clearRefsTo);
+    observers.forEach(fun => {
+      // re-run and re-register observer, if not canceled as a descendant of others.
+      if (!observerDescendants.has(fun))
+        callWithObserver(fun, fun);
     });
-    funs.clear();
+    observers.clear();
+    observerDescendants.clear();
   });
 })();
 
