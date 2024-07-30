@@ -311,7 +311,6 @@ describe("microstore", function () {
   it("cancels nested autorun() when the parent is reevaluated.", async function () {
     const [store1, setStore1] = observe({ x: 1 });
     const [store2, setStore2] = observe({ y: 2 });
-    void store1;
 
     let acc1 = 0;
     let acc2 = 0;
@@ -338,6 +337,30 @@ describe("microstore", function () {
     setStore2(s => { s.y = 7; });
     expect(acc1).toBe(6);
     expect(acc2).toBe(15);
+  });
+
+  it("cancels nested autorun() even if they are fired synchronously", async function () {
+    const [store1, setStore1] = observe({ x: 1, y: 2 });
+
+    let acc1 = 0, acc2 = 0;
+    autorun(() => {
+      acc1 += store1.x;
+      autorun(() => {
+        acc2 += store1.y;
+      });
+    });
+    expect(acc1).toBe(1);
+    expect(acc2).toBe(2);
+
+    // modify x and then y, to fire outer autorun() first.
+    setStore1(s => { s.x = 3; s.y = 5; });
+    expect(acc1).toBe(4);
+    expect(acc2).toBe(7);
+
+    // modify y and then x, to fire inner autorun() first.
+    setStore1(s => { s.y = 11; s.x = 13; });
+    expect(acc1).toBe(17);
+    expect(acc2).toBe(18);
   });
 
   describe("watchDeep()", () => {
