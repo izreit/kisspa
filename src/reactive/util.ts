@@ -1,5 +1,5 @@
 import { decimated } from "./decimated";
-import { autorun, bindObserver, cancelAutorun, observe, withoutObserver } from "./core";
+import { autorun, bindObserver, cancelAutorun, observe } from "./core";
 
 export interface AutorunDecimatedResult {
   fun: () => Promise<void>;
@@ -31,7 +31,7 @@ export function watchProbe<T>(probe: () => T, fun: (current: T, previous: T | un
     const p = prev;
     prev = cur;
 
-    withoutObserver(() => fun(cur, p));
+    fun(cur, p);
   });
 }
 
