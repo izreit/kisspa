@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { cloneutil } from "../cloneutil";
-import { autorun, bindObserver, cancelAutorun, debugGetInternal, Key, observe, unwatch, watchDeep, watchShallow } from "../core";
+import { autorun, bindObserver, cancelAutorun, debugGetInternal, observe, unwatch, watchDeep, watchShallow } from "../core";
+import { Key } from "../internal/reftable";
 
 describe("microstore", function () {
   it("can be read/modified", function () {
@@ -16,7 +17,7 @@ describe("microstore", function () {
     const raw = { foo: 4 };
     const [store, setStore] = observe(raw);
     expect(store.foo).toBe(4);
-    expect(internal.refs.has(store)).toBe(false);
+    expect(internal.refTable.table_.has(store)).toBe(false);
     expect(internal.memoizedTable.get(store)?.[0]).toBe(store);
 
     let squareFoo: number = 0;
@@ -24,10 +25,10 @@ describe("microstore", function () {
     autorun(observer);
     expect(store.foo).toBe(4);
     expect(squareFoo).toBe(16); // autorun() calls the observer func imidiately
-    expect(internal.refs.get(store)?.get("foo")?.has(observer)).toBe(true);
-    expect(internal.refs.get(store)?.get("foo")?.size).toBe(1);
-    expect(internal.revRefs.get(observer)?.get(store)?.has("foo")).toBe(true);
-    expect(internal.revRefs.get(observer)?.get(store)?.size).toBe(1);
+    expect(internal.refTable.table_.get(store)?.get("foo")?.has(observer)).toBe(true);
+    expect(internal.refTable.table_.get(store)?.get("foo")?.size).toBe(1);
+    expect(internal.refTable.reverseTable_.get(observer)?.get(store)?.has("foo")).toBe(true);
+    expect(internal.refTable.reverseTable_.get(observer)?.get(store)?.size).toBe(1);
 
     setStore(s => { s.foo *= 2; });
     expect(store.foo).toBe(8);
@@ -206,14 +207,14 @@ describe("microstore", function () {
     autorun(observer1);
 
     expect(value).toBe("ar");
-    expect(internal.refs.get(store1)?.get("index")?.has(observer1)).toBe(true);
-    expect(internal.refs.get(store2)?.get("values")?.has(observer1)).toBe(true);
-    expect(internal.refs.get(store2.values)?.get("1")?.has(observer1)).toBe(true);
-    expect(internal.refs.get(store2.values)?.get("2")?.has(observer1)).toBe(undefined);
-    expect(internal.revRefs.get(observer1)?.get(store1)?.has("index")).toBe(true);
-    expect(internal.revRefs.get(observer1)?.get(store2)?.has("values")).toBe(true);
-    expect(internal.revRefs.get(observer1)?.get(store2.values)?.has("1")).toBe(true);
-    expect(internal.revRefs.get(observer1)?.get(store2.values)?.has("2")).toBe(false);
+    expect(internal.refTable.table_.get(store1)?.get("index")?.has(observer1)).toBe(true);
+    expect(internal.refTable.table_.get(store2)?.get("values")?.has(observer1)).toBe(true);
+    expect(internal.refTable.table_.get(store2.values)?.get("1")?.has(observer1)).toBe(true);
+    expect(internal.refTable.table_.get(store2.values)?.get("2")?.has(observer1)).toBe(undefined);
+    expect(internal.refTable.reverseTable_.get(observer1)?.get(store1)?.has("index")).toBe(true);
+    expect(internal.refTable.reverseTable_.get(observer1)?.get(store2)?.has("values")).toBe(true);
+    expect(internal.refTable.reverseTable_.get(observer1)?.get(store2.values)?.has("1")).toBe(true);
+    expect(internal.refTable.reverseTable_.get(observer1)?.get(store2.values)?.has("2")).toBe(false);
 
     setStore1(v => { v.index = 0; });
     setStore1(v => { v.index = 3; });
@@ -221,16 +222,16 @@ describe("microstore", function () {
     expect(raw1.index).toBe(3);
 
     expect(value).toBe("s4");
-    expect(internal.refs.get(store1)?.get("index")?.has(observer1)).toBe(true);
-    expect(internal.refs.get(store2)?.get("values")?.has(observer1)).toBe(true);
-    expect(internal.refs.get(store2.values)?.get("1")?.has(observer1)).toBe(undefined); // not false because .values changed
-    expect(internal.refs.get(store2.values)?.get("2")?.has(observer1)).toBe(undefined);
-    expect(internal.refs.get(store2.values)?.get("3")?.has(observer1)).toBe(true);
-    expect(internal.revRefs.get(observer1)?.get(store1)?.has("index")).toBe(true);
-    expect(internal.revRefs.get(observer1)?.get(store2)?.has("values")).toBe(true);
-    expect(internal.revRefs.get(observer1)?.get(store2.values)?.has("1")).toBe(false);
-    expect(internal.revRefs.get(observer1)?.get(store2.values)?.has("2")).toBe(false);
-    expect(internal.revRefs.get(observer1)?.get(store2.values)?.has("3")).toBe(true);
+    expect(internal.refTable.table_.get(store1)?.get("index")?.has(observer1)).toBe(true);
+    expect(internal.refTable.table_.get(store2)?.get("values")?.has(observer1)).toBe(true);
+    expect(internal.refTable.table_.get(store2.values)?.get("1")?.has(observer1)).toBe(undefined); // not false because .values changed
+    expect(internal.refTable.table_.get(store2.values)?.get("2")?.has(observer1)).toBe(undefined);
+    expect(internal.refTable.table_.get(store2.values)?.get("3")?.has(observer1)).toBe(true);
+    expect(internal.refTable.reverseTable_.get(observer1)?.get(store1)?.has("index")).toBe(true);
+    expect(internal.refTable.reverseTable_.get(observer1)?.get(store2)?.has("values")).toBe(true);
+    expect(internal.refTable.reverseTable_.get(observer1)?.get(store2.values)?.has("1")).toBe(false);
+    expect(internal.refTable.reverseTable_.get(observer1)?.get(store2.values)?.has("2")).toBe(false);
+    expect(internal.refTable.reverseTable_.get(observer1)?.get(store2.values)?.has("3")).toBe(true);
   });
 
   it("can alter array", async function () {
