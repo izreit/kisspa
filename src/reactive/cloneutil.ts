@@ -1,5 +1,5 @@
 import { dceNeverReach } from "./assert";
-import type { Key } from "./core";
+import type { Key } from "./internal/reftable";
 
 export namespace cloneutil {
   export function cloneDeep<T>(val: T): T {

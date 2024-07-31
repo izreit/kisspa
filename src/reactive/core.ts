@@ -1,13 +1,9 @@
 import { assert, dceNeverReach, throwError } from "./assert";
 import { decimated } from "./decimated";
-import { createTrie, Trie } from "./internal/trie";
-import { createMapset, Mapset } from "./internal/mapset";
 import { createLayeredSet, LayeredSet } from "./internal/layeredset";
-
-export type Key = string | symbol | number;
-type Target = any;
-type Wrapped = any;
-type Observer = () => void;
+import { createMapset, Mapset } from "./internal/mapset";
+import { createRefTable, Key, Observer, Target, Wrapped } from "./internal/reftable";
+import { createTrie, Trie } from "./internal/trie";
 
 export interface StoreSetterOptions {
   lazyFlush?: boolean;
@@ -18,11 +14,7 @@ export interface StoreSetter<T> {
   autorun: (writer: (val: T) => void) => void;
 }
 
-/** Target to Observer table */
-const refs: WeakMap<Wrapped, Map<Key, Set<Observer>>> = new WeakMap();
-
-/** Observer to Target table */
-const revRefs: WeakMap<Observer, Map<Wrapped, Set<Key>>> = new WeakMap();
+const refTable = createRefTable();
 
 const childObservers: WeakMap<Observer, Set<Observer>> = new WeakMap();
 
@@ -39,7 +31,7 @@ const valueCacheTable: WeakMap<Wrapped, Map<Key, any>> = new WeakMap();
 // NOTE not WeakSet, to use clear(). Never causes leak since it always be cleared at the finally clause in setter.
 const writings: LayeredSet<Wrapped> = createLayeredSet();
 
-/** Stack of the current observers, used to update refs/revRefs */
+/** Stack of the current observers, used to update refTable */
 let activeObserverStack: Observer[] = [];
 
 /** Properties that currently altered and not yet notified to its observers.  */
@@ -48,8 +40,6 @@ let activeObserverStack: Observer[] = [];
 // where 'hpo' (stands for 'has-property-observer') equals hasPropWatcher(wrapped) at the written time.
 const writtens: (Wrapped | Key | any)[] = [];
 
-// const propObserverTable: WeakMap<Wrapped, Map<Wrapped, Map<Key, Set<(prop: Key, val: any, prev: any) => void>>>> = new WeakMap();
-
 const DELETE_MARKER = {};
 
 const arrayMutators = ((a) => new Set<Function>([a.shift, a.unshift, a.push, a.pop, a.splice]))([] as any[]);
@@ -57,7 +47,7 @@ const MUTATION_MARKER = Symbol();
 let arrayMutatorCallDepth = 0;
 
 export function debugGetInternal() {
-  return { refs, revRefs, memoizedTable, parentRefTable, propWatcherTable };
+  return { refTable, memoizedTable, parentRefTable, propWatcherTable };
 }
 
 function isWrappable(v: any): v is object {
@@ -75,23 +65,11 @@ function collectObserverDescendants(fun: Observer, acc: Set<Observer>): void {
   }
 }
 
-function clearRefsTo(fun: Observer): void {
-  const revent = revRefs.get(fun);
-  if (revent?.size) {
-    revent.forEach((keys, wrapped) => {
-      const ref = refs.get(wrapped);
-      if (ref)
-        keys.forEach(key => ref.get(key)?.delete(fun));
-    });
-    revent.clear();
-  }
-}
-
 export function cancelAutorun(fun: Observer): void {
   const cos = new Set<Observer>();
   collectObserverDescendants(fun, cos);
-  cos.forEach(clearRefsTo);
-  clearRefsTo(fun)
+  cos.forEach(refTable.clear_);
+  refTable.clear_(fun);
 }
 
 export const requestFlush = (() => {
@@ -115,7 +93,7 @@ export const requestFlush = (() => {
 
       if (key !== MUTATION_MARKER) {
         // collect watchers
-        refs.get(wrapped)?.get(key)?.forEach(fun => {
+        refTable.forEachObserver_(wrapped, key, fun => {
           collectObserverDescendants(fun, observerDescendants);
           observers.add(fun);
         });
@@ -131,7 +109,7 @@ export const requestFlush = (() => {
     writtens.length = 0;
     finishNotifyPropChange();
 
-    observerDescendants.forEach(clearRefsTo);
+    observerDescendants.forEach(refTable.clear_);
     observers.forEach(fun => {
       // re-run and re-register observer, if not canceled as a descendant of others.
       if (!observerDescendants.has(fun))
@@ -142,21 +120,11 @@ export const requestFlush = (() => {
   });
 })();
 
-function addRef(wrapped: any, prop: Key, value: any, observer: () => void): void {
-  const refent = refs.get(wrapped) ?? refs.set(wrapped, new Map()).get(wrapped)!;
-  (refent.get(prop) ?? refent.set(prop, new Set()).get(prop)!).add(observer);
-
-  const revent = revRefs.get(observer) ?? revRefs.set(observer, new Map()).get(observer)!;
-  (revent.get(wrapped) ?? revent.set(wrapped, new Set()).get(wrapped)!).add(prop);
-
-  (valueCacheTable.get(wrapped) ?? valueCacheTable.set(wrapped, new Map()).get(wrapped)!).set(prop, value);
-}
-
 const rejectionMessageWrite = (p: string | symbol) => `can't set/delete property ${String(p)} without setter`;
 
 export function observe<T extends object>(initial: T): [T, StoreSetter<T>] {
   if (memoizedTable.has(initial))
-    return memoizedTable.get(initial)!;
+    return memoizedTable.get(initial)! as [T, StoreSetter<T>];
 
   const proxy = new Proxy(initial, {
     apply: function (target, thisArg, argArray) {
@@ -176,7 +144,8 @@ export function observe<T extends object>(initial: T): [T, StoreSetter<T>] {
       const raw = Reflect.get(target, prop, receiver);
 
       if (activeObserverStack.length > 0) {
-        addRef(proxy, prop, raw, activeObserverStack[activeObserverStack.length - 1]);
+        refTable.add_(proxy, prop, activeObserverStack[activeObserverStack.length - 1]);
+        (valueCacheTable.get(proxy) ?? valueCacheTable.set(proxy, new Map()).get(proxy)!).set(prop, raw);
       }
 
       if (!isWrappable(raw))
@@ -258,8 +227,8 @@ export function observe<T extends object>(initial: T): [T, StoreSetter<T>] {
   return ret;
 }
 
-export function unwrap<T>(val: T): T {
-  return unwrapTable.has(val) ? unwrapTable.get(val) : val;
+export function unwrap<T extends object>(val: T): T {
+  return unwrapTable.has(val) ? unwrapTable.get(val) as T : val;
 }
 
 function callWithObserver<T>(fun: () => T, observer: () => void): T {
@@ -434,7 +403,7 @@ function getPathTrie(wid: PropWatcherId, target: Wrapped): Trie<Key> | null | un
   if (pref.minKey_ === DUMMY_SYMBOL)
     return trieRoot;
 
-  return getPathTrie(wid, pref.minParent_)?.childFor_(pref.minKey_!);
+  return getPathTrie(wid, pref.minParent_!)?.childFor_(pref.minKey_!);
 }
 
 const flushingWatchers: Set<PropWatcherId> = new Set();
