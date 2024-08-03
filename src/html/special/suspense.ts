@@ -1,4 +1,4 @@
-import { AssembleContext, Backing, BackingLocation, assemble, assignLocation, createLocation, createSpecial, disposeBackings, insertBackings, tailOfBackings } from "../core/backing";
+import { AssembleContext, Backing, assemble, createBackingCommon, createSpecial, disposeBackings, insertBackings } from "../core/backing";
 import { JSXNode, PropChildren } from "../core/types";
 import { arrayify, mapCoerce } from "../core/util";
 
@@ -47,15 +47,17 @@ function createAllWaiter(): AllWaiter {
 
 export const Suspense = createSpecial(function Suspense(actx: AssembleContext, props: Suspense.Props): Backing {
   const { fallback, errorFallback, children } = props;
-  let loc = createLocation();
+
   let fallbackBackings: Backing[] | null | undefined;
   let errorFallbackBackings: Backing[] | null | undefined;
   let backings: Backing[];
 
   let currentBackings: Backing[] | null | undefined;
+  const base = createBackingCommon("Suspense", () => currentBackings);
+
   const setCurrent = (bs: Backing[] | null | undefined): void => {
     insertBackings(currentBackings, null);
-    insertBackings(bs, loc);
+    insertBackings(bs, base.location_);
     currentBackings = bs;
   };
 
@@ -105,11 +107,5 @@ export const Suspense = createSpecial(function Suspense(actx: AssembleContext, p
   };
   start();
 
-  const insert = (l: BackingLocation | null | undefined) => {
-    if (assignLocation(loc, l))
-      insertBackings(currentBackings, loc);
-  };
-  const tail = () => tailOfBackings(currentBackings, loc.prev);
-  const dispose = () => disposeBackings(currentBackings);
-  return { insert, tail, dispose, name: "Suspense" };
+  return base;
 });

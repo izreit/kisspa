@@ -1,4 +1,4 @@
-import { AssembleContext, Backing, assemble, assignLocation, createLocation, createSpecial, disposeBackings, insertBackings, tailOf, tailOfBackings } from "../core/backing";
+import { AssembleContext, Backing, assemble, assignLocation, createBackingCommon, createLocation, createSpecial, disposeBackings, insertBackings, tailOf, tailOfBackings } from "../core/backing";
 import { PropChildren } from "../core/types";
 import { lastOf, mapCoerce } from "../core/util";
 
@@ -15,31 +15,26 @@ export namespace Portal {
 }
 
 interface PortalDestBacking extends Backing {
-  addChild(b: Backing): void;
-  removeChild(b: Backing): void;
+  addBacking_(b: Backing): void;
+  removeBacking_(b: Backing): void;
 }
 
 function createPortalDestBacking(): PortalDestBacking {
   const childBackings: Backing[] = [];
-  let loc = createLocation();
+  const base = createBackingCommon("PortalDest", () => childBackings);
+  const loc = base.location_;
   return {
-    insert: (l): void => {
-      if (assignLocation(loc, l))
-        insertBackings(childBackings, l);
-    },
-    tail: () => tailOfBackings(childBackings, loc?.prev),
-    dispose: () => disposeBackings(childBackings),
-    addChild: (b: Backing): void => {
+    ...base,
+    addBacking_(b: Backing): void {
       if (loc.parent)
         b.insert(createLocation(loc.parent, lastOf(childBackings)));
       childBackings.push(b);
     },
-    removeChild: (b: Backing): void => {
+    removeBacking_(b: Backing): void {
       const i = childBackings.indexOf(b);
       b.insert();
       childBackings.splice(i, 1);
     },
-    name: "PortalDest"
   };
 }
 
@@ -71,6 +66,7 @@ export function createPortalSrcBacking(actx: AssembleContext, props: Portal.SrcP
       insertBackings(childBackings, physicalLoc);
     } else {
       disposeBackings(childBackings);
+      childBackings = null;
     }
   }
 
@@ -84,7 +80,7 @@ export function createPortalSrcBacking(actx: AssembleContext, props: Portal.SrcP
     name: "PortalSrcPhys",
   };
 
-  destBackingFor(to).addChild(physicalBacking);
+  destBackingFor(to).addBacking_(physicalBacking);
 
   return {
     insert: (l) => {
@@ -94,7 +90,7 @@ export function createPortalSrcBacking(actx: AssembleContext, props: Portal.SrcP
     tail: () => tailOf(virtualLoc.prev),
     dispose: () => {
       disposeBackings(childBackings);
-      destBackingFor(to).removeChild(physicalBacking);
+      destBackingFor(to).removeBacking_(physicalBacking);
     },
     name: "PortalSrcVirt",
   };

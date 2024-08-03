@@ -1,5 +1,5 @@
 import { autorun, signal, watchProbe } from "../../reactive";
-import { assemble, AssembleContext, Backing, createBackingBase, createSpecial } from "../core/backing";
+import { assemble, AssembleContext, Backing, createSimpleBacking, createSpecial } from "../core/backing";
 import { jsx } from "../core/h";
 import { JSXNode, PropChildren } from "../core/types";
 import { arrayify, mapCoerce } from "../core/util";
@@ -56,14 +56,8 @@ export const Switch = createSpecial((actx: AssembleContext, props: Switch.Props)
       ] : children
     }
   );
-
-  return {
-    ...b,
-    dispose() {
-      b.dispose();
-      switchCtx.dispose_();
-    },
-  }
+  b.addDisposer_(switchCtx.dispose_);
+  return b;
 });
 
 export namespace Match {
@@ -84,7 +78,7 @@ export const Match = createSpecial(<T extends object>(actx: AssembleContext, pro
   const switchCtx = useSwitchContext();
   const index = switchCtx.register_(when);
 
-  const base = createBackingBase("Match");
+  const base = createSimpleBacking("Match");
 
   base.addDisposer_(watchProbe(
     () => (switchCtx.active_() === index),
