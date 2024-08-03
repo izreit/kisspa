@@ -19,13 +19,11 @@ describe("util", function () {
       expect(results).toEqual([4]); // decimated to call once
 
       setStore(m => { m.a.nested.value += 10; });
-      await Promise.resolve(); // wait for the promise resolution created in setStore()
       await Promise.resolve(); // Ugh! wait for the promise resolution of decimated()
       expect(results).toEqual([4, 14]); // autorun still works
 
       cancel();
       setStore(m => { m.a.nested.value += 10; });
-      await Promise.resolve(); // wait for the promise resolution created in setStore()
       await Promise.resolve(); // Ugh! wait for the promise resolution of decimated()
       expect(results).toEqual([4, 14]); // nothing changed because already cancelled
     });
@@ -50,26 +48,56 @@ describe("util", function () {
 
       // does nothing on unrelated changes.
       setStore(s => { s.values[2] = "written"; });
-      await Promise.resolve();
       expect(count).toBe(1);
 
       // target changes makes the watcher called.
       setStore(s => { s.values[1] = "boo"; });
-      await Promise.resolve();
       expect(count).toBe(2);
       expect(history).toEqual(["boo", "glaa"]);
 
       // the watcher is not called unless the target is changed to a different value.
       setStore(s => { s.values[1] = "boo"; });
-      await Promise.resolve();
       expect(count).toBe(2);
       expect(history).toEqual(["boo", "glaa"]);
 
       // indirect modifications are also notified to the watcher.
       setStore(s => { s.values.unshift("UNSHIFTED"); });
-      await Promise.resolve();
       expect(count).toBe(3);
       expect(history).toEqual(["fee", "boo"]);
+    });
+
+    it("compares by array elements", async function () {
+      const raw = {
+        values: ["fee", "glaa", "zoo"],
+        foo: 3,
+      };
+      const [store, setStore] = observe(raw);
+
+      let count = 0;
+      let history: ([[string, number], [string, number] | undefined])[] = [];
+      watchProbe(() => [store.values[1], store.foo] as [string, number], (cur, prev) => {
+        count++;
+        history.push([cur, prev]);
+      });
+
+      expect(count).toBe(1);
+      expect(history).toEqual([[["glaa", 3], undefined]]);
+
+      // unaffected by unwatched values
+      setStore(s => { s.values[0] = "bee"; });
+      expect(count).toBe(1);
+
+      // affected by an element of watchProbe'ed array
+      setStore(s => { s.foo = 4 });
+      expect(count).toBe(2);
+      expect(history).toEqual([
+        [["glaa", 3], undefined],
+        [["glaa", 4], ["glaa", 3]],
+      ]);
+
+      // increase ocoverage: watched properties are changed and restored synchronously
+      setStore(s => { s.foo++; s.foo--; });
+      expect(count).toBe(2);
     });
   });
 });
