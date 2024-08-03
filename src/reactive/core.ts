@@ -1,6 +1,5 @@
 import { assert, dceNeverReach, throwError } from "./assert";
 import { decimated } from "./decimated";
-import { createLayeredSet, LayeredSet } from "./internal/layeredset";
 import { createMapset, Mapset } from "./internal/mapset";
 import { createRefTable, Key, Observer, Target, Wrapped } from "./internal/reftable";
 import { createTrie, Trie } from "./internal/trie";
@@ -10,26 +9,22 @@ export interface StoreSetterOptions {
 }
 
 export interface StoreSetter<T> {
-  <U>(writer: (val: T) => U, opts?: StoreSetterOptions): U;
-  autorun: (writer: (val: T) => void) => void;
+  (writer: (val: T) => void, opts?: StoreSetterOptions): void;
+  autorun: (writer: (val: T) => void) => (() => void);
 }
 
 const refTable = createRefTable();
 
 const childObservers: WeakMap<Observer, Set<Observer>> = new WeakMap();
 
-/** Memoized table */
-const memoizedTable: WeakMap<Target | Wrapped, [Wrapped, StoreSetter<Wrapped>]> = new WeakMap();
+/** Memoized table: raw value to [readProxy, writeProxy] */
+const memoizedTable: WeakMap<Target | Wrapped, [Wrapped, Wrapped]> = new WeakMap();
 
 /** Reverse map to Target */
 const unwrapTable: WeakMap<Wrapped, Target> = new WeakMap();
 
 /** cache of values: used to skip to notify observers and maintain watchDeep() watchers. */
 const valueCacheTable: WeakMap<Wrapped, Map<Key, any>> = new WeakMap();
-
-/** Wrapped values retrieved inside the ongoing setter callbacks. Modifications are rejected unless through the values registered here. */
-// NOTE not WeakSet, to use clear(). Never causes leak since it always be cleared at the finally clause in setter.
-const writings: LayeredSet<Wrapped> = createLayeredSet();
 
 /** Stack of the current observers, used to update refTable */
 let activeObserverStack: Observer[] = [];
@@ -42,12 +37,12 @@ const writtens: (Wrapped | Key | any)[] = [];
 
 const DELETE_MARKER = {};
 
-const arrayMutators = ((a) => new Set<Function>([a.shift, a.unshift, a.push, a.pop, a.splice]))([] as any[]);
+const arrayMutators = ((a) => new Set<Function>([a.shift, a.unshift, a.push, a.pop, a.splice, a.sort]))([] as any[]);
 const MUTATION_MARKER = Symbol();
 let arrayMutatorCallDepth = 0;
 
 export function debugGetInternal() {
-  return { refTable, memoizedTable, parentRefTable, propWatcherTable };
+  return { refTable, memoizedTable, parentRefTable, propWatcherTable, wrap };
 }
 
 function isWrappable(v: any): v is object {
@@ -120,19 +115,59 @@ export const requestFlush = (() => {
   });
 })();
 
-const rejectionMessageWrite = (p: string | symbol) => `can't set/delete property ${String(p)} without setter`;
+const rejectWithPropName = (_target: unknown, prop: PropertyKey) => throwError(`can't set/delete '${String(prop)}' without setter`);
+
+// Note: 'get' trap must return the original value for read-only, non-configurable data property.
+// Note: `d` is just a local variable, Written in the most mififier-friendly way...
+const mustGetRaw: ((o: any, p: PropertyKey) => boolean | undefined) =
+  (o: any, p: PropertyKey, d?: PropertyDescriptor) =>
+    ((d = Object.getOwnPropertyDescriptor(o, p)) && !d.configurable && !d.writable);
+
+function addRef(writeProxy: Wrapped, prop: Key, val: unknown) {
+  refTable.add_(writeProxy, prop, activeObserverStack[activeObserverStack.length - 1]);
+  (valueCacheTable.get(writeProxy) ?? valueCacheTable.set(writeProxy, new Map()).get(writeProxy)!).set(prop, val);
+}
 
 export function observe<T extends object>(initial: T): [T, StoreSetter<T>] {
-  if (memoizedTable.has(initial))
-    return memoizedTable.get(initial)! as [T, StoreSetter<T>];
+  const [readProxy, writeProxy] = wrap(initial);
+  const setter = ((writer: (val: T) => void, opts?: StoreSetterOptions): void => {
+    try {
+      writer(writeProxy);
+    } finally {
+      if (!opts?.lazyFlush) {
+        while (writtens.length)
+          requestFlush.immediate();
+      }
+    }
+  }) as StoreSetter<T>;
 
-  const proxy = new Proxy(initial, {
-    apply: function (target, thisArg, argArray) {
+  setter.autorun = (writer: (val: T) => void) => autorun(() => setter(writer));
+
+  return [readProxy, setter];
+}
+
+function wrap<T extends object>(initial: T): [T, T] {
+  if (memoizedTable.has(initial))
+    return memoizedTable.get(initial)! as [T, T];
+
+  const readProxy = new Proxy(initial, {
+    get(target, prop, receiver) {
+      const raw = unwrap(Reflect.get(target, prop, receiver));
+      if (activeObserverStack.length > 0)
+        addRef(writeProxy, prop, raw); // Note refTable and valueCacheTable are keyed by writeProxy
+      return (!isWrappable(raw) || mustGetRaw(target, prop)) ? raw : wrap(raw)[0];
+    },
+    set: rejectWithPropName,
+    deleteProperty: rejectWithPropName,
+  });
+
+  const writeProxy = new Proxy(initial, {
+    apply(target, thisArg, argArray) {
       const rawTarget = unwrap(target as Function);
       if (!arrayMutators.has(rawTarget))
         return Reflect.apply(target as Function, thisArg, argArray);
 
-      const wrappedSelf = observe(thisArg)[0];
+      const wrappedSelf = wrap(thisArg)[1];
       const hasPropObserver = hasPropWatcher(wrappedSelf);
       writtens.push(wrappedSelf, MUTATION_MARKER, rawTarget, argArray, hasPropObserver);
       const ret = Reflect.apply(target as Function, thisArg, argArray);
@@ -140,32 +175,14 @@ export function observe<T extends object>(initial: T): [T, StoreSetter<T>] {
       return ret;
     },
 
-    get: function (target, prop, receiver) {
+    get(target, prop, receiver) {
       const raw = Reflect.get(target, prop, receiver);
-
-      if (activeObserverStack.length > 0) {
-        refTable.add_(proxy, prop, activeObserverStack[activeObserverStack.length - 1]);
-        (valueCacheTable.get(proxy) ?? valueCacheTable.set(proxy, new Map()).get(proxy)!).set(prop, raw);
-      }
-
-      if (!isWrappable(raw))
-        return raw;
-
-      // Note: this is required by the spec. The 'get' must return the original value for read-only, non-configurable data property.
-      const config = Object.getOwnPropertyDescriptor(target, prop);
-      if (config && !config.configurable && !config.writable)
-        return raw;
-
-      const ret = observe(raw)[0];
-      if (writings.has_(proxy)) {
-        writings.add_(ret);
-      }
-      return ret;
+      if (activeObserverStack.length > 0)
+        addRef(writeProxy, prop, raw);
+      return (!isWrappable(raw) || mustGetRaw(target, prop)) ? raw : wrap(raw)[1];
     },
 
     set(target, prop, value, receiver) {
-      if (!writings.has_(proxy))
-        throwError(rejectionMessageWrite(prop));
       const v: any = unwrap(value);
 
       // Request flush only if the writing value 'v' is not identical to the cached value.
@@ -175,11 +192,11 @@ export function observe<T extends object>(initial: T): [T, StoreSetter<T>] {
       // For example, Array.prototype.push() called on proxy invokes the 'set' handler twice: to set an element and to update the length.
       // The latter invocation sets the length property, but the length of 'target' have already been increased by setting the element.
       // So we may miss update if we compare 'v' with the original value
-      const cacheEntry = valueCacheTable.get(proxy);
+      const cacheEntry = valueCacheTable.get(writeProxy);
       const cache = cacheEntry?.get(prop);
       if (cache !== v) {
-        writtens.push(proxy, prop, v, cacheEntry?.has(prop) ? cache : Reflect.get(target, prop, receiver), hasPropWatcher(proxy));
-        (cacheEntry ?? valueCacheTable.set(proxy, new Map()).get(proxy)!).set(prop, v);
+        writtens.push(writeProxy, prop, v, cacheEntry?.has(prop) ? cache : Reflect.get(target, prop, receiver), hasPropWatcher(writeProxy));
+        (cacheEntry ?? valueCacheTable.set(writeProxy, new Map()).get(writeProxy)!).set(prop, v);
         requestFlush();
       }
 
@@ -187,48 +204,28 @@ export function observe<T extends object>(initial: T): [T, StoreSetter<T>] {
     },
 
     deleteProperty(target, prop) {
-      if (!writings.has_(proxy))
-        throwError(rejectionMessageWrite(prop));
-
-      const cacheEntry = valueCacheTable.get(proxy);
+      const cacheEntry = valueCacheTable.get(writeProxy);
       const cache = cacheEntry?.has(prop) ? cacheEntry.get(prop) : Reflect.get(target, prop);
       cacheEntry?.delete(prop);
-      writtens.push(proxy, prop, DELETE_MARKER, cache, hasPropWatcher(proxy));
+      writtens.push(writeProxy, prop, DELETE_MARKER, cache, hasPropWatcher(writeProxy));
       requestFlush();
 
       return Reflect.deleteProperty(target, prop);
     },
   });
 
-  const setter = (<U>(writer: (val: T) => U, opts?: StoreSetterOptions): U => {
-    const lazyFlush = opts?.lazyFlush ?? false;
-    try {
-      writings.save_();
-      writings.add_(proxy);
-      return writer(proxy);
-    } finally {
-      writings.restore_();
-      if (!lazyFlush) {
-        while (writtens.length)
-          requestFlush.immediate();
-      }
-    }
-  }) as StoreSetter<T>;
-
-  setter.autorun = ((writer: (val: T) => void): void => {
-    autorun(() => { setter(writer); });
-  });
-
-  const ret: [T, StoreSetter<T>] = [proxy, setter];
+  const ret = [readProxy, writeProxy] as [T, T];
   memoizedTable.set(initial, ret);
-  memoizedTable.set(proxy, ret); // also register proxy itself to avoid to wrap proxy more than once.
-
-  unwrapTable.set(proxy, initial);
+  memoizedTable.set(writeProxy, ret); // Register writProxy to avoid to wrap more than once. esp. used in watchDeep().
+  // memoizedTable.set(readProxy, ret); // This allows anyone to get the setter by `observe(readProxy)`.
+  memoizedTable.set(readProxy, null!);
+  unwrapTable.set(readProxy, initial); // Should remove? This allows anyone to get the setter by `observe(unwrap(readProxy))` .
+  unwrapTable.set(writeProxy, initial);
   return ret;
 }
 
 export function unwrap<T extends object>(val: T): T {
-  return unwrapTable.has(val) ? unwrapTable.get(val) as T : val;
+  return unwrapTable.get(val) as T ?? val;
 }
 
 function callWithObserver<T>(fun: () => T, observer: () => void): T {
@@ -260,19 +257,6 @@ export function bindObserver<A extends [...any], R>(fun: (...args: A) => R, obse
     return autorunImpl(() => fun(...args), resolvedObserver);
   };
 }
-
-// Impossible?
-/*
-export function withoutObserver<T>(fun: () => T): T {
-  const os = activeObserverStack;
-  try {
-    activeObserverStack = [];
-    return fun();
-  } finally {
-    activeObserverStack = os;
-  }
-}
-*/
 
 // --- watch ----
 
@@ -306,7 +290,7 @@ const parentRefTable: WeakMap<object /* chid */, Map<PropWatcherId, ParentRef>> 
 
 function registerParentRef(wid: PropWatcherId, target: object, key: Key, child: any, norm: number, deep: boolean) {
   if (!isWrappable(child)) return;
-  child = observe(child)[0];
+  child = wrap(child)[1];
 
   const tableFromChild = (parentRefTable.has(child) ? parentRefTable : (parentRefTable.set(child, new Map()))).get(child)!;
   const pref = (
@@ -328,7 +312,7 @@ function registerParentRef(wid: PropWatcherId, target: object, key: Key, child: 
 
 function unregisterParentRefs(wid: PropWatcherId, parent: object, prop: Key, child: any): void {
   if (!isWrappable(child)) return;
-  const wchild = observe(child)[0];
+  const wchild = wrap(child)[1];
   const pref = parentRefTable.get(wchild)?.get(wid);
   if (!pref) return;
   if (pref.minParent_ == parent) {
@@ -346,7 +330,7 @@ let nextWatcherId = 0;
 function watchImpl<T extends object>(target: T, opts: PropWatcherEntry): PropWatcherId {
   const wid = { id: nextWatcherId++ } as PropWatcherId; // should be the only place to cast to PropWatcherId
   propWatcherTable.set(wid, opts);
-  registerParentRef(wid, DUMMY_ROOT, DUMMY_SYMBOL, target, 0, opts.deep);
+  registerParentRef(wid, DUMMY_ROOT, DUMMY_SYMBOL, unwrap(target), 0, opts.deep);
   return wid;
 }
 
