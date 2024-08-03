@@ -267,13 +267,17 @@ export function useComponentMethods(): ComponentMethods {
 }
 
 export function assemble(actx: AssembleContext, jnode: JSXNode): Backing {
-  componentContexts.push(null);
-
   if (isJSXElement(jnode) && !jnode.el)
     allocateSkeletons(jnode);
-  const b = assembleImpl(actx, jnode);
 
-  const cctx = lastOf(componentContexts);
+  let b: Backing;
+  let cctx: typeof componentContexts[number];
+  componentContexts.push(null);
+  try {
+    b = assembleImpl(actx, jnode);
+  } finally {
+    cctx = componentContexts.pop()!;
+  }
   if (!cctx)
     return b;
 
