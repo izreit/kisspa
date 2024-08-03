@@ -50,7 +50,7 @@ export type JSXNode =
 export type Component<P> = (props: P) => JSXNode;
 
 export function isJSXElement(v: any): v is JSXElement {
-  return v?.[$h];
+  return v && v[$h];
 }
 
 export type Ref<T> = { value: T | null };

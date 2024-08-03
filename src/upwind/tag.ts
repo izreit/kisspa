@@ -200,7 +200,7 @@ export function createTag(target?: Tag.TargetStyleSheet): Tag {
           selector = target ? `${target.name}${modKey} ${target.rel ?? ""} ${selector}` : `${selector}${modKey}`;
         } else {
           const decl = modifierTable[modKey];
-          if (decl?.type_ !== modifierPlaceHolderWhole)
+          if (!decl || decl.type_ !== modifierPlaceHolderWhole)
             selector = `${decl.prefix_}${selector}${decl.postfix_}`;
         }
       }
@@ -209,7 +209,7 @@ export function createTag(target?: Tag.TargetStyleSheet): Tag {
       let style = `${selector}{${makeCSSDeclarations(name, value)}}`;
       for (let i = 0; i < modifiers.length; ++i) {
         const decl = modifierTable[modifiers[i].modKey];
-        if (decl?.type_ === modifierPlaceHolderWhole)
+        if (decl && decl.type_ === modifierPlaceHolderWhole)
           style = `${decl.prefix_}${style}${decl.postfix_}`;
       }
 

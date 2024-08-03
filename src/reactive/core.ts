@@ -51,7 +51,7 @@ function isWrappable(v: any): v is object {
 
 function collectObserverDescendants(fun: Observer, acc: Set<Observer>): void {
   const cs = childObservers.get(fun);
-  if (cs?.size) {
+  if (cs && cs.size) {
     cs.forEach(c => {
       acc.add(c);
       collectObserverDescendants(c, acc);
@@ -193,7 +193,7 @@ function wrap<T extends object>(initial: T): [T, T] {
       // The latter invocation sets the length property, but the length of 'target' have already been increased by setting the element.
       // So we may miss update if we compare 'v' with the original value
       const cacheEntry = valueCacheTable.get(writeProxy);
-      const cache = cacheEntry?.get(prop);
+      const cache = cacheEntry && cacheEntry.get(prop);
       if (cache !== v) {
         writtens.push(writeProxy, prop, v, cacheEntry?.has(prop) ? cache : Reflect.get(target, prop, receiver), hasPropWatcher(writeProxy));
         (cacheEntry ?? valueCacheTable.set(writeProxy, new Map()).get(writeProxy)!).set(prop, v);
@@ -205,8 +205,8 @@ function wrap<T extends object>(initial: T): [T, T] {
 
     deleteProperty(target, prop) {
       const cacheEntry = valueCacheTable.get(writeProxy);
-      const cache = cacheEntry?.has(prop) ? cacheEntry.get(prop) : Reflect.get(target, prop);
-      cacheEntry?.delete(prop);
+      const cache = (cacheEntry && cacheEntry.has(prop)) ? cacheEntry.get(prop) : Reflect.get(target, prop);
+      cacheEntry && cacheEntry.delete(prop);
       writtens.push(writeProxy, prop, DELETE_MARKER, cache, hasPropWatcher(writeProxy));
       requestFlush();
 
@@ -422,7 +422,7 @@ function notifyPropChange(target: Wrapped, prop: Key, val: any, prev: any): void
     }
 
     if (prop === MUTATION_MARKER) {
-      onApply?.(pathTrie.trace_(), val, prev);  // when (prop === MUTATION_HANDLER), val and prev is this and arguments. Ugh! need more readability...
+      onApply && onApply(pathTrie.trace_(), val, prev);  // when (prop === MUTATION_HANDLER), val and prev is this and arguments. Ugh! need more readability...
       return;
     }
 

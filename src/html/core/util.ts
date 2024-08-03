@@ -17,7 +17,7 @@ export function mapCoerce<T, U>(xs: T | T[] | null | undefined, f: (x: T) => U):
 }
 
 export function isPromise(v: any): v is Promise<any> {
-  return typeof v?.then === "function";
+  return v && (typeof v.then === "function");
 }
 
 export const objEntries = <T>(o: { [key: string]: T }): [string, T][] => Object.entries(o);

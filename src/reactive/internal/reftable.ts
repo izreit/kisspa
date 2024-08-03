@@ -42,7 +42,7 @@ export function createRefTable(): RefTable {
 
     clear_(o) {
       const revent = reverseRefTable.get(o);
-      if (revent?.size) {
+      if (revent && revent.size) {
         revent.forEach((keys, wrapped) => {
           const refent = refTable.get(wrapped)!;
           keys.forEach(key => refent.get(key)?.delete(o));

@@ -9,12 +9,12 @@ export interface BackingRoot {
 export function createRoot(parent: Element): BackingRoot {
   let b: Backing | null | undefined;
   const attach = (jnode: JSXNode) => {
-    b?.dispose();
+    b && b.dispose();
     b = assemble({ suspenseContext_: null }, jnode);
     b.insert(createLocation(parent));
   };
   const detach = () => {
-    b?.dispose();
+    b && b.dispose();
     b = null;
   };
   return { attach, detach };

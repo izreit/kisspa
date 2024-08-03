@@ -21,7 +21,7 @@ export function jsx<P>(
 ): JSXElement {
   const a = { ...(attrs ?? {}) } as (Exclude<typeof attrs, null | undefined> & { children?: any });
   delete a.children;
-  const cs = (attrs as any)?.children;
+  const cs = attrs && (attrs as any).children;
   return makeJSXElement(name, a, arrayify(cs), cs);
 }
 

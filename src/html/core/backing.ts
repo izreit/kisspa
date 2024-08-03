@@ -111,7 +111,7 @@ function createNodeBackingIfNeeded(node: Node, staticParent: boolean, disposers?
   }
 
   const insert = (pos?: BackingLocation | null | undefined) => {
-    if (pos?.parent) {
+    if (pos && pos.parent) {
       insertAfter(node, pos.parent, pos.prev);
     } else {
       node.parentNode?.removeChild(node);
@@ -119,7 +119,7 @@ function createNodeBackingIfNeeded(node: Node, staticParent: boolean, disposers?
   };
   const dispose = () => {
     insert();
-    disposers?.forEach(d => d());
+    disposers && disposers.forEach(d => d());
   };
   return { insert, dispose, tail: () => node, name: node };
 }
@@ -142,7 +142,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
     const p = jnode.then((j) => {
       disposed || b.setBackings_([assemble(actx, j)]);
     });
-    actx.suspenseContext_?.push(p);
+    actx.suspenseContext_ && actx.suspenseContext_.push(p);
     return b;
   }
 
@@ -154,14 +154,14 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
     return b;
   }
 
-  const staticParent = !!node?.parentNode;
+  const staticParent = !!(node && node.parentNode);
   const el =
     node ??
     ((jnode && typeof jnode === "object") ?
-      (jnode.el !== $noel ? jnode.el?.cloneNode(true) : null) :
+      (jnode.el && jnode.el !== $noel ? jnode.el.cloneNode(true) : null) :
       document.createTextNode(""));
 
-  if (el && !el.parentNode && loc?.parent)
+  if (el && !el.parentNode && loc && loc.parent)
     insertAfter(el, loc.parent, loc.prev);
 
   if (!(jnode && typeof jnode === "object")) {
@@ -205,7 +205,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
       // IMPORTANT This condition, for consuming the skeleton, must be correspondent with collectSkeletons().
       if (typeof v === "string" || (isJSXElement(v) && !v.el && typeof v.name === "string")) {
         ch = assembleImpl(actx, v, null, skelCh);
-        skelCh = skelCh?.nextSibling;
+        skelCh = skelCh && skelCh.nextSibling;
       } else {
         ch = assembleImpl(actx, v, chLoc);
       }
@@ -286,7 +286,7 @@ export function assemble(actx: AssembleContext, jnode: JSXNode): Backing {
   let mounted = false;
   const insert = (l: BackingLocation | null | undefined): void => {
     b.insert(l);
-    if (!mounted && l?.parent) {
+    if (!mounted && l && l.parent) {
       mounted = true;
       // Check the length each time to for onMount() called in onMount()
       for (let i = 0; i < onMounts.length; ++i)
@@ -324,16 +324,17 @@ export function tailOfBackings(bs: Backing[] | null | undefined, prev?: Backing 
 }
 
 export function insertBackings(bs: Backing[] | null | undefined, loc: BackingLocation | null | undefined): void {
-  if (!bs) return;
-  if (loc?.parent) {
-    const parent = loc.parent;
-    bs.reduce((prev, b) => (b.insert({ parent, prev }), b), loc.prev);
-  } else {
-    bs.forEach(b => b.insert());
+  if (bs) {
+    if (loc && loc.parent) {
+      const parent = loc.parent;
+      bs.reduce((prev, b) => (b.insert({ parent, prev }), b), loc.prev);
+    } else {
+      bs.forEach(b => b.insert());
+    }
   }
 }
 
 export function disposeBackings(bs: Backing[] | null | undefined): void {
-  bs?.forEach(b => b.dispose());
+  bs && bs.forEach(b => b.dispose());
 }
 
