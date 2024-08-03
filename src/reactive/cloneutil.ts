@@ -15,13 +15,10 @@ export namespace cloneutil {
 
   export function assign(target: any, path: readonly Key[], val: any, del?: boolean): void {
     if (__DCE_DISABLE_WATCH__) return dceNeverReach();
-    for (let i = 0; i < path.length - 1; ++i)
+    const last = path.length - 1;
+    for (let i = 0; i < last; ++i)
       target = target[path[i]];
-    if (!del) {
-      target[path[path.length - 1]] = val;
-    } else {
-      delete target[path[path.length - 1]];
-    }
+    del ? (delete target[path[last]]) : (target[path[last]] = val);
   }
 
   export function apply(target: any, path: readonly Key[], fun: Function, args: any[]): void {

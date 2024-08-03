@@ -130,11 +130,11 @@ function addRef(writeProxy: Wrapped, prop: Key, val: unknown) {
 
 export function observe<T extends object>(initial: T): [T, StoreSetter<T>] {
   const [readProxy, writeProxy] = wrap(initial);
-  const setter = ((writer: (val: T) => void, opts?: StoreSetterOptions): void => {
+  const setter = ((writer: (val: T) => void, opts: StoreSetterOptions = {}): void => {
     try {
       writer(writeProxy);
     } finally {
-      if (!opts?.lazyFlush) {
+      if (!opts.lazyFlush) {
         while (writtens.length)
           requestFlush.immediate();
       }
