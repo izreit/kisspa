@@ -1,5 +1,5 @@
 import { autorun, signal } from "../../reactive";
-import { AssembleContext, Backing, assemble, assignLocation, createLocation, createSpecial, disposeBackings, insertBackings, tailOfBackings } from "../core/backing";
+import { AssembleContext, Backing, assemble, createBackingCommon, createSpecial } from "../core/backing";
 import { JSXNode } from "../core/types";
 import { arrayify } from "../core/util";
 import { lcs } from "./internal/lcs";
@@ -21,9 +21,11 @@ export const For = createSpecial(function For<E>(actx: AssembleContext, props: F
   let backings: Backing[] = [];
   let backingTable: Map<any, Backing> = new Map();
   let ixTable: WeakMap<Backing, [() => number, (v: number) => void]> = new WeakMap();
-  let loc = createLocation();
 
-  const cancelUpdate = autorun(() => {
+  const base = createBackingCommon("For", () => backings);
+  const loc = base.location_;
+
+  base.addDisposer_(autorun(() => {
     const nextTable: Map<any, Backing> = new Map();
     const nextBackings = each().map((e, i) => {
       const k = key?.(e, i) ?? e;
@@ -68,18 +70,7 @@ export const For = createSpecial(function For<E>(actx: AssembleContext, props: F
     }
 
     backings = nextBackings;
-  });
+  }));
 
-  return {
-    insert: (l) => {
-      if (assignLocation(loc, l))
-        insertBackings(backings, loc);
-    },
-    tail: () => tailOfBackings(backings, loc.prev),
-    dispose: () => {
-      cancelUpdate();
-      disposeBackings(backings);
-    },
-    name: "For"
-  };
+  return base;
 });

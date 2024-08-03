@@ -1,5 +1,5 @@
 import { watchProbe } from "../../reactive";
-import { AssembleContext, Backing, assemble, createBackingBase, createSpecial } from "../core/backing";
+import { AssembleContext, Backing, assemble, createSimpleBacking, createSpecial } from "../core/backing";
 import { JSXNode, PropChildren } from "../core/types";
 import { mapCoerce } from "../core/util";
 
@@ -15,7 +15,7 @@ export const Show = createSpecial(function ShowImpl(actx: AssembleContext, props
   const { when, fallback, children } = props;
   let showing = false;
 
-  const base = createBackingBase("Show");
+  const base = createSimpleBacking("Show");
   base.addDisposer_(watchProbe(when, toShow => {
     showing = toShow;
     const bs = showing ? mapCoerce(children, c => assemble(actx, c)) : (fallback ? [assemble(actx, fallback)] : null);

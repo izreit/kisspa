@@ -1,5 +1,5 @@
 import { autorun } from "../../reactive";
-import { assemble, AssembleContext, Backing, createBackingBase, createSpecial } from "../core/backing";
+import { assemble, AssembleContext, Backing, createSimpleBacking, createSpecial } from "../core/backing";
 import { jsx } from "../core/h";
 import { Component } from "../core/types";
 
@@ -10,7 +10,7 @@ export namespace Dynamic {
 }
 
 export const Dynamic = createSpecial(<T>(actx: AssembleContext, props: Dynamic.Props<T>): Backing => {
-  const base = createBackingBase("Dynamic");
+  const base = createSimpleBacking("Dynamic");
   base.addDisposer_(autorun(() => {
     if (props.component)
       base.setBackings_([assemble(actx, jsx(props.component(), props))]);

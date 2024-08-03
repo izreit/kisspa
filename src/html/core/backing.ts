@@ -23,10 +23,12 @@ const nullLocation = createLocation();
 
 export function assignLocation(self: BackingLocation, loc: BackingLocation | null | undefined): boolean {
   const { parent, prev } = loc ?? nullLocation;
-  if (self.parent === parent && self.prev === prev) return false;
-  self.parent = parent;
-  self.prev = prev;
-  return true;
+  const differ = self.parent !== parent || self.prev !== prev;
+  if (differ) {
+    self.parent = parent;
+    self.prev = prev;
+  }
+  return differ;
 }
 
 function isNode(v: object): v is Node {
@@ -55,40 +57,49 @@ export interface AssembleContext {
 
 const doNothing = () => {};
 
-export interface BackingBase extends Backing {
-  extractBackings_: () => Backing[] | null | undefined;
-  setBackings_: (bs: Backing[] | null | undefined) => void;
+export interface BackingCommon extends Backing {
+  location_: BackingLocation;
   addDisposer_: (f: () => void) => void;
 }
 
-export function createBackingBase(name: string, l?: BackingLocation | null): BackingBase {
+export function createBackingCommon(
+  name: string,
+  resolveChildren: () => Backing[] | null | undefined,
+  l?: BackingLocation | null
+): BackingCommon {
   const loc = l ? { ...l } : createLocation();
-  let backings: Backing[] | null | undefined;
   const disposers: (() => void)[] = [];
   return {
-    extractBackings_: () => {
-      insertBackings(backings, null);
-      return backings;
-    },
-    setBackings_(bs) {
-      if (backings !== bs) {
-        disposeBackings(backings);
-        backings = bs;
-        insertBackings(bs, loc);
-      }
-    },
-    addDisposer_: f => disposers.push(f),
     insert(l) {
       if (assignLocation(loc, l))
-        insertBackings(backings, l);
+        insertBackings(resolveChildren(), l);
     },
-    tail: () => tailOfBackings(backings, loc.prev),
+    tail: () => tailOfBackings(resolveChildren(), loc.prev),
     dispose() {
       disposers.forEach(d => d());
-      disposeBackings(backings);
+      disposeBackings(resolveChildren());
     },
+    addDisposer_: f => disposers.push(f),
+    location_: loc,
     name,
   };
+}
+
+export interface SimpleBacking extends BackingCommon {
+  setBackings_: (bs: Backing[] | null | undefined) => void;
+}
+
+export function createSimpleBacking(name: string, l?: BackingLocation | null): SimpleBacking {
+  let backings: Backing[] | null | undefined;
+  const base = createBackingCommon(name, () => backings, l) as SimpleBacking;
+  base.setBackings_ = (bs) => {
+    if (backings !== bs) {
+      disposeBackings(backings);
+      backings = bs;
+      insertBackings(bs, base.location_);
+    }
+  };
+  return base;
 }
 
 function createNodeBackingIfNeeded(node: Node, staticParent: boolean, disposers?: (() => void)[]): Backing | Node {
@@ -126,7 +137,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
 function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node {
   if (isPromise(jnode)) {
     let disposed: boolean | undefined;
-    const b = createBackingBase("Delay", loc);
+    const b = createSimpleBacking("Delay", loc);
     b.addDisposer_(() => { disposed = true; });
     const p = jnode.then((j) => {
       disposed || b.setBackings_([assemble(actx, j)]);
@@ -136,7 +147,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
   }
 
   if (typeof jnode === "function") {
-    const b = createBackingBase("Fun", loc);
+    const b = createSimpleBacking("Fun", loc);
     b.addDisposer_(autorun(() => {
       b.setBackings_([assemble(actx, jnode())]);
     }));
