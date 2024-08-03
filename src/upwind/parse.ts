@@ -31,8 +31,8 @@ export function parse(src: string): ParseResult<Decl[]> {
 }
 
 // DECLS
-//  := _ beginpos=@ head=DECL tail={__ d=DECL}* endpos=@ _
-//  | beginpos=@ _ endpos=@ $
+//  := _ head=DECL tail={__ d=DECL}* _
+//  | _ $
 // __ := '[ \t\n\r]+'
 // _ := '[ \t\n\r]*'
 function parseDecls(src: string, ix: number): ParseResult<Decl[]> {
@@ -61,7 +61,7 @@ function parseDecls(src: string, ix: number): ParseResult<Decl[]> {
 // DECL
 //  := mod=MOD '/{' ds=DECLS '}'
 //  | mod=MOD '/' decl=DECL
-//  | beginpos=@ name=NAME v={':' c=VAL}? endpos=@
+//  | name=NAME v={':' c=VAL}?
 function parseDecl(src: string, ix: number): ParseResult<Decl[]> | ParseFailure {
   const begin = ix;
 
@@ -70,25 +70,24 @@ function parseDecl(src: string, ix: number): ParseResult<Decl[]> | ParseFailure 
     const { val_: mod, end_: ixMod } = mMod;
     if (src[ixMod] !== "/") break withMod;
 
+    let decls: Decl[];
     if (src[ixMod + 1] === "{") {
       //  := mod=MOD '/{' ds=DECLS '}'
       const mDeclGroup = parseDecls(src, ixMod + 2); // +2 for "/{"
       if (mDeclGroup.fail_ || src[mDeclGroup.end_] !== "}") break withMod;
       ix = mDeclGroup.end_ + 1; // +1 for "}"
-      const decls = mDeclGroup.val_.map(d => ({ ...d, mods: d.mods.concat(mod) }));
-      return { val_: decls, begin_: begin, end_: ix };
-
+      decls = mDeclGroup.val_;
     } else {
       //  | mod=MOD '/' decl=DECL
       const mDecl = parseDecl(src, ixMod + 1); // +1 for "/"
       if (mDecl.fail_) break withMod;
       ix = mDecl.end_;
-      const decls = mDecl.val_.map(d => ({ ...d, mods: d.mods.concat(mod) }));
-      return { val_: decls, begin_: begin, end_: ix };
+      decls = mDecl.val_;
     }
+    return { val_: decls.map(d => ({ ...d, mods: d.mods.concat(mod) })), begin_: begin, end_: ix };
   }
 
-  //  | beginpos=@ name=NAME v={':' c=VAL}? endpos=@
+  //  | name=NAME v={':' c=VAL}?
   const mName = parseName(src, ix);
   if (!mName) return skipToDelim(src, ix);
   ix = mName.end_;
@@ -109,7 +108,7 @@ function skipToDelim(src: string, ix: number): ParseFailure {
   return { fail_: true, end_: matchRe(src, ix, /[^\s\t\n\r}]*/y)!.end_ };
 }
 
-// MOD := beginpos=@ v=':*[^/_:\s]+' target={'_' name='[^/:\s~\+]+' rel='[~\+]'?}? endpos=@
+// MOD := v=':*[^/_:\s]+' target={'_' name='[^/:\s~\+]+' rel='[~\+]'?}?
 function parseMod(src: string, ix: number): ParseResult<Mod> | null {
   const begin = ix;
   let target: Mod["target"];
@@ -119,16 +118,16 @@ function parseMod(src: string, ix: number): ParseResult<Mod> | null {
   ix = mMod.end_;
   const modKey = mMod.val_[0];
 
-  parseTarget: if (src[ix] === "_") {
+  if (src[ix] === "_") {
     const mTargetName = matchRe(src, ix + 1, /[^/:\s~\+]+/y); // +1 for "_"
-    if (!mTargetName) break parseTarget;
-    const mRel = matchRe(src, mTargetName.end_, /[~\+]?/y)!;
-    ix = mRel.end_;
-    target = { name: mTargetName.val_[0], rel: mRel.val_[0] || null };
+    if (mTargetName) {
+      const mRel = matchRe(src, mTargetName.end_, /[~\+]?/y)!;
+      ix = mRel.end_;
+      target = { name: mTargetName.val_[0], rel: mRel.val_[0] || null };
+    }
   }
 
-  const end = ix;
-  return { val_: { modKey, target, begin, end }, begin_: begin, end_: end };
+  return { val_: { modKey, target, begin, end: ix }, begin_: begin, end_: ix };
 }
 
 // NAME := '-'* head=FRAG tail={'-' f=FRAG}*
@@ -202,8 +201,7 @@ function parseValSegment(src: string, ix: number): ParseResult<string> | null {
 }
 
 function matchRe(src: string, ix: number, re: RegExp): ParseResult<RegExpMatchArray> | null {
-  const begin = ix;
   re.lastIndex = ix;
   const m = re.exec(src);
-  return m && { val_: m, begin_: begin, end_: ix + m[0].length };
+  return m && { val_: m, begin_: ix, end_: ix + m[0].length };
 }
