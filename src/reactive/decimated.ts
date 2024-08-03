@@ -1,4 +1,4 @@
-const cache: WeakMap<Function, Function> = new WeakMap();
+const cache: WeakMap<Function, DecimatedFun> = new WeakMap();
 
 export interface DecimatedFun {
   (): Promise<void>;
@@ -7,28 +7,20 @@ export interface DecimatedFun {
 }
 
 export function decimated(fun: () => void): DecimatedFun {
-  if (cache.has(fun))
-    return (cache.get(fun) as DecimatedFun);
+  const c = cache.get(fun);
+  if (c) return c;
 
   let f: (() => void) | null = fun;
-  let p: Promise<void> | null = null;
+  let p: Promise<void> | null | undefined;
 
-  const fire = () => {
-    if (p) {
-      p = null;
-      f?.();
-    }
-  }
-
-  const ret = (() => {
-    return p ?? (p = Promise.resolve().then(fire));
-  }) as DecimatedFun;
-
-  ret.immediate = () => {
+  const immediate = () => {
     p = null;
     f?.();
   };
 
+  const fire = () => { p && immediate() };
+  const ret = (() => (p ?? (p = Promise.resolve().then(fire)))) as DecimatedFun;
+  ret.immediate = immediate;
   ret.dispose = () => {
     f = null;
   };
