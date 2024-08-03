@@ -38,7 +38,7 @@ function collectSkeletonsImpl(acc: Skeleton[], target: JSXNode | { [key: string]
   }
 
   const e = document.createElement(name);
-  parent?.appendChild(e) ?? acc.push({ el: e, path });
+  parent ? parent.appendChild(e) : acc.push({ el: e, path });
   for (let i = 0; i < children.length; ++i)
     collectSkeletonsImpl(acc, children[i], path.concat(i), e);
 }

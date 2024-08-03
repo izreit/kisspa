@@ -53,8 +53,8 @@ export function createPortalSrcBacking(actx: AssembleContext, props: Portal.SrcP
 
   let childBackings: Backing[] | null | undefined;
   let showing = false;
-  let virtualLoc = createLocation();
-  let physicalLoc = createLocation();
+  const virtualLoc = createLocation();
+  const physicalLoc = createLocation();
 
   function updateShow(): void {
     const toShow = !!(virtualLoc.parent && physicalLoc.parent);
@@ -75,7 +75,7 @@ export function createPortalSrcBacking(actx: AssembleContext, props: Portal.SrcP
       if (assignLocation(physicalLoc, l))
         updateShow();
     },
-    tail: () => tailOfBackings(childBackings, physicalLoc?.prev),
+    tail: () => tailOfBackings(childBackings, physicalLoc.prev),
     dispose: () => {},
     name: "PortalSrcPhys",
   };

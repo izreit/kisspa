@@ -15,7 +15,7 @@ export function decimated(fun: () => void): DecimatedFun {
 
   const immediate = () => {
     p = null;
-    f?.();
+    f && f();
   };
 
   const fire = () => { p && immediate() };

@@ -20,9 +20,9 @@ export function createTrie<T>(parent?: Trie<T>, key?: T): Trie<T> {
     },
 
     trace_(): readonly T[] {
-      let ret = cache?.deref();
+      let ret = cache && cache.deref();
       if (!ret) {
-        ret = parent?.trace_().concat(key!) ?? [];
+        ret = parent ? parent.trace_().concat(key!) : [];
         cache = new WeakRef(ret);
       }
       return ret;
