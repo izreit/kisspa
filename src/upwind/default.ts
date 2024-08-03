@@ -9,7 +9,6 @@ export const defaultModifiers = {
   lg: minWidthStr(1024),
   xl: minWidthStr(1280),
   "2xl": minWidthStr(1536),
-  dark: mediaStr(`(prefers-color-scheme: dark)`)
 };
 
 export const defaultProperties = {
@@ -20,7 +19,6 @@ export const defaultProperties = {
   "h": "height",
   "bg": "background",
   "d": "display",
-  "fl": "flex",
 };
 
 export const $ = createTag();

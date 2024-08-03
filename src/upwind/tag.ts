@@ -39,21 +39,24 @@ export namespace Tag {
      *
      * then you can use it (e.g. ``` $`print/background:white` ```).
      *
-     * Other examples:
+     * Another example:
      *
      * ```
-     * {
+     * $.extend({
      *   modifiers: {
      *     // override a screen size breakpoint.
      *     xl: "@media (min-width: 1700px) { <whole> }",
      *
-     *     // override dark mode modifier to use className "dark".
+     *     // dark mode modifier that uses preferes-color-scheme
+     *     dark: "@media (prefers-color-scheme: dark) { <whole> }",
+     *
+     *     // dark mode modifier that uses className "dark".
      *     dark: "<selector>:is(.dark *)",
      *
-     *     // override dark mode modifier to use a data attribute `data-darkmode`.
+     *     // dark mode modifier that uses a data attribute `data-darkmode`.
      *     dark: "<selector>:where([data-darkmode="true"], [data-darkmode="true"] *)",
      *   }
-     * }
+     * })
      * ```
      */
     modifiers: { [key: string]: ModifierDef };
@@ -110,20 +113,19 @@ function product(...args: (string | string[])[]): string[][] {
   return ret;
 }
 
+const reNum = /^\d+(?:\.5)?$/;
+
 function replaceValue(val: string[], config: Tag.Config): void {
   const { colors: color, colorRe, num } = config;
-  const reNum = /^\d+(?:\.5)?$/;
   for (let i = 0; i < val.length; ++i) {
     const v = val[i];
+    let m: RegExpMatchArray | null | undefined;
     if (reNum.test(v)) {
       val[i] = num(Number(v));
-      continue;
+    } else if (colorRe && (m = v.match(colorRe))) {
+      const alpha = m[3] ? Math.ceil(255 * parseInt(m[3]) / 100).toString(16) : "";
+      val[i] = `${color[m[1]][m[2]]}${alpha}`;
     }
-    if (!colorRe) continue;
-    const m = v.match(colorRe);
-    if (!m) continue;
-    const alpha = m[3] ? Math.ceil(255 * parseInt(m[3]) / 100).toString(16) : "";
-    val[i] = `${color[m[1]][m[2]]}${alpha}`;
   }
 }
 
