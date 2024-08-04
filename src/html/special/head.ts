@@ -1,6 +1,6 @@
-import { AssembleContext, Backing, createLocation, createSpecial } from "../core/backing";
+import { AssembleContext, Backing, createSpecial } from "../core/backing";
 import type { PropChildren } from "../core/types";
-import { createPortalSrcBacking, destBackingFor, hasPortalDestBackingFor } from "./portal";
+import { PortalImpl } from "./portal";
 
 export namespace Head {
   export type Props = {
@@ -8,14 +8,11 @@ export namespace Head {
   };
 }
 
-// Key to distinguish Portal target for Head.
-const headKey = {};
-
 /**
- * `<Portal />` to `document.head`.
+ * Alias of `<Portal to={document.head} />`.
  *
  * The children of this component will be inserted to `document.head`.
- * Unlike normal <Portal />, you don't need to place <Portal from={} /> explicitly.
+ * You don't need to place <Portal from={} /> explicitly.
  *
  * Any elements allowed under HTMLHeadElement are valid but <title /> is not
  * recommended because "there must be no more than one title element per document,"
@@ -25,9 +22,6 @@ const headKey = {};
  *
  * [spec]: https://html.spec.whatwg.org/multipage/semantics.html#the-title-element
  */
-export const Head = createSpecial((actx: AssembleContext, props: Head.Props): Backing => {
-  if (!hasPortalDestBackingFor(headKey))
-    destBackingFor(headKey).insert(createLocation(document.head));
-
-  return createPortalSrcBacking(actx, { to: headKey, children: props.children });
-});
+export const Head = createSpecial((actx: AssembleContext, props: Head.Props): Backing => (
+  PortalImpl(actx, { ...props, to: document.head })
+));

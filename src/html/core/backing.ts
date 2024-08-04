@@ -1,7 +1,7 @@
 import { autorun } from "../../reactive";
 import { allocateSkeletons } from "./skeleton";
 import { $noel, Component, JSXNode, Ref, isJSXElement } from "./types";
-import { arrayify, isPromise, lastOf, objEntries } from "./util";
+import { arrayify, isFunction, isNode, isPromise, isString, objEntries } from "./util";
 
 export interface Backing {
   insert(loc?: BackingLocation | null | undefined): void;
@@ -29,10 +29,6 @@ export function assignLocation(self: BackingLocation, loc: BackingLocation | nul
     self.prev = prev;
   }
   return differ;
-}
-
-function isNode(v: object): v is Node {
-  return "nodeName" in v;
 }
 
 function isStrOrNum(v: any): v is number | string {
@@ -125,7 +121,7 @@ function createNodeBackingIfNeeded(node: Node, staticParent: boolean, disposers?
 }
 
 function resolveRef(el: HTMLElement, r: Ref<HTMLElement> | ((e: HTMLElement) => void)): void {
-  (typeof r === "function") ? r(el) : (r.value = el);
+  isFunction(r) ? r(el) : (r.value = el);
 }
 
 function assignAttribute(el: HTMLElement, k: string, v: string | null): void {
@@ -146,7 +142,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
     return b;
   }
 
-  if (typeof jnode === "function") {
+  if (isFunction(jnode)) {
     const b = createSimpleBacking("Fun", loc);
     b.addDisposer_(autorun(() => {
       b.setBackings_([assemble(actx, jnode())]);
@@ -170,7 +166,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
   }
 
   const { name, attrs, children, rawChildren } = jnode;
-  if (typeof name === "string") {
+  if (isString(name)) {
     let refVal: (Ref<HTMLElement> | ((v: HTMLElement) => void))[] | null | undefined;
     const disposers: (() => void)[] = [];
 
@@ -181,7 +177,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
       }
       if (isStrOrNum(v)) {
         (el as any)[k] = v;
-      } else if (typeof v === "function") {
+      } else if (isFunction(v)) {
         if (k[0] === "o" && k[1] === "n") {
           (el as any)[k.toLowerCase()] = v;
         } else {
@@ -191,7 +187,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
         for (const [vk, vv] of objEntries(v)) {
           if (isStrOrNum(vv)) {
             (el as any)[k][vk] = vv;
-          } else if (typeof vv === "function") {
+          } else if (isFunction(vv)) {
             disposers.push(autorun(() => { (el as any)[k][vk] = vv(); }));
           }
         }
@@ -203,7 +199,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
     for (const v of children) {
       let ch: Backing | Node;
       // IMPORTANT This condition, for consuming the skeleton, must be correspondent with collectSkeletons().
-      if (typeof v === "string" || (isJSXElement(v) && !v.el && typeof v.name === "string")) {
+      if (isString(v) || (isJSXElement(v) && !v.el && isString(v.name))) {
         ch = assembleImpl(actx, v, null, skelCh);
         skelCh = skelCh && skelCh.nextSibling;
       } else {
@@ -337,4 +333,3 @@ export function insertBackings(bs: Backing[] | null | undefined, loc: BackingLoc
 export function disposeBackings(bs: Backing[] | null | undefined): void {
   bs && bs.forEach(b => b.dispose());
 }
-

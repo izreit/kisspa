@@ -9,7 +9,7 @@ export namespace Fragment {
 }
 
 export const Fragment = createSpecial((actx: AssembleContext, { children }: Fragment.Props): Backing => {
-  const base = createSimpleBacking("Fragment");
+  const base = createSimpleBacking("Frag");
   base.setBackings_(mapCoerce(children, c => assemble(actx, c)));
   return base;
 });
