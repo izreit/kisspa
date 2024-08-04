@@ -1,6 +1,6 @@
 import { AssembleContext, Backing, assemble, createBackingCommon, createSpecial, disposeBackings, insertBackings } from "../core/backing";
 import { JSXNode, PropChildren } from "../core/types";
-import { arrayify, mapCoerce } from "../core/util";
+import { arrayify, isFunction, mapCoerce } from "../core/util";
 
 export namespace Suspense {
   export interface Props {
@@ -63,7 +63,7 @@ export const Suspense = createSpecial(function Suspense(actx: AssembleContext, p
 
   const handleError = (e: any) => {
     errorFallbackBackings = errorFallback ?
-      [assemble(actx, typeof errorFallback === "function" ? errorFallback(e, start) : errorFallback)] :
+      [assemble(actx, isFunction(errorFallback) ? errorFallback(e, start) : errorFallback)] :
       null;
     setCurrent(errorFallbackBackings);
   };

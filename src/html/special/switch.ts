@@ -2,7 +2,7 @@ import { autorun, signal, watchProbe } from "../../reactive";
 import { assemble, AssembleContext, Backing, createSimpleBacking, createSpecial } from "../core/backing";
 import { jsx } from "../core/h";
 import { JSXNode, PropChildren } from "../core/types";
-import { arrayify, mapCoerce } from "../core/util";
+import { arrayify, isFunction, mapCoerce } from "../core/util";
 import { createContextFun } from "./context";
 import { Show } from "./show";
 
@@ -86,7 +86,7 @@ export const Match = createSpecial(<T extends object>(actx: AssembleContext, pro
       showing = toShow;
       let bs: Backing[] | null | undefined;
       if (showing && children) {
-        const cs = typeof children !== "function" ? children : children(when() as T); // `as T` is valid since guard() is true here
+        const cs = isFunction(children) ? children(when() as T): children; // `as T` is valid since guard() is true here
         bs = mapCoerce(cs, c => assemble(actx, c));
       }
       base.setBackings_(bs);

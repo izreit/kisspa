@@ -1,5 +1,5 @@
 import { $noel, JSXElement, JSXNode, isJSXElement } from "./types";
-import { objEntries } from "./util";
+import { isString, objEntries } from "./util";
 
 export interface Skeleton {
   el: Node | typeof $noel;
@@ -11,7 +11,7 @@ export interface Skeleton {
  * IMPORTANT This must be coresspondent with codeOf() and how assemble() consumes skeletons
  */
 function collectSkeletonsImpl(acc: Skeleton[], target: JSXNode | { [key: string]: any }, path: (number | string)[], parent?: Node | null): void {
-  if (typeof target === "string" && parent) {
+  if (isString(target) && parent) {
     parent.appendChild(document.createTextNode(""));
     return;
   }
@@ -27,7 +27,7 @@ function collectSkeletonsImpl(acc: Skeleton[], target: JSXNode | { [key: string]
   if (target.el)
     return;
   const { name, attrs, children } = target;
-  if (typeof name !== "string") {
+  if (!isString(name)) {
     if (!parent)
       acc.push({ el: $noel, path });
     for (const [k, v] of objEntries(attrs))
@@ -73,7 +73,7 @@ function codeOfChildren(children: JSXNode[], prefix: string = "", postfix: strin
 
 // IMPORTANT This must be coresspondent with how collectSkeletons() creates Node hierarchy.
 function codeOf(target: JSXNode | { [key: string]: any }, prefix: string = "", hasParent?: boolean): string {
-  if (typeof target === "string" && hasParent)
+  if (isString(target) && hasParent)
     return prefix + "T"; // "T" has no meaning. just to indicate a text node.
 
   if (!isJSXElement(target)) {
@@ -86,7 +86,7 @@ function codeOf(target: JSXNode | { [key: string]: any }, prefix: string = "", h
     return "";
 
   const { name, attrs, children } = target;
-  if (typeof name !== "string") {
+  if (!isString(name)) {
     const a = codeOfEntries(objEntries(attrs)), c = codeOfChildren(children, "|");
     // "." has no meaning. just to correspond to $noel in collectSkeletonsImpl().
     const ret = `${hasParent ? "" : "."}${(a || c) ? `(${a}${c})` : ""}`;

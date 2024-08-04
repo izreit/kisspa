@@ -1,17 +1,12 @@
 import { AssembleContext, Backing, assemble, assignLocation, createBackingCommon, createLocation, createSpecial, disposeBackings, insertBackings, tailOf, tailOfBackings } from "../core/backing";
+import { isNode } from "../core/util";
 import { PropChildren } from "../core/types";
 import { lastOf, mapCoerce } from "../core/util";
 
-export namespace Portal {
-  export type SrcProps = {
-    to: object;
-    children?: PropChildren;
+export namespace PortalDest {
+  export type Props = {
+    from: string | symbol;
   };
-  export type DestProps = {
-    from: object;
-    children?: PropChildren; // children is not used but required for type inference...
-  }
-  export type Props = DestProps | SrcProps;
 }
 
 interface PortalDestBacking extends Backing {
@@ -22,12 +17,11 @@ interface PortalDestBacking extends Backing {
 function createPortalDestBacking(): PortalDestBacking {
   const childBackings: Backing[] = [];
   const base = createBackingCommon("PortalDest", () => childBackings);
-  const loc = base.location_;
   return {
     ...base,
     addBacking_(b: Backing): void {
-      if (loc.parent)
-        b.insert(createLocation(loc.parent, lastOf(childBackings)));
+      if (base.location_.parent)
+        b.insert(createLocation(base.location_.parent, lastOf(childBackings)));
       childBackings.push(b);
     },
     removeBacking_(b: Backing): void {
@@ -38,17 +32,22 @@ function createPortalDestBacking(): PortalDestBacking {
   };
 }
 
-const destBackings: WeakMap<object, PortalDestBacking> = new WeakMap();
+const destBackings: Map<string | symbol | Node, PortalDestBacking> = new Map();
 
-export function hasPortalDestBackingFor(key: object): boolean {
-  return destBackings.has(key);
-}
-
-export function destBackingFor(key: object): PortalDestBacking {
+function destBackingFor(key: string | symbol | Node): PortalDestBacking {
   return destBackings.get(key) ?? (destBackings.set(key, createPortalDestBacking()).get(key)!);
 }
 
-export function createPortalSrcBacking(actx: AssembleContext, props: Portal.SrcProps): Backing {
+export const PortalDest = createSpecial((_actx: AssembleContext, { from }: PortalDest.Props) => destBackingFor(from));
+
+export namespace Portal {
+  export type Props = {
+    to: string | symbol | Node;
+    children?: PropChildren;
+  };
+}
+
+export function PortalImpl(actx: AssembleContext, props: Portal.Props): Backing {
   const { to, children } = props;
 
   let childBackings: Backing[] | null | undefined;
@@ -80,6 +79,9 @@ export function createPortalSrcBacking(actx: AssembleContext, props: Portal.SrcP
     name: "PortalSrcPhys",
   };
 
+  if (typeof to === "object" && isNode(to) && !destBackings.has(to))
+    destBackingFor(to).insert(createLocation(to));
+
   destBackingFor(to).addBacking_(physicalBacking);
 
   return {
@@ -96,6 +98,4 @@ export function createPortalSrcBacking(actx: AssembleContext, props: Portal.SrcP
   };
 }
 
-export const Portal = createSpecial((actx: AssembleContext, props: Portal.Props): Backing => {
-  return ("to" in props) ? createPortalSrcBacking(actx, props) : destBackingFor(props.from);
-});
+export const Portal = createSpecial(PortalImpl);
