@@ -282,7 +282,7 @@ type ParentRef = {
    */
   minNorm_: number;
   minParent_: object | null;
-  minKey_: Key | null;
+  minKey_: Key | null | undefined;
 };
 
 const propWatcherTable: WeakMap<PropWatcherId, PropWatcherEntry> = new WeakMap();

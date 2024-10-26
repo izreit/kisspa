@@ -1,0 +1,17 @@
+{
+  "name": "kisspa-root",
+  "version": "0.0.0",
+  "private": true,
+  "main": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "description": "",
+  "workspaces": [
+    "packages/kisspa",
+    "packages/docskit"
+  ]
+}
