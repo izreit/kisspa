@@ -708,12 +708,12 @@ export namespace JSXInternal {
 
 	type AriaRole = WAIAriaRole | DPubAriaRole;
 
-	export interface FiccoAttributes {
+	export interface KisspaAttributes {
 		children?: Element | Element[];
 	}
 
 	export interface HTMLAttributes<RefType extends EventTarget = EventTarget>
-		extends DOMAttributes<RefType>, AriaAttributes, IntrinsicAttributes, FiccoAttributes
+		extends DOMAttributes<RefType>, AriaAttributes, IntrinsicAttributes, KisspaAttributes
 	{
 		// Standard HTML Attributes
 		accept?: string | undefined | Accessor<string | undefined>;

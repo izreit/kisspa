@@ -15,6 +15,7 @@
     "lib": [                                             /* Specify a set of bundled library declaration files that describe the target runtime environment. */
       "ES2015",
       "ES2017.Object",
+      "ES2019.Array",
       "ES2021.WeakRef"
     ],
     // "jsx": "preserve",                                /* Specify what JSX code is generated. */

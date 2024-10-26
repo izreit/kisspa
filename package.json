@@ -1,7 +1,7 @@
 {
-  "name": "ficco",
+  "name": "kisspa",
   "private": true,
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "type": "module",
   "types": "lib/index.d.js",
