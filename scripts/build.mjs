@@ -2,8 +2,8 @@ import { execSync } from "node:child_process";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const { FICCO_BUILD } = process.env;
-const mode = /^normal|full|all$/.test(FICCO_BUILD) ? FICCO_BUILD : "all";
+const { KISSPA_BUILD } = process.env;
+const mode = /^normal|full|all$/.test(KISSPA_BUILD) ? KISSPA_BUILD : "all";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = relative(process.cwd(), join(__dirname, ".."));
