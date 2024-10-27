@@ -1,11 +1,16 @@
 {
-  "name": "docskit",
+  "name": "kisspa-sitekit",
   "version": "0.0.1",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "izreit",
   "license": "MIT",
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^22.8.1",
+    "typescript": "^5.6.3"
+  }
 }

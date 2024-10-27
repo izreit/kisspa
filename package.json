@@ -12,6 +12,6 @@
   "description": "",
   "workspaces": [
     "packages/kisspa",
-    "packages/docskit"
+    "packages/sitekit"
   ]
 }
