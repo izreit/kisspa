@@ -1,0 +1,338 @@
+import { Parser as acornParser } from "acorn";
+import acornJsx from "acorn-jsx";
+
+const jsParser = acornParser.extend(acornJsx());
+
+type LayoutEntry =
+  { type: "imports", code: string } |
+  { type: "passthrough", code: string } |
+  { type: "placeholder", value: "title" | "params" | "body" } |
+  { type: "href", value: string, quote: "'" | "\"" } |
+  { type: "jsxenter" } |
+  { type: "jsxleave" };
+
+interface ParseFailure {
+  type: "warn" | "error";
+  pos: number;
+  line: number; // one-origin
+  col: number; // one-origin
+  msg: string;
+}
+
+interface LayoutParseContext {
+  /**
+   * the input string.
+   */
+  src: string;
+
+  /**
+   * the position of the end of the input. (i.e. `src.length`)
+   */
+  end: number;
+
+  pos: number;
+
+  segmentHead: number;
+
+  jsxDepth: number;
+
+  /**
+   * The position of the first column of the current line.
+   * (i.e. just after the last \r, \n, or \r\n as of `src[pos]`.)
+   */
+  lineHead: number;
+
+  /**
+   * The count of newlines (\r, \n, or \r\n) we found.
+   * (i.e. zero-origin line number.)
+   */
+  newlines: number;
+
+  parsed: LayoutEntry[];
+
+  failures: ParseFailure[];
+}
+
+function runRe(ctx: LayoutParseContext, re: RegExp): RegExpExecArray | null {
+  const { src, pos } = ctx;
+
+  re.lastIndex = pos;
+  const m = re.exec(src);
+  // console.log(`RUNRE-${m ? "SUCC" : "FAIL"}`, JSON.stringify(src.slice(pos, pos + 16)), re); // debug
+  if (!m) return m;
+  const last = re.sticky ? re.lastIndex : m.index + m[0].length;
+
+  ctx.pos = last;
+  for (let i = pos; i < last; ++i) {
+    const c = src[i];
+    if (c === "\n") {
+      ++ctx.newlines;
+      ctx.lineHead = i + 1;
+    } else if (c === "\r") {
+      ++ctx.newlines;
+      if (src[i + 1] === "\n") {
+        ctx.lineHead = i + 2;
+        ++i;
+      } else {
+        ctx.lineHead = i + 1;
+      }
+    }
+  }
+
+  return m;
+}
+
+function testRe(re: RegExp, src: string, pos: number): boolean {
+  re.lastIndex = pos;
+  return re.test(src);
+}
+
+function createLayoutParseContext(src: string): LayoutParseContext {
+  return { src, end: src.length, pos: 0, segmentHead: 0, jsxDepth: 0, lineHead: 0, newlines: 0, parsed: [], failures: [] };
+}
+
+function addParseFailure(ctx: LayoutParseContext, type: ParseFailure["type"], msg: string): void {
+  const { newlines: lineCount, lineHead, pos, failures } = ctx;
+  const line = lineCount + 1;
+  const col = pos - lineHead + 1;
+  failures.push({ type, pos, line, col, msg });
+}
+
+const fatalParseErrorMarker: unique symbol = Symbol("fatal-parse-error-marker");
+
+interface FatalParseError extends Error {
+  marker: typeof fatalParseErrorMarker;
+}
+
+function isFatalParseError(e: any): e is FatalParseError {
+  return (e as any)?.marker === fatalParseErrorMarker;
+}
+
+function assertParse(cond: unknown, ctx: LayoutParseContext, msg: string, recoverRe?: RegExp): asserts cond is true {
+  if (cond) return;
+
+  addParseFailure(ctx, "error", msg);
+
+  if (recoverRe) {
+    runRe(ctx, recoverRe);
+    return;
+  }
+
+  const e = new Error("Parse Error") as FatalParseError;
+  e.marker = fatalParseErrorMarker;
+  throw e;
+}
+
+const reAttrHead = /[ \t\r\n\f]*(?<name>[^ \t\r\n\f"'>/=\0\x00-\x1f\x7f\x80-\x9f]+)(?:[ \t\r\n\f]*(?<eq>=)[ \t\r\n\f]*(?<head>["'{]?))?/iy;
+//                              <-attr name--------------------------------------->                     =             <-check '"-->
+const reAttrTailUnquoted = /[^<>= \t\r\n\f'"`]+/y;
+const reAttrTailSQuoted = /(?<val>[^<>= \t\r\n\f'`]+)'/y;
+const reAttrTailDQuoted = /(?<val>[^<>= \t\r\n\f"`]+)"/y;
+const reAttrJSXClose = /[ \t\r\n\f]*}/y;
+const reSkipToTagEnd = /[^>]*/y;
+
+const resourceAttrTable = {
+  href: new Set(["link"]),
+  imagesrcset: new Set(["link"]),
+  src: new Set(["img", "embed", "track", "audio", "video", "input", "script"]),
+  srcset: new Set(["img", "source"]),
+  data: new Set(["object"]),
+  poster: new Set(["video"]),
+} as const;
+
+function parseAttribute(ctx: LayoutParseContext, tagname?: string | undefined): boolean {
+  const { jsxDepth } = ctx;
+  const inJSX = jsxDepth > 0;
+
+  const m = runRe(ctx, reAttrHead);
+  if (!m) return false;
+
+  const { name, eq, head } = m.groups!;
+  if (!eq)
+    return true;
+
+  const p = ctx.pos;
+
+  let val: string | undefined;
+  switch (head) {
+    case "\"": {
+      val = runRe(ctx, reAttrTailDQuoted)?.groups!.val;
+      break;
+    }
+    case "'": {
+      val = runRe(ctx, reAttrTailSQuoted)?.groups!.val;
+      break;
+    }
+    case "{": {
+      if (!inJSX)
+        addParseFailure(ctx, "error", `JSX value attribute outside JSX: ${name}={`);
+      parseJSValue(ctx);
+      assertParse(runRe(ctx, reAttrJSXClose), ctx, "JSX value attribute not closed (by '}')", reSkipToTagEnd);
+      break;
+    }
+    case "": {
+      runRe(ctx, reAttrTailUnquoted);
+      break;
+    }
+    default: {
+      assertParse(false, ctx, `invalid attribute value, found: ${JSON.stringify(head)}`, reSkipToTagEnd);
+    }
+  }
+
+  if (val && tagname && resourceAttrTable[name as keyof typeof resourceAttrTable]?.has(tagname)) {
+    const { src, segmentHead, parsed } = ctx;
+    parsed.push(
+      { type: "passthrough", code: src.slice(segmentHead, p) },
+      { type: "href", value: val, quote: head as ("\"" | "'")}
+    );
+    ctx.segmentHead = ctx.pos - 1; // -1 to include ', "
+  }
+
+  return true;
+}
+
+function parseJSValue(ctx: LayoutParseContext): boolean {
+  const { src, pos } = ctx;
+
+  try {
+    const ast = jsParser.parseExpressionAt(src, pos, { ecmaVersion: "latest" });
+    ctx.pos = ast.end;
+  } catch (e) {
+    if (!(e instanceof SyntaxError))
+      throw e;
+    const { line, column } = (e as any).loc as { line: number, column: number };
+    addParseFailure(ctx, "error", `at (${line}, ${column}): ${e.message}`);
+    runRe(ctx, /[^}]*/y); // skip to nearest } to recover
+  }
+  return true;
+}
+
+const reNonTagStart = /[^<]+/my;
+const reComment = /<!--(?:[^-]|-(?!->))*-->/my; // Intentionally loosen the spec to conform the actual browsers...
+const reDoctype = /<!DOCTYPE[ \t\r\n\f]+[^>]*[ \t\r\n\f]*>/imy;
+const reStartTagHead = /[ \t\r\n\f]*<(?<tagname>[\da-z]+)(?=[\s/>])/iy;
+const reStartTagTail = /[ \t\r\n\f]*(?<closing>\/)?>/iy;
+const reEndTag = /[^<]*<\/(?<tagname>[\da-z]+)[ \t\r\n\f]*>/iy;
+const reVoidElementNames = /^(?:area|base|br|col|command|embed|hr|img|input|keygen|link|meta|param|source|track|wbr)$/i;
+const reRawOrRCDataElementNames = /^script|style|textarea|input$/i;
+const reRawTextEndSearch = /(?:<\/(?<tagname>[\da-z]+)[ \t\r\n\f]*>){1}?/mi; // {1}? means lazy (match the nearest). No y flag to search the end.
+const reLower = /[a-z]/y;
+
+function parseElement(ctx: LayoutParseContext): boolean {
+  const { src, end, parsed, jsxDepth } = ctx;
+  const inJSX = jsxDepth > 0;
+
+  // skip a text, a comment, or a DOCTYPE
+  while (ctx.pos < end && (runRe(ctx, reNonTagStart) || (!inJSX && (runRe(ctx, reComment) || runRe(ctx, reDoctype)))))
+    continue;
+
+  let m: RegExpExecArray | null;
+  const p = ctx.pos;
+
+  // find element or jsx
+  m = runRe(ctx, reStartTagHead);
+  if (!m) return false;
+
+  assertParse(m, ctx, "Failed to parse start tag.");
+
+  const { tagname } = m.groups!;
+  if (testRe(reLower, tagname, 0)) {
+    // found an element (e.g "<div", "<img")
+    while (parseAttribute(ctx, tagname));
+
+    m = runRe(ctx, reStartTagTail);
+    assertParse(m, ctx, `The start tag <${tagname} is not closed.`);
+    const selfClosing = m.groups?.closing === "/";
+
+    if (selfClosing || reVoidElementNames.test(tagname)) {
+      // void elements (e.g. img, br, hr, ...) have no end tag even if the start tag isn't self-closing (e.g. <img>).
+      // do nothing.
+
+    } else if (reRawOrRCDataElementNames.test(tagname)) {
+      // raw text elements ro RCDATA elements
+      m = runRe(ctx, reRawTextEndSearch);
+      assertParse(m, ctx, `No close tag for <${tagname}> found.`);
+      // TODO detect url() in style tag
+
+    } else {
+      // normal elements.
+      while (parseElement(ctx));
+
+      m = runRe(ctx, reEndTag);
+      assertParse(m, ctx, `No close tag for <${tagname}> found.`);
+      assertParse(m.groups?.tagname === tagname, ctx, `No close tag for <${tagname}> but </${m.groups?.tagname}> found.`);
+    }
+  } else {
+    // found a jsx (e.g. "<Componet")
+    const depth = ctx.jsxDepth++;
+    try {
+      if (depth === 0) {
+        const { segmentHead } = ctx;
+        parsed.push(
+          { type: "passthrough", code: src.slice(segmentHead, p) },
+          { type: "jsxenter" }
+        );
+        ctx.segmentHead = p;
+      }
+
+      while (parseAttribute(ctx));
+
+      m = runRe(ctx, reStartTagTail);
+      assertParse(m, ctx, `The start tag <${tagname} is not closed.`);
+      const selfClosing = m.groups?.closing === "/";
+
+      if (!selfClosing) {
+        while (parseElement(ctx));
+        m = runRe(ctx, reEndTag);
+        assertParse(m, ctx, `No close tag for <${tagname}> found.`);
+        assertParse(m.groups?.tagname === tagname, ctx, `No close tag for <${tagname}> but </${m.groups?.tagname}> found.`);
+      }
+    } finally {
+      ctx.jsxDepth--;
+      if (depth === 0) {
+        parsed.push(
+          { type: "passthrough", code: src.slice(ctx.segmentHead, ctx.pos) },
+          { type: "jsxleave" }
+        );
+        ctx.segmentHead = ctx.pos;
+      }
+    }
+  }
+  return true;
+}
+
+const reImport = /import\s+(?:\*\s+as\s+\w+\s+|\{[^\}]+\}\s*)?from\s+["'][^"']+["']\s*;?\s*[\r\n]*/my;
+const reImportInvalid = /\s+import\s+(?:\*\s+as\s+\w+\s+|\{[^\}]+\}\s*)?from\s+["'][^"']+["']\s*;?\s*[\r\n]*/my;
+
+function parseImports(ctx: LayoutParseContext) {
+  const { src, parsed } = ctx;
+
+  while (runRe(ctx, reImport));
+  parsed.push({ type: "imports", code: src.slice(0, ctx.pos) });
+
+  if (testRe(reImportInvalid, src, ctx.pos))
+    addParseFailure(ctx, "warn", "preabmle imports must start from the first column of a line.");
+}
+
+export type LayoutParseResult =
+  { success: true, parsed: LayoutEntry[] } |
+  { success: false, failures: ParseFailure[] };
+
+export function parseLayout(s: string): LayoutParseResult {
+  const ctx = createLayoutParseContext(s);
+  const { src, end, parsed } = ctx;
+
+  try {
+    parseImports(ctx);
+    // parse HTML
+    ctx.segmentHead = ctx.pos;
+    while (ctx.pos < end && parseElement(ctx));
+    if (ctx.segmentHead < end)
+      parsed.push({ type: "passthrough", code: src.slice(ctx.segmentHead, end) });
+  } catch (e) {
+    if (e === "skip") return { success: true, parsed, ctx } as LayoutParseResult;
+    if (!isFatalParseError(e)) throw e;
+    return { success: false, failures: ctx.failures };
+  }
+  return { success: true, parsed };
+}
