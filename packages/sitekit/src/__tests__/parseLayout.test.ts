@@ -6,7 +6,7 @@ function jj(x: any): any { return JSON.parse(JSON.stringify(x)); }
 describe("parseLayout()", () => {
   it("import", () => {
     const src = [
-      `import * as   x from "./foo";`,
+      `import * as   x from "some-lib";`,
       `import * as y from "./bar";`,
       `import { some, anotherSome as AS } from    "./foo";`,
       ``,
@@ -27,13 +27,42 @@ describe("parseLayout()", () => {
     expect(parseResult).toEqual({
       success: true,
       parsed: [
+        { type: 'jsenter' },
         {
-          type: 'imports',
-          code: 'import * as   x from "./foo";\n' +
-            'import * as y from "./bar";\n' +
-            'import { some, anotherSome as AS } from    "./foo";\n' +
-            '\n'
+          code: "import * as   x from \"",
+          type: "passthrough",
         },
+        {
+          quote: "\"",
+          type: "href",
+          value: "some-lib",
+        },
+        {
+          code: "\";\n" +
+            "import * as y from \"",
+          type: "passthrough",
+        },
+        {
+          quote: "\"",
+          type: "href",
+          value: "./bar",
+        },
+        {
+          code: "\";\n" +
+            "import { some, anotherSome as AS } from    \"",
+          type: "passthrough",
+        },
+        {
+          quote: "\"",
+          type: "href",
+          value: "./foo",
+        },
+        {
+          code: "\";\n" +
+            "\n",
+          type: "passthrough",
+        },
+        { type: 'jsleave' },
         {
           type: 'passthrough',
           code: '<!doctype html>\n' +
@@ -54,12 +83,12 @@ describe("parseLayout()", () => {
             '  foo -->\n' +
             '<d foo=true ja="foo" ><area/></d>\n'
         },
-        { type: 'jsxenter' },
+        { type: 'jsenter' },
         {
           type: 'passthrough',
           code: '<NavList foo={true} ja={"foo"} j={<div>foo</div>} ><area/></NavList>'
         },
-        { type: 'jsxleave' },
+        { type: 'jsleave' },
         {
           type: 'passthrough',
           code: '\n' +
