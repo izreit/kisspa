@@ -8,8 +8,8 @@ type LayoutEntry =
   { type: "passthrough", code: string } |
   { type: "placeholder", value: "title" | "params" | "body" } |
   { type: "href", value: string, quote: "'" | "\"" } |
-  { type: "jsxenter" } |
-  { type: "jsxleave" };
+  { type: "jsenter" } |
+  { type: "jsleave" };
 
 interface ParseFailure {
   type: "warn" | "error";
@@ -270,7 +270,7 @@ function parseElement(ctx: LayoutParseContext): boolean {
         const { segmentHead } = ctx;
         parsed.push(
           { type: "passthrough", code: src.slice(segmentHead, p) },
-          { type: "jsxenter" }
+          { type: "jsenter" }
         );
         ctx.segmentHead = p;
       }
@@ -292,7 +292,7 @@ function parseElement(ctx: LayoutParseContext): boolean {
       if (depth === 0) {
         parsed.push(
           { type: "passthrough", code: src.slice(ctx.segmentHead, ctx.pos) },
-          { type: "jsxleave" }
+          { type: "jsleave" }
         );
         ctx.segmentHead = ctx.pos;
       }
@@ -301,14 +301,37 @@ function parseElement(ctx: LayoutParseContext): boolean {
   return true;
 }
 
-const reImport = /import\s+(?:\*\s+as\s+\w+\s+|\{[^\}]+\}\s*)?from\s+["'][^"']+["']\s*;?\s*[\r\n]*/my;
+const reImportHead = /import\s+(?:\*\s+as\s+\w+\s+|\{[^\}]+\}\s*)?from\s+["']/my;
+const reImportTail = /(?<target>[^"']+)(?<quote>["'])\s*;?\s*[\r\n]*/my;
 const reImportInvalid = /\s+import\s+(?:\*\s+as\s+\w+\s+|\{[^\}]+\}\s*)?from\s+["'][^"']+["']\s*;?\s*[\r\n]*/my;
+const reSkipToImportEnd = /[^\r\n]*[\r\n]*/my;
 
 function parseImports(ctx: LayoutParseContext) {
-  const { src, parsed } = ctx;
+  const { src, end, parsed } = ctx;
 
-  while (runRe(ctx, reImport));
-  parsed.push({ type: "imports", code: src.slice(0, ctx.pos) });
+  parsed.push({ type: "jsenter" });
+
+  while (ctx.pos < end) {
+    if (!runRe(ctx, reImportHead))
+      break;
+
+    const p0 = ctx.pos;
+    const m = runRe(ctx, reImportTail);
+    assertParse(m, ctx, "import statement broken.", reSkipToImportEnd);
+
+    const { target, quote } = m.groups!;
+    parsed.push(
+      { type: "passthrough", code: src.slice(ctx.segmentHead, p0) },
+      { type: "href", quote: quote as "'" | "\"", value: target },
+    );
+    ctx.segmentHead = ctx.pos - m[0].length + target.length;  // set the pos of the closing quote ', ""
+  }
+
+  parsed.push(
+    { type: "passthrough", code: src.slice(ctx.segmentHead, ctx.pos) },
+    { type: "jsleave" }
+  );
+  ctx.segmentHead = ctx.pos;
 
   if (testRe(reImportInvalid, src, ctx.pos))
     addParseFailure(ctx, "warn", "preabmle imports must start from the first column of a line.");
