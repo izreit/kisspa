@@ -82,7 +82,47 @@ describe("parseDoc()", () => {
     ].join("\n");
 
     const parseDocResult = parseDoc(src);
-    console.log(parseDocResult);
-    expect(1).toBe(0);
+    expect(parseDocResult).toEqual({
+      frontmatter: { title: 'A Test Title', tag: ['testtag1', 'testtag2'] },
+      markdown: '<p>  import from &#39;this-line/should-be-warned&#39;;</p>\n' +
+        '<h1>foo</h1>\n' +
+        '<p>some text</p>\n' +
+        '<div data-sitekit-embed="2" style="display:none" /><p>followed by a block text</p>\n' +
+        '<p>with <div data-sitekit-embed="3" style="display:none" /> something.</p>\n',
+      jsxFrags: [
+        {
+          marker: '2',
+          code: '<ThisIsAComponent prop1={100}>\n' +
+            '  <ul>\n' +
+            '    <li>pee <Inline /></li>\n' +
+            '    <li>zoo</li>\n' +
+            '  </ul>\n' +
+            '\n' +
+            '</ThisIsAComponent>'
+        },
+        {
+          marker: '3',
+          code: '<InlineCompo><div class={`foo ${1 + 2}`}>text</div></InlineCompo>'
+        }
+      ],
+      importData: [
+        { type: 'jsenter' },
+        { type: 'passthrough', code: "\nimport { Foo } from '" },
+        { type: 'href', quote: "'", value: './tee' },
+        { type: 'passthrough', code: "';\nimport from '" },
+        { type: 'href', quote: "'", value: '@___/module_never_exists' },
+        { type: 'passthrough', code: "';\n" },
+        { type: 'jsleave' }
+      ],
+      failures: [
+        {
+          type: 'warn',
+          pos: 70,
+          line: 12,
+          col: 1,
+          msg: 'preamble imports must start from the first column of a line.'
+        }
+      ]
+    });
   });
 });

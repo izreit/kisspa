@@ -350,7 +350,6 @@ function consumeImports(ctx: LayoutParseContext): void {
     parsed.pop(); // drop jsenter because no imports found.
   }
 
-  console.log("CHKINV", JSON.stringify(src.slice(ctx.pos, ctx.pos + 16)), ctx.pos, ctx.end, src);
   if (testRe(reImportInvalid, src, ctx.pos))
     addParseFailure(ctx, "warn", "preamble imports must start from the first column of a line." + src.slice(ctx.pos, 20));
 }
