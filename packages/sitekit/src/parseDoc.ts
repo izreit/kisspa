@@ -86,7 +86,6 @@ function preprocess(src: string): string {
 
   const { newlines: newlinesOffsetAfterFm } = countNewlines(src, 0, fmEnd);
   const pr = parseImports(srcAfterFm, newlinesOffsetAfterFm);
-  console.log("PRE2", pr);
   const markdown = srcAfterFm.slice(pr.pos);
 
   lastFrontmatter = frontmatter;
