@@ -3,7 +3,7 @@ import acornJsx from "acorn-jsx";
 
 const jsParser = acornParser.extend(acornJsx());
 
-type LayoutEntry =
+export type LayoutEntry =
   { type: "imports", code: string } |
   { type: "passthrough", code: string } |
   { type: "placeholder", value: "title" | "params" | "body" } |
@@ -11,7 +11,7 @@ type LayoutEntry =
   { type: "jsenter" } |
   { type: "jsleave" };
 
-interface ParseFailure {
+export interface ParseFailure {
   type: "warn" | "error";
   pos: number;
   line: number; // one-origin
@@ -182,7 +182,7 @@ function parseAttribute(ctx: LayoutParseContext, tagname?: string | undefined): 
   if (val && tagname && resourceAttrTable[name as keyof typeof resourceAttrTable]?.has(tagname)) {
     const { src, segmentHead, parsed } = ctx;
     parsed.push(
-      { type: "passthrough", code: src.slice(segmentHead, p) },
+      { type: "passthrough", code: src.slice(segmentHead, p) }, // never empty since there is an attribute name
       { type: "href", value: val, quote: head as ("\"" | "'")}
     );
     ctx.segmentHead = ctx.pos - 1; // -1 to include ', "
@@ -268,11 +268,11 @@ function parseElement(ctx: LayoutParseContext): boolean {
     try {
       if (depth === 0) {
         const { segmentHead } = ctx;
-        parsed.push(
-          { type: "passthrough", code: src.slice(segmentHead, p) },
-          { type: "jsenter" }
-        );
-        ctx.segmentHead = p;
+        if (segmentHead < p) {
+          parsed.push({ type: "passthrough", code: src.slice(segmentHead, p) });
+          ctx.segmentHead = p;
+        }
+        parsed.push({ type: "jsenter" });
       }
 
       while (parseAttribute(ctx));
@@ -291,7 +291,7 @@ function parseElement(ctx: LayoutParseContext): boolean {
       ctx.jsxDepth--;
       if (depth === 0) {
         parsed.push(
-          { type: "passthrough", code: src.slice(ctx.segmentHead, ctx.pos) },
+          { type: "passthrough", code: src.slice(ctx.segmentHead, ctx.pos) }, // never empty since there is a component head.
           { type: "jsleave" }
         );
         ctx.segmentHead = ctx.pos;
@@ -321,17 +321,22 @@ function parseImports(ctx: LayoutParseContext) {
 
     const { target, quote } = m.groups!;
     parsed.push(
-      { type: "passthrough", code: src.slice(ctx.segmentHead, p0) },
+      { type: "passthrough", code: src.slice(ctx.segmentHead, p0) }, // never empty: there is "import ~"
       { type: "href", quote: quote as "'" | "\"", value: target },
     );
     ctx.segmentHead = ctx.pos - m[0].length + target.length;  // set the pos of the closing quote ', ""
   }
 
-  parsed.push(
-    { type: "passthrough", code: src.slice(ctx.segmentHead, ctx.pos) },
-    { type: "jsleave" }
-  );
-  ctx.segmentHead = ctx.pos;
+  if (ctx.segmentHead < ctx.pos) {
+    parsed.push({ type: "passthrough", code: src.slice(ctx.segmentHead, ctx.pos) });
+    ctx.segmentHead = ctx.pos;
+  }
+
+  if (parsed[parsed.length - 1]?.type !== "jsenter") {
+    parsed.push({ type: "jsleave" });
+  } else {
+    parsed.pop(); // drop jsenter because no imports found.
+  }
 
   if (testRe(reImportInvalid, src, ctx.pos))
     addParseFailure(ctx, "warn", "preabmle imports must start from the first column of a line.");
@@ -358,4 +363,13 @@ export function parseLayout(s: string): LayoutParseResult {
     return { success: false, failures: ctx.failures };
   }
   return { success: true, parsed };
+}
+
+export function parseJSExpression(src: string): number | null {
+  try {
+    const ast = jsParser.parseExpressionAt(src, 0, { "ecmaVersion": "latest" });
+    return ast.end;
+  } catch (_) {
+    return null;
+  }
 }
