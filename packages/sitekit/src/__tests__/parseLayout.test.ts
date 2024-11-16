@@ -1,8 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { parseLayout } from "../parseLayout";
 
-function jj(x: any): any { return JSON.parse(JSON.stringify(x)); }
-
 describe("parseLayout()", () => {
   it("import", () => {
     const src = [
@@ -26,6 +24,7 @@ describe("parseLayout()", () => {
     const parseResult = parseLayout(src);
     expect(parseResult).toEqual({
       success: true,
+      failures: [],
       parsed: [
         { type: 'jsenter' },
         {
