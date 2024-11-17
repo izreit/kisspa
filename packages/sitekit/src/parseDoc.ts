@@ -76,16 +76,19 @@ function preprocess(src: string): string {
   const m = reSearchFrontmatterEnd.exec(src.slice(begin));
   if (!m)
     return src;
-
   const fmYamlEnd = begin + m.index;
-  const fmEnd = fmYamlEnd + m[0].length;
+  const fmEnd = fmYamlEnd + m[0].length;  // the end of the delimiter "---"".
 
+  // extract and parse frontmatter
   const srcFm = src.slice(begin, fmYamlEnd);
-  const srcAfterFm = src.slice(fmEnd);
   const frontmatter = loadYAML(srcFm);
 
+  // measure and parse imports
+  const srcAfterFm = src.slice(fmEnd);
   const { newlines: newlinesOffsetAfterFm } = countNewlines(src, 0, fmEnd);
   const pr = parseImports(srcAfterFm, newlinesOffsetAfterFm);
+
+  // extract the remaining: markdown with JSX
   const markdown = srcAfterFm.slice(pr.pos);
 
   lastFrontmatter = frontmatter;
