@@ -91,7 +91,15 @@ describe("parseLayout()", () => {
         {
           type: 'passthrough',
           code: '\n' +
-            '<title>{%sitekit:title%} - Web</title>\n' +
+            '<title>',
+        },
+        {
+          type: "placeholder",
+          value: "title",
+        },
+        {
+          type: 'passthrough',
+          code: " - Web</title>\n" +
             `<area foo="bee" tee:zoo doulbe='ppee"poo' />`
         }
       ]

@@ -3,8 +3,7 @@ import acornJsx from "acorn-jsx";
 
 const jsParser = acornParser.extend(acornJsx());
 
-export type LayoutEntry =
-  { type: "imports", code: string } |
+export type LayoutFragment =
   { type: "passthrough", code: string } |
   { type: "placeholder", value: "title" | "params" | "body" } |
   { type: "href", value: string, quote: "'" | "\"" } |
@@ -48,7 +47,7 @@ interface LayoutParseContext {
    */
   newlines: number;
 
-  parsed: LayoutEntry[];
+  parsed: LayoutFragment[];
 
   failures: ParseFailure[];
 }
@@ -216,7 +215,8 @@ function consumeJSValue(ctx: LayoutParseContext): boolean {
   return true;
 }
 
-const reNonTagStart = /[^<]+/my;
+const reNonTagStart = /[^<{]+/my;
+const rePlaceholder = /{(?:%sitekit:(?<type>title|body)%})?/my;
 const reComment = /<!--(?:[^-]|-(?!->))*-->/my; // Intentionally loosen the spec to conform the actual browsers...
 const reDoctype = /<!DOCTYPE[ \t\r\n\f]+[^>]*[ \t\r\n\f]*>/imy;
 const reStartTagHead = /[ \t\r\n\f]*<(?<tagname>[\da-z]+)(?=[\s/>])/iy;
@@ -231,7 +231,24 @@ function consumeElement(ctx: LayoutParseContext): boolean {
   const { src, end, parsed, jsxDepth } = ctx;
   const inJSX = jsxDepth > 0;
 
-  // skip a text, a comment, or a DOCTYPE
+  // skip a text, a comment, a DOCTYPE, or a placeholder
+  while (ctx.pos < end) {
+    if (runRe(ctx, reNonTagStart) || (!inJSX && (runRe(ctx, reComment) || runRe(ctx, reDoctype))))
+      continue;
+
+    const p0 = ctx.pos;
+    const m = runRe(ctx, rePlaceholder);
+    if (!m)
+      break;
+
+    if (m.groups?.type) {
+      if (ctx.segmentHead < p0)
+        parsed.push({ type: "passthrough", code: src.slice(ctx.segmentHead, p0) });
+      parsed.push({ type: "placeholder", value: m.groups.type as "title" | "body" });
+      ctx.segmentHead = ctx.pos;
+    }
+  }
+
   while (ctx.pos < end && (runRe(ctx, reNonTagStart) || (!inJSX && (runRe(ctx, reComment) || runRe(ctx, reDoctype)))))
     continue;
 
@@ -355,7 +372,7 @@ function consumeImports(ctx: LayoutParseContext): void {
 }
 
 export type LayoutParseResult =
-  { success: true, failures: ParseFailure[], parsed: LayoutEntry[] } |
+  { success: true, failures: ParseFailure[], parsed: LayoutFragment[] } |
   { success: false, failures: ParseFailure[] };
 
 export function parseLayout(s: string): LayoutParseResult {
@@ -386,7 +403,7 @@ export function measureJSExpression(src: string): number | null {
 }
 
 export interface ParseImportsResult {
-  parsed: LayoutEntry[];
+  parsed: LayoutFragment[];
   failures: ParseFailure[];
   pos: number;
 }

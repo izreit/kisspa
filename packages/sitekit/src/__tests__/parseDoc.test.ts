@@ -21,7 +21,7 @@ describe("parseDoc()", () => {
       "with <InlineCompo><div class={`foo ${1 + 2}`}>text</div></InlineCompo> something.",
     ].join("\n");
 
-    const { markdown, jsxFrags } = parseDoc(src)
+    const { markdown, jsxs } = parseDoc(src)
 
     expect(markdown.split("\n")).toEqual([
       '<h1>foo</h1>',
@@ -31,7 +31,7 @@ describe("parseDoc()", () => {
       '',
     ]);
 
-    expect(jsxFrags).toEqual([
+    expect(jsxs).toEqual([
       {
         marker: '0',
         code: '<ThisIsAComponent prop1={100}>\n' +
@@ -89,7 +89,7 @@ describe("parseDoc()", () => {
         '<p>some text</p>\n' +
         '<div data-sitekit-embed="2" style="display:none" /><p>followed by a block text</p>\n' +
         '<p>with <div data-sitekit-embed="3" style="display:none" /> something.</p>\n',
-      jsxFrags: [
+      jsxs: [
         {
           marker: '2',
           code: '<ThisIsAComponent prop1={100}>\n' +
