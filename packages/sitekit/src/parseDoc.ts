@@ -1,6 +1,6 @@
 import { marked, TokenizerAndRendererExtension, Tokens } from "marked";
 import { load as loadYAML } from "js-yaml";
-import { countNewlines, LayoutEntry, measureJSExpression, ParseFailure, parseImports } from "./parseLayout";
+import { countNewlines, LayoutFragment, measureJSExpression, ParseFailure, parseImports } from "./parseLayout";
 
 const reSearchBlockJSXStartTagHead = /(?<=(?:\r|\n|\r\n){2,})<[A-Z][\da-zA-Z\.]*(?=[\s/>])/;
 const reBlockJSXStartTagHead = /^<[A-Z][\da-zA-Z\.]*(?=[\s/>])/;
@@ -64,7 +64,7 @@ const reFrontmatterHead = /[\r\n]*---[\r\n]+/my;
 const reSearchFrontmatterEnd = /^---\s*$/m;
 
 let lastFrontmatter: unknown;
-let lastImports: LayoutEntry[];
+let lastImports: LayoutFragment[];
 let lastImportsFailures: ParseFailure[];
 
 function preprocess(src: string): string {
@@ -105,15 +105,15 @@ marked.use({
 export type DocParseResult = {
   frontmatter: unknown;
   markdown: string;
-  importData: LayoutEntry[];
-  jsxFrags: JSXInDocEntry[];
+  importData: LayoutFragment[];
+  jsxs: JSXInDocEntry[];
   failures: ParseFailure[];
 };
 
 export function parseDoc(src: string): DocParseResult {
   jsxBuffer = [];
   const markdown = marked.parse(src) as string;
-  const jsxFrags = jsxBuffer; // updated by marked extensions through marked.parse().
+  const jsxs = jsxBuffer; // updated by marked extensions through marked.parse().
   const frontmatter = lastFrontmatter;
   const importData = lastImports;
   const failures = lastImportsFailures;
@@ -124,5 +124,5 @@ export function parseDoc(src: string): DocParseResult {
   lastImports = [];
   lastImportsFailures = [];
 
-  return { frontmatter, markdown, jsxFrags, importData, failures };
+  return { frontmatter, markdown, jsxs, importData, failures };
 }
