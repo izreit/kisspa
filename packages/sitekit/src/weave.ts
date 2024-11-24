@@ -1,14 +1,13 @@
 import assert from "node:assert";
 import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
 import { dirname, join, parse as parsePath, relative, resolve } from "node:path";
-import { ResolvedConfig } from "./config";
+import { loadConfig, ResolvedConfig } from "./config";
 import { parseDoc } from "./parseDoc";
 import { LayoutFragment, ParseFailure, parseLayout } from "./parseLayout";
+import { defaultHandlers, SitekitHandlers } from "./handlers";
 
-function sha256(s: string): string {
-  return createHash("sha256").update(s).digest("hex");
-}
+const THEME_DIR_NAME = "theme";
+const WORKSPACE_DIR_NAME = ".workspace";
 
 export interface Layout {
   /**
@@ -16,33 +15,53 @@ export interface Layout {
    */
   dir: string;
   hash: string;
-  refs: string[];
+  refs: Set<string>;
   fragments: LayoutFragment[];
 }
 
 export interface WeaveContext {
-  resolvedConfig: ResolvedConfig;
-
   /**
    * The absolute path of the .sitekit/ dir.
    */
   configRoot: string;
 
   /**
+   * Config.
+   */
+  resolvedConfig: ResolvedConfig;
+
+  /**
    * The layout cache table.
    */
   layouts: Map<string, Layout>;
 
+  /**
+   * The relative paths (from configRoot) of docs (.md) refering changed layouts.
+   */
   staled: Set<string>;
+
+  handlers: SitekitHandlers;
+}
+
+export async function createWeaveContext(handlers: SitekitHandlers | null, configRoot: string): Promise<WeaveContext> {
+  const h = handlers || defaultHandlers;
+  const absConfigRoot = resolve(configRoot);
+  return {
+    configRoot: absConfigRoot,
+    resolvedConfig: await loadConfig(h, absConfigRoot),
+    layouts: new Map(),
+    staled: new Set(),
+    handlers: h,
+  };
 }
 
 export async function resolveLayout(ctx: WeaveContext, name: string): Promise<Layout | null> {
-  const { configRoot, layouts, staled } = ctx;
-  const themeRoot = join(configRoot, "theme");
+  const { configRoot, layouts, staled, handlers } = ctx;
+  const themeRoot = join(configRoot, THEME_DIR_NAME);
   const layoutPath = join(themeRoot, `${name}.html`);
-  assert(relative(themeRoot, layoutPath).startsWith(".."), `layout "${name}" is out of the theme directory.`);
+  assert(!relative(themeRoot, layoutPath).startsWith(".."), `layout "${name}" is out of the theme directory.`);
 
-  const layoutSrc = await readFile(layoutPath, "utf-8");
+  const layoutSrc = await handlers.readTextFile(layoutPath);
   const hash = sha256(layoutSrc);
   const cache = layouts.get(name);
   if (cache?.hash === hash)
@@ -56,7 +75,7 @@ export async function resolveLayout(ctx: WeaveContext, name: string): Promise<La
   const layout: Layout = {
     dir: dirname(layoutPath),
     hash,
-    refs: cache?.refs ?? [],
+    refs: cache?.refs ?? new Set(),
     fragments: parseResult.parsed
   };
 
@@ -66,13 +85,14 @@ export async function resolveLayout(ctx: WeaveContext, name: string): Promise<La
 }
 
 export async function weave(ctx: WeaveContext, path: string): Promise<void> {
-  const { resolvedConfig, configRoot, layouts, staled } = ctx;
+  const { resolvedConfig, configRoot, staled, handlers } = ctx;
   const docPath = resolve(resolvedConfig.src, path);
   const docDir = dirname(docPath);
   const docRelPath = relative(resolvedConfig.src, docPath);
-  assert(docRelPath.startsWith(".."), `"${path}" is out of the document directory.`);
+  assert(!docRelPath.startsWith(".."), `"${path}" is out of the document directory. ${resolvedConfig.src} to ${docPath} is ${docRelPath}`);
 
-  const { markdown, jsxs, importData, frontmatter, failures } = parseDoc(docPath);
+  const docSrc = await handlers.readTextFile(docPath);
+  const { markdown, jsxs, importData, frontmatter, failures } = parseDoc(docSrc);
   printFailure(failures, docPath);
   validateDocFrontmatter(frontmatter, docPath);
 
@@ -81,81 +101,155 @@ export async function weave(ctx: WeaveContext, path: string): Promise<void> {
   if (!layout)
     return;
 
-  const outPathBase = resolve(configRoot, ".workspace", stripExt(docRelPath));
+  const outPathBase = resolve(configRoot, WORKSPACE_DIR_NAME, stripExt(docRelPath));
   const outDir = dirname(outPathBase);
   const outPathHTML = outPathBase + ".html";
   const outPathJS = outPathBase + ".js";
 
-  // weave .html
   const jsFrags: string[] = [];
   const htmlFrags: string[] = [];
 
-  let inJS = false;
-  const pushFrag = (code: string): void => {
-    (inJS ? jsFrags : htmlFrags).push(code);
-  };
-
-  layout.fragments.forEach(frag => {
+  // push imports in .md to .js
+  importData.forEach(frag => {
     switch (frag.type) {
-      case "jsenter": {
-        inJS = true;
-        break;
-      }
-
-      case "jsleave": {
-        inJS = false;
-        break;
-      }
-
       case "passthrough": {
-        pushFrag(frag.code);
+        jsFrags.push(frag.code);
         break;
       }
-
-      case "placeholder": {
-        switch (frag.value) {
-          case "body": {
-            pushFrag(markdown);
-            break;
-          }
-          case "title": {
-            // TODO should detect the title-like string from headings in .md? or introdue the default title in layout?
-            pushFrag(frontmatter.title ?? "");
-            break;
-          }
-          case "params": {
-            // unused yet
-            break;
-          }
-        }
-        break;
-      }
-
       case "href": {
         const { quote, value } = frag;
-        if (!(/^\.\.?\//.test(value))) {
-          pushFrag(value);
-          break;
-        }
-        const path = dotSlashRelative(outDir, resolve(layout.dir, value));
-        const re = (quote === "'") ? /(?<!\\)(?=')/g : /(?<!\\)(?=")/g;
-        const escaped = path.replaceAll(re, "\\");
-        pushFrag(escaped);
+        const path = isRelativePath(value) ? asDotSlashRelative(outDir, resolve(docDir, value), quote) : value;
+        jsFrags.push(path);
         break;
       }
-
+      case "importenter": case "importleave": case "jsenter": case "jsleave": {
+        // do nothing.
+        break;
+      }
+      case "placeholder": {
+        throwError("unexpected fragment in import");
+      }
       default: {
         unreachable(frag);
       }
     }
   });
+
+  let mode: "html" | "js" | "import" = "html";
+  let jsxCurrentKey = 0;
+  let foundJSX = false;
+
+  const pushFrag = (code: string, marker: string = `L${jsxCurrentKey}`): void => {
+    switch (mode) {
+      case "html": {
+        htmlFrags.push(code);
+        break;
+      }
+      case "import": {
+        jsFrags.push(code);
+        break;
+      }
+      case "js": {
+        if (!foundJSX) {
+          // TODO name literals, support other JSX libraries.
+          // Ugh! how to avoid name conflit?
+          jsFrags.unshift(`import { attach as __kisspa_attach__ } from "kisspa";\n`);
+          foundJSX = true;
+        }
+        jsFrags.push(`__kisspa_attach__(document.querySelector([data-sitekit-embed="${marker}"]), ${code});\n`);
+        break;
+      }
+      default: {
+        unreachable(mode);
+      }
+    }
+  };
+
+  // weave .html
+  layout.fragments.forEach(frag => {
+    switch (frag.type) {
+      case "jsenter": {
+        mode = "js";
+        break;
+      }
+      case "jsleave": {
+        mode = "html";
+        htmlFrags.push(`<div data-sitekit-embed="L${jsxCurrentKey}" style="display:none" />"`);
+        jsxCurrentKey++;
+        break;
+      }
+      case "importenter": {
+        mode = "import";
+        break;
+      }
+      case "importleave": {
+        mode = "html";
+        break;
+      }
+      case "passthrough": {
+        pushFrag(frag.code);
+        break;
+      }
+      case "placeholder": {
+        const { value } = frag;
+        if (value === "body") {
+          pushFrag(markdown);
+        } else if (value === "title") {
+          // TODO should detect the title-like string from headings in .md? or introdue the default title in layout?
+          pushFrag(frontmatter.title ?? "");
+        } else {
+          unreachable(value);
+        }
+        break;
+      }
+      case "href": {
+        const { quote, value } = frag;
+        const path = isRelativePath(value) ? asDotSlashRelative(outDir, resolve(layout.dir, value), quote) : value;
+        pushFrag(path);
+        break;
+      }
+      default: {
+        unreachable(frag);
+      }
+    }
+  });
+
+  // flush JSX in .md
+  mode = "js";
+  jsxs.forEach(({ marker, code }) => {
+    pushFrag(code, marker);
+  });
+
+  await handlers.writeTextFile(outPathHTML, htmlFrags.join(""));
+  await handlers.writeTextFile(outPathJS, jsFrags.join(""));
+
+  layout.refs.add(path);
+  staled.delete(path);
+}
+
+function throwError(msg: string): never {
+  throw new Error(msg);
 }
 
 function unreachable(_: never): void {}
 
-function dotSlashRelative(from: string, to: string): string {
-  const p = relative(from, to).replaceAll("\\", "/");
-  return (p[0] === ".") ? p : "./" + p;
+function sha256(s: string): string {
+  return createHash("sha256").update(s).digest("hex");
+}
+
+const reIsRelativePath = /^\.\.?\//;
+const reUnescapedSQuote = /(?<!\\)(?=')/g;
+const reUnescapedDQuote = /(?<!\\)(?=")/g;
+
+function isRelativePath(p: string): boolean {
+  return reIsRelativePath.test(p);
+}
+
+function asDotSlashRelative(from: string, to: string, escapeQuoteType: "'" | "\""): string {
+  const raw = relative(from, to).replaceAll("\\", "/");
+  const path = (raw[0] === ".") ? raw : "./" + raw;
+  const reUnescaped = escapeQuoteType === "'" ? reUnescapedSQuote : reUnescapedDQuote;
+  return path.replaceAll(reUnescaped, "\\");
 }
 
 function stripExt(path: string): string {
@@ -170,7 +264,7 @@ function printFailure(failures: ParseFailure[], srcPath: string): void {
   });
 
   if (failures.find(f => f.type === "error"))
-    throw new Error("Giveup by parse failure");
+    throwError("Giveup by parse failure");
 }
 
 interface DocFrontmatter {
@@ -184,5 +278,5 @@ function validateDocFrontmatter(fm: unknown, path: string): asserts fm is DocFro
 
   const { layout, title } = fm as any;
   assert(typeof layout === "string", `${path} has no 'layout' fieald in its frontmatter.`);
-  assert(title && typeof title === "string", `${path} has no 'title' fieald in its frontmatter.`);
+  assert(!title || typeof title === "string", `${path} has no 'title' fieald in its frontmatter.`);
 }
