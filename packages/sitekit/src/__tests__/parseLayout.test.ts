@@ -26,7 +26,7 @@ describe("parseLayout()", () => {
       success: true,
       failures: [],
       parsed: [
-        { type: 'jsenter' },
+        { type: 'importenter' },
         {
           code: "import * as   x from \"",
           type: "passthrough",
@@ -61,7 +61,7 @@ describe("parseLayout()", () => {
             "\n",
           type: "passthrough",
         },
-        { type: 'jsleave' },
+        { type: 'importleave' },
         {
           type: 'passthrough',
           code: '<!doctype html>\n' +
