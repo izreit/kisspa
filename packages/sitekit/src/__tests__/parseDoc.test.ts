@@ -26,14 +26,14 @@ describe("parseDoc()", () => {
     expect(markdown.split("\n")).toEqual([
       '<h1>foo</h1>',
       '<p>some text</p>',
-      '<div data-sitekit-embed="0" style="display:none" /><p>followed by a block text</p>',
-      '<p>with <div data-sitekit-embed="1" style="display:none" /> something.</p>',
+      '<div data-sitekit-embed="D0" style="display:none" /><p>followed by a block text</p>',
+      '<p>with <div data-sitekit-embed="D1" style="display:none" /> something.</p>',
       '',
     ]);
 
     expect(jsxs).toEqual([
       {
-        marker: '0',
+        marker: 'D0',
         code: '<ThisIsAComponent prop1={100}>\n' +
           '  <ul>\n' +
           '    <li>pee <Inline /></li>\n' +
@@ -43,7 +43,7 @@ describe("parseDoc()", () => {
           '</ThisIsAComponent>'
       },
       {
-        marker: '1',
+        marker: 'D1',
         code: '<InlineCompo><div class={`foo ${1 + 2}`}>text</div></InlineCompo>'
       }
     ]);
@@ -87,11 +87,11 @@ describe("parseDoc()", () => {
       markdown: '<p>  import from &#39;this-line/should-be-warned&#39;;</p>\n' +
         '<h1>foo</h1>\n' +
         '<p>some text</p>\n' +
-        '<div data-sitekit-embed="2" style="display:none" /><p>followed by a block text</p>\n' +
-        '<p>with <div data-sitekit-embed="3" style="display:none" /> something.</p>\n',
+        '<div data-sitekit-embed="D0" style="display:none" /><p>followed by a block text</p>\n' +
+        '<p>with <div data-sitekit-embed="D1" style="display:none" /> something.</p>\n',
       jsxs: [
         {
-          marker: '2',
+          marker: 'D0',
           code: '<ThisIsAComponent prop1={100}>\n' +
             '  <ul>\n' +
             '    <li>pee <Inline /></li>\n' +
@@ -101,18 +101,18 @@ describe("parseDoc()", () => {
             '</ThisIsAComponent>'
         },
         {
-          marker: '3',
+          marker: 'D1',
           code: '<InlineCompo><div class={`foo ${1 + 2}`}>text</div></InlineCompo>'
         }
       ],
       importData: [
-        { type: 'jsenter' },
+        { type: 'importenter' },
         { type: 'passthrough', code: "\nimport { Foo } from '" },
         { type: 'href', quote: "'", value: './tee' },
         { type: 'passthrough', code: "';\nimport from '" },
         { type: 'href', quote: "'", value: '@___/module_never_exists' },
         { type: 'passthrough', code: "';\n" },
-        { type: 'jsleave' }
+        { type: 'importleave' }
       ],
       failures: [
         {

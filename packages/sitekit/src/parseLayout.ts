@@ -5,10 +5,10 @@ const jsParser = acornParser.extend(acornJsx());
 
 export type LayoutFragment =
   { type: "passthrough", code: string } |
-  { type: "placeholder", value: "title" | "params" | "body" } |
+  { type: "placeholder", value: "title" | "body" } |
   { type: "href", value: string, quote: "'" | "\"" } |
-  { type: "jsenter" } |
-  { type: "jsleave" };
+  { type: "jsenter" | "jsleave" } |
+  { type: "importenter" | "importleave" };
 
 export interface ParseFailure {
   type: "warn" | "error";
@@ -336,7 +336,7 @@ const reSkipToImportEnd = /[^\r\n]*[\r\n]*/my;
 function consumeImports(ctx: LayoutParseContext): void {
   const { src, end, parsed } = ctx;
 
-  parsed.push({ type: "jsenter" });
+  parsed.push({ type: "importenter" });
 
   runRe(ctx, reEmptyLines); // No rationale: empty lines are accepted as the first lines only.
 
@@ -361,8 +361,8 @@ function consumeImports(ctx: LayoutParseContext): void {
     ctx.segmentHead = ctx.pos;
   }
 
-  if (parsed[parsed.length - 1]?.type !== "jsenter") {
-    parsed.push({ type: "jsleave" });
+  if (parsed[parsed.length - 1]?.type !== "importenter") {
+    parsed.push({ type: "importleave" });
   } else {
     parsed.pop(); // drop jsenter because no imports found.
   }

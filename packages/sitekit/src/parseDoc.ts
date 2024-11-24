@@ -27,7 +27,7 @@ const jsxBlockExtension: TokenizerAndRendererExtension = {
     const end = measureJSExpression(src);
     if (end == null) return;
     const code = src.slice(0, end);
-    const marker = `${jsxInDocNextKey++}`;
+    const marker = `D${jsxInDocNextKey++}`;
     jsxBuffer.push({ marker, code });
     return { type: "jsxBlock", raw: src.slice(0, end), marker };
   },
@@ -51,7 +51,7 @@ const jsxInlineExtension: TokenizerAndRendererExtension = {
       return;
     }
     const code = src.slice(0, end);
-    const marker = `${jsxInDocNextKey++}`;
+    const marker = `D${jsxInDocNextKey++}`;
     jsxBuffer.push({ marker, code });
     return { type: "jsxBlock", raw: src.slice(0, end), marker };
   },
@@ -112,6 +112,7 @@ export type DocParseResult = {
 
 export function parseDoc(src: string): DocParseResult {
   jsxBuffer = [];
+  jsxInDocNextKey = 0;
   const markdown = marked.parse(src) as string;
   const jsxs = jsxBuffer; // updated by marked extensions through marked.parse().
   const frontmatter = lastFrontmatter;
