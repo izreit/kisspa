@@ -1,6 +1,6 @@
-import { stat } from "fs/promises";
 import assert from "node:assert";
-import { join, posix, resolve } from "node:path";
+import { dirname, join, posix, resolve } from "node:path";
+import { defaultHandlers, SitekitHandlers } from "./handlers";
 
 export interface Config {
   /**
@@ -28,14 +28,16 @@ export interface ResolvedConfig {
 
 function normalizeConfig(cfg: unknown, path: string): ResolvedConfig {
   const { src, out } = (cfg || {}) as Config;
+  const base = dirname(path);
   return {
-    src: resolve(path, src ?? ".."),
-    out: resolve(out ?? "./dist/"),
+    src: resolve(base, src ?? ".."),
+    out: resolve(base, out ?? "./dist/"),
   };
 }
 
-async function loadConfig(p: string): Promise<ResolvedConfig> {
-  const filep = async (p: string) => (await stat(p)).isFile() ? p : null;
+export async function loadConfig(handlers: SitekitHandlers | null, p: string): Promise<ResolvedConfig> {
+  const { isFile } = handlers || defaultHandlers;
+  const filep = async (p: string) => (await isFile(p)) ? p : null;
   const actualPath = (
     await filep(join(p)) ??
     await filep(join(p, "sitekit.config.js")) ??
@@ -43,7 +45,8 @@ async function loadConfig(p: string): Promise<ResolvedConfig> {
     await filep(join(p, "sitekit.config.cjs"))
   );
   assert(actualPath, "sitekit.config.js not found.");
-  return normalizeConfig(require(asRequirePath(actualPath)), actualPath);
+  const content = (await import(asRequirePath(actualPath))).default;
+  return normalizeConfig(content, actualPath);
 }
 
 function asRequirePath(path: string): string {
