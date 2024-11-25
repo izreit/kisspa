@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { createHash } from "node:crypto";
-import { dirname, join, parse as parsePath, relative, resolve } from "node:path";
+import { basename, dirname, join, parse as parsePath, relative, resolve } from "node:path";
 import { loadConfig, ResolvedConfig } from "./config";
 import { parseDoc } from "./parseDoc";
 import { LayoutFragment, ParseFailure, parseLayout } from "./parseLayout";
@@ -103,36 +103,44 @@ export async function weave(ctx: WeaveContext, path: string): Promise<void> {
 
   const outPathBase = resolve(configRoot, WORKSPACE_DIR_NAME, stripExt(docRelPath));
   const outDir = dirname(outPathBase);
+  const outBasename = basename(outPathBase);
   const outPathHTML = outPathBase + ".html";
-  const outPathJS = outPathBase + ".js";
+  const outPathLayoutJS = outPathBase + ".layout.js";
+  const outPathDocJS = outPathBase + ".doc.js";
 
-  const jsFrags: string[] = [];
+  const layoutJsFrags: string[] = [];
+  const docJsFrags: string[] = [];
   const htmlFrags: string[] = [];
 
-  // push imports in .md to .js
+  // weave .doc.js
+  if (jsxs.length > 0)
+    docJsFrags.push(`import { attach as __kisspa_attach__ } from "kisspa";\n`);
   importData.forEach(frag => {
     switch (frag.type) {
       case "passthrough": {
-        jsFrags.push(frag.code);
+        docJsFrags.push(frag.code);
         break;
       }
       case "href": {
         const { quote, value } = frag;
         const path = isRelativePath(value) ? asDotSlashRelative(outDir, resolve(docDir, value), quote) : value;
-        jsFrags.push(path);
+        docJsFrags.push(path);
         break;
       }
       case "importenter": case "importleave": case "jsenter": case "jsleave": {
         // do nothing.
         break;
       }
-      case "placeholder": {
+      case "placeholder": case "closehtml": {
         throwError("unexpected fragment in import");
       }
       default: {
         unreachable(frag);
       }
     }
+  });
+  jsxs.forEach(({ marker, code }) => {
+    docJsFrags.push(`__kisspa_attach__(document.querySelector([data-sitekit-embed="${marker}"]), ${code});\n`);
   });
 
   let mode: "html" | "js" | "import" = "html";
@@ -146,17 +154,17 @@ export async function weave(ctx: WeaveContext, path: string): Promise<void> {
         break;
       }
       case "import": {
-        jsFrags.push(code);
+        layoutJsFrags.push(code);
         break;
       }
       case "js": {
         if (!foundJSX) {
           // TODO name literals, support other JSX libraries.
           // Ugh! how to avoid name conflit?
-          jsFrags.unshift(`import { attach as __kisspa_attach__ } from "kisspa";\n`);
+          layoutJsFrags.unshift(`import { attach as __kisspa_attach__ } from "kisspa";\n`);
           foundJSX = true;
         }
-        jsFrags.push(`__kisspa_attach__(document.querySelector([data-sitekit-embed="${marker}"]), ${code});\n`);
+        layoutJsFrags.push(`__kisspa_attach__(document.querySelector([data-sitekit-embed="${marker}"]), ${code});\n`);
         break;
       }
       default: {
@@ -208,20 +216,22 @@ export async function weave(ctx: WeaveContext, path: string): Promise<void> {
         pushFrag(path);
         break;
       }
+      case "closehtml": {
+        htmlFrags.push(
+          `<script type="module" src="./${outBasename}.layout.js" />\n`,
+          `<script type="module" src="./${outBasename}.doc.js" />\n`,
+        );
+        break;
+      }
       default: {
         unreachable(frag);
       }
     }
   });
 
-  // flush JSX in .md
-  mode = "js";
-  jsxs.forEach(({ marker, code }) => {
-    pushFrag(code, marker);
-  });
-
   await handlers.writeTextFile(outPathHTML, htmlFrags.join(""));
-  await handlers.writeTextFile(outPathJS, jsFrags.join(""));
+  await handlers.writeTextFile(outPathLayoutJS, layoutJsFrags.join(""));
+  await handlers.writeTextFile(outPathDocJS, docJsFrags.join(""));
 
   layout.refs.add(path);
   staled.delete(path);

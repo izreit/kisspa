@@ -8,7 +8,8 @@ export type LayoutFragment =
   { type: "placeholder", value: "title" | "body" } |
   { type: "href", value: string, quote: "'" | "\"" } |
   { type: "jsenter" | "jsleave" } |
-  { type: "importenter" | "importleave" };
+  { type: "importenter" | "importleave" } |
+  { type: "closehtml" };
 
 export interface ParseFailure {
   type: "warn" | "error";
@@ -226,6 +227,7 @@ const reVoidElementNames = /^(?:area|base|br|col|command|embed|hr|img|input|keyg
 const reRawOrRCDataElementNames = /^script|style|textarea|input$/i;
 const reRawTextEndSearch = /(?:<\/(?<tagname>[\da-z]+)[ \t\r\n\f]*>){1}?/mi; // {1}? means lazy (match the nearest). No y flag to search the end.
 const reLower = /[a-z]/y;
+const reHtml = /^html$/i;
 
 function consumeElement(ctx: LayoutParseContext): boolean {
   const { src, end, parsed, jsxDepth } = ctx;
@@ -283,6 +285,14 @@ function consumeElement(ctx: LayoutParseContext): boolean {
     } else {
       // normal elements.
       while (consumeElement(ctx));
+
+      if (reHtml.test(tagname)) {
+        if (ctx.segmentHead < ctx.pos) {
+          parsed.push({ type: "passthrough", code: src.slice(ctx.segmentHead, ctx.pos) });
+          ctx.segmentHead = ctx.pos;
+        }
+        parsed.push({ type: "closehtml" });
+      }
 
       m = runRe(ctx, reEndTag);
       assertParse(m, ctx, `No close tag for <${tagname}> found.`);
