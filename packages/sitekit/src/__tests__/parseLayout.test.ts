@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { parseLayout } from "../parseLayout";
 
 describe("parseLayout()", () => {
-  it("import", () => {
+  it("parses imports followed by html", () => {
     const src = [
       `import * as   x from "some-lib";`,
       `import * as y from "./bar";`,
@@ -103,6 +103,51 @@ describe("parseLayout()", () => {
             `<area foo="bee" tee:zoo doulbe='ppee"poo' />`
         }
       ]
+    });
+  });
+
+  it("detects the end of the html tag", () => {
+    const src = [
+      `import * as x from "some-lib";`,
+      ``,
+      `<!doctype html>`,
+      `<html>`,
+      `<title>Test Title</title>`,
+      `<NavList foo={true} ja={"foo"} j={<div>foo</div>} ><area/></NavList>`,
+      `{%sitekit:body%}`,
+      `<area foo="bee" tee:zoo doulbe='ppee"poo' />`,
+      `</html>`,
+    ].join("\n");
+
+    const parseResult = parseLayout(src);
+    expect(parseResult).toEqual({
+      success: true,
+      parsed: [
+        { type: 'importenter' },
+        { type: 'passthrough', code: 'import * as x from "' },
+        { type: 'href', quote: '"', value: 'some-lib' },
+        { type: 'passthrough', code: '";\n\n' },
+        { type: 'importleave' },
+        {
+          type: 'passthrough',
+          code: '<!doctype html>\n<html>\n<title>Test Title</title>\n'
+        },
+        { type: 'jsenter' },
+        {
+          type: 'passthrough',
+          code: '<NavList foo={true} ja={"foo"} j={<div>foo</div>} ><area/></NavList>'
+        },
+        { type: 'jsleave' },
+        { type: 'passthrough', code: '\n' },
+        { type: 'placeholder', value: 'body' },
+        {
+          type: 'passthrough',
+          code: `\n<area foo="bee" tee:zoo doulbe='ppee"poo' />\n`
+        },
+        { type: 'closehtml' },
+        { type: 'passthrough', code: '</html>' }
+      ],
+      failures: []
     });
   });
 });
