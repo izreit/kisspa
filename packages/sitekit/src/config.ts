@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { dirname, join, posix, resolve } from "node:path";
-import { defaultHandlers, SitekitHandlers } from "./handlers";
+import { defaultHandlers, SitekitHandlers } from "./context";
 
 export interface Config {
   /**
@@ -17,21 +17,40 @@ export interface Config {
 
 export interface ResolvedConfig {
   /**
-   * The *absolute* path to the source directory.
+   * The *absolute* path of the source directory.
    */
   src: string;
   /**
-   * The *absolute* path to the output directory.
+   * The *absolute* path of the output directory.
    */
   out: string;
+
+  /**
+   * The *absolute* path of the workspace directory.
+   */
+  workspace: string;
+
+  /**
+   * The *absolute* path of the theme directory.
+   */
+  theme: string;
+
+  /**
+   * The *absolute* path of vite.config.mjs we generate.
+   */
+  userConfigPath: string;
 }
 
 function normalizeConfig(cfg: unknown, path: string): ResolvedConfig {
   const { src, out } = (cfg || {}) as Config;
   const base = dirname(path);
+  const workspace = resolve(base, ".workspace");
   return {
     src: resolve(base, src ?? ".."),
-    out: resolve(base, out ?? "./dist/"),
+    out: resolve(base, out ?? "dist"),
+    workspace,
+    theme: resolve(base, "theme"),
+    userConfigPath: join(workspace, "vite.config.mjs"),
   };
 }
 
