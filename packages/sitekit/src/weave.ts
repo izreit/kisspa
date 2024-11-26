@@ -1,65 +1,19 @@
 import assert from "node:assert";
 import { createHash } from "node:crypto";
 import { basename, dirname, join, parse as parsePath, relative, resolve } from "node:path";
-import { loadConfig, ResolvedConfig } from "./config";
+import { Layout, SitekitContext } from "./context";
 import { parseDoc } from "./parseDoc";
-import { LayoutFragment, ParseFailure, parseLayout } from "./parseLayout";
-import { defaultHandlers, SitekitHandlers } from "./handlers";
+import { ParseFailure, parseLayout } from "./parseLayout";
 
-const THEME_DIR_NAME = "theme";
-const WORKSPACE_DIR_NAME = ".workspace";
-
-export interface Layout {
-  /**
-   * the absolute path
-   */
-  dir: string;
-  hash: string;
-  refs: Set<string>;
-  fragments: LayoutFragment[];
+export function layoutNameOf(ctx: SitekitContext, path: string): string {
+  return relative(ctx.resolvedConfig.theme, stripExt(resolve(path)));
 }
 
-export interface WeaveContext {
-  /**
-   * The absolute path of the .sitekit/ dir.
-   */
-  configRoot: string;
-
-  /**
-   * Config.
-   */
-  resolvedConfig: ResolvedConfig;
-
-  /**
-   * The layout cache table.
-   */
-  layouts: Map<string, Layout>;
-
-  /**
-   * The relative paths (from configRoot) of docs (.md) refering changed layouts.
-   */
-  staled: Set<string>;
-
-  handlers: SitekitHandlers;
-}
-
-export async function createWeaveContext(handlers: SitekitHandlers | null, configRoot: string): Promise<WeaveContext> {
-  const h = handlers || defaultHandlers;
-  const absConfigRoot = resolve(configRoot);
-  return {
-    configRoot: absConfigRoot,
-    resolvedConfig: await loadConfig(h, absConfigRoot),
-    layouts: new Map(),
-    staled: new Set(),
-    handlers: h,
-  };
-}
-
-export async function resolveLayout(ctx: WeaveContext, name: string): Promise<Layout | null> {
-  const { configRoot, layouts, staled, handlers } = ctx;
-  const themeRoot = join(configRoot, THEME_DIR_NAME);
-  const layoutPath = join(themeRoot, `${name}.html`);
-  assert(!relative(themeRoot, layoutPath).startsWith(".."), `layout "${name}" is out of the theme directory.`);
+export async function resolveLayout(ctx: SitekitContext, name: string): Promise<Layout | null> {
+  console.log(`INFO: Resolving layout ${name} ...`);
+  const { resolvedConfig, layouts, staled, handlers } = ctx;
+  const layoutPath = join(resolvedConfig.theme, `${name}.html`);
+  assert(!relative(resolvedConfig.theme, layoutPath).startsWith(".."), `layout "${name}" is out of the theme directory.`);
 
   const layoutSrc = await handlers.readTextFile(layoutPath);
   const hash = sha256(layoutSrc);
@@ -81,11 +35,18 @@ export async function resolveLayout(ctx: WeaveContext, name: string): Promise<La
 
   layouts.set(name, layout);
   cache?.refs.forEach(p => staled.add(p));
+  console.log(`INFO: Resolving layout ${name} done.`);
   return layout;
 }
 
-export async function weave(ctx: WeaveContext, path: string): Promise<void> {
-  const { resolvedConfig, configRoot, staled, handlers } = ctx;
+export interface WeaveResult {
+  entryPath: string;
+  paths: string[];
+}
+
+export async function weave(ctx: SitekitContext, path: string): Promise<WeaveResult | null> {
+  console.log(`INFO: Weaving ${path} ...`);
+  const { resolvedConfig, staled, handlers } = ctx;
   const docPath = resolve(resolvedConfig.src, path);
   const docDir = dirname(docPath);
   const docRelPath = relative(resolvedConfig.src, docPath);
@@ -99,9 +60,9 @@ export async function weave(ctx: WeaveContext, path: string): Promise<void> {
   const { layout: layoutName } = frontmatter;
   const layout = await resolveLayout(ctx, layoutName);
   if (!layout)
-    return;
+    return null;
 
-  const outPathBase = resolve(configRoot, WORKSPACE_DIR_NAME, stripExt(docRelPath));
+  const outPathBase = resolve(resolvedConfig.workspace, stripExt(docRelPath));
   const outDir = dirname(outPathBase);
   const outBasename = basename(outPathBase);
   const outPathHTML = outPathBase + ".html";
@@ -235,6 +196,12 @@ export async function weave(ctx: WeaveContext, path: string): Promise<void> {
 
   layout.refs.add(path);
   staled.delete(path);
+  console.log(`INFO: weaving ${path} done.`);
+
+  return {
+    entryPath: outPathHTML,
+    paths: [outPathHTML, outPathLayoutJS, outPathDocJS],
+  };
 }
 
 function throwError(msg: string): never {
@@ -256,10 +223,10 @@ function isRelativePath(p: string): boolean {
 }
 
 function asDotSlashRelative(from: string, to: string, escapeQuoteType: "'" | "\""): string {
-  const raw = relative(from, to).replaceAll("\\", "/");
+  const raw = relative(from, to).replace(/\\/g, "/");
   const path = (raw[0] === ".") ? raw : "./" + raw;
   const reUnescaped = escapeQuoteType === "'" ? reUnescapedSQuote : reUnescapedDQuote;
-  return path.replaceAll(reUnescaped, "\\");
+  return path.replace(reUnescaped, "\\");
 }
 
 function stripExt(path: string): string {

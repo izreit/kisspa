@@ -1,4 +1,3 @@
+import { cli } from "./cli.js";
 
-export function f() {
-
-}
+cli(process.argv.slice(2));
