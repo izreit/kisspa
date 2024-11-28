@@ -1,7 +1,7 @@
 import type { JSXInternal } from "./core/jsx";
 export { assemble, assignLocation, createSpecial, lazy, tailOf, useComponentMethods, createBackingCommon } from "./core/backing";
 export type { Backing, BackingLocation, ComponentMethods } from "./core/backing";
-export { h, jsx, jsxs } from "./core/h";
+export { h, jsx, jsxs, jsxDEV, jsxsDEV } from "./core/h";
 export { attach, createRoot } from "./core/root";
 export type { BackingRoot } from "./core/root";
 export { $h, createRef } from "./core/types";

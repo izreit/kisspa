@@ -25,7 +25,7 @@ export function jsx<P>(
   return makeJSXElement(name, a, arrayify(cs), cs);
 }
 
-export const jsxs = jsx;
+export const jsxs = jsx, jsxDEV = jsx, jsxsDEV = jsx;
 
 export function makeJSXElement(name: string | Component<any>, attrs: Attributes, children: any[], rawChildren: any): JSXElement {
   return { [$h]: 1, el: null, name, attrs, children: children.flat(), rawChildren };
