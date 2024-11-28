@@ -6,12 +6,18 @@ export interface BackingRoot {
   detach(): void;
 }
 
-export function createRoot(parent: Element): BackingRoot {
+export type RootLocation = Element | { after: Node };
+
+export function createRoot(location: Element | { after: Node }): BackingRoot {
   let b: Backing | null | undefined;
   const attach = (jnode: JSXNode) => {
     b && b.dispose();
     b = assemble({ suspenseContext_: null }, jnode);
-    b.insert(createLocation(parent));
+    const after = (location as { after: Node }).after;
+    const loc = after ?
+      createLocation(after.parentElement, after) :
+      createLocation(location as Element, null);
+    b.insert(loc);
   };
   const detach = () => {
     b && b.dispose();
@@ -20,8 +26,8 @@ export function createRoot(parent: Element): BackingRoot {
   return { attach, detach };
 }
 
-export function attach(parent: Element, jnode: JSXNode): () => void {
-  const r = createRoot(parent);
+export function attach(location: Element | { after: Node }, jnode: JSXNode): () => void {
+  const r = createRoot(location);
   r.attach(jnode);
   return r.detach;
 }
