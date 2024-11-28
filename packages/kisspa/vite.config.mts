@@ -45,9 +45,10 @@ export default defineConfig({
     outDir: "dist",
     lib: {
       entry: entryTable[target],
-      formats: ["cjs"],
-      fileName: (_format, name) => `${name}.js`,
+      formats: ["es", "cjs"],
+      fileName: (format, name) => name + (format === "es" ? ".raw.mjs" : ".cjs"),
     },
+
     rollupOptions: {
       output: {
         inlineDynamicImports: true,
@@ -55,6 +56,13 @@ export default defineConfig({
       }
     },
 
+    // NOTE Vite doesn't minify ESM (.mjs, "es" output).
+    // Instead, we minify .mjs manually. See scripts/build.mjs.
+    //
+    // They said that minifying ESM library is not appropriate for tree-shaking
+    // but we prefer to provide a mangled (pre-minified) version rather than
+    // to rely on user-dependent optimizations.
+    // (ref. https://github.com/vitejs/vite/issues/5167)
     minify: "terser",
     terserOptions: {
       // Mangle any property names ends with '_' (e.g. insert_, name_).
@@ -64,6 +72,6 @@ export default defineConfig({
           regex: /.*_$/,
         },
       }
-    },
+    }
   },
 });
