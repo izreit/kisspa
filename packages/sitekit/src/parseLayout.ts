@@ -48,6 +48,8 @@ interface LayoutParseContext {
    */
   newlines: number;
 
+  seenEnd: boolean;
+
   parsed: LayoutFragment[];
 
   failures: ParseFailure[];
@@ -97,7 +99,7 @@ function testRe(re: RegExp, src: string, pos: number): boolean {
 }
 
 function createLayoutParseContext(src: string): LayoutParseContext {
-  return { src, end: src.length, pos: 0, segmentHead: 0, jsxDepth: 0, lineHead: 0, newlines: 0, parsed: [], failures: [] };
+  return { src, end: src.length, pos: 0, segmentHead: 0, jsxDepth: 0, lineHead: 0, newlines: 0, seenEnd: false, parsed: [], failures: [] };
 }
 
 function addParseFailure(ctx: LayoutParseContext, type: ParseFailure["type"], msg: string): void {
@@ -292,6 +294,7 @@ function consumeElement(ctx: LayoutParseContext): boolean {
           ctx.segmentHead = ctx.pos;
         }
         parsed.push({ type: "closehtml" });
+        ctx.seenEnd = true;
       }
 
       m = runRe(ctx, reEndTag);
@@ -390,12 +393,19 @@ export function parseLayout(s: string): LayoutParseResult {
   const { src, end, parsed, failures } = ctx;
 
   try {
+    // consume imports
     consumeImports(ctx);
-    // parse HTML
+
+    // consume HTML
     ctx.segmentHead = ctx.pos;
     while (ctx.pos < end && consumeElement(ctx));
+
+    // flush remainings
     if (ctx.segmentHead < end)
       parsed.push({ type: "passthrough", code: src.slice(ctx.segmentHead, end) });
+    if (!ctx.seenEnd)
+      parsed.push({ type: "closehtml"  });
+
   } catch (e) {
     if (!isFatalParseError(e)) throw e;
     return { success: false, failures };
