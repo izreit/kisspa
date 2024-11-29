@@ -1,6 +1,6 @@
 import { marked, TokenizerAndRendererExtension, Tokens } from "marked";
 import { load as loadYAML } from "js-yaml";
-import { countNewlines, LayoutFragment, measureJSExpression, ParseFailure, parseImports } from "./parseLayout";
+import { countNewlines, LayoutFragment, measureJSExpression, ParseFailure, parseImports } from "./parseLayout.js";
 
 const reSearchBlockJSXStartTagHead = /(?<=(?:\r|\n|\r\n){2,})<[A-Z][\da-zA-Z\.]*(?=[\s/>])/;
 const reBlockJSXStartTagHead = /^<[A-Z][\da-zA-Z\.]*(?=[\s/>])/;
@@ -32,7 +32,7 @@ const jsxBlockExtension: TokenizerAndRendererExtension = {
     return { type: "jsxBlock", raw: src.slice(0, end), marker };
   },
   renderer(token) {
-    return `<div data-sitekit-embed="${token.marker}" style="display:none" />`;
+    return `<div data-sitekit-embed="${token.marker}" style="display:none"></div>`;
   }
 };
 
@@ -56,7 +56,7 @@ const jsxInlineExtension: TokenizerAndRendererExtension = {
     return { type: "jsxBlock", raw: src.slice(0, end), marker };
   },
   renderer(token) {
-    return `<span data-sitekit-embed="${token.marker}" style="display:none" />`;
+    return `<span data-sitekit-embed="${token.marker}" style="display:none"></span>`;
   }
 };
 

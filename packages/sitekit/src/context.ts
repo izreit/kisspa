@@ -1,7 +1,7 @@
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { resolve, dirname } from "node:path";
-import { loadConfig, ResolvedConfig } from "./config";
-import { LayoutFragment } from "./parseLayout";
+import { loadConfig, ResolvedConfig } from "./config.js";
+import { LayoutFragment } from "./parseLayout.js";
 
 export interface SitekitHandlers {
   readTextFile: (path: string) => Promise<string>;

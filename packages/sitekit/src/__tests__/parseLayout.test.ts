@@ -101,7 +101,10 @@ describe("parseLayout()", () => {
           type: 'passthrough',
           code: " - Web</title>\n" +
             `<area foo="bee" tee:zoo doulbe='ppee"poo' />`
-        }
+        },
+        {
+          type: 'closehtml',
+        },
       ]
     });
   });

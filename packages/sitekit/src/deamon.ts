@@ -1,13 +1,12 @@
 import { unlink } from "node:fs/promises";
-import { sep } from "node:path";
 import { watch } from "chokidar";
 import { createServer, type UserConfig, type ViteDevServer } from "vite";
-import { createSitekitContext, SitekitHandlers } from "./context";
-import { layoutNameOf, resolveLayout, weave } from "./weave";
+import { createSitekitContext, SitekitHandlers } from "./context.js";
+import { layoutNameOf, resolveLayout, weave } from "./weave.js";
 
 export interface StartOptions {
-  handlers?: SitekitHandlers | null;
   configRoot?: string;
+  handlers?: SitekitHandlers | null;
 }
 
 export interface Daemon {
@@ -17,7 +16,6 @@ export interface Daemon {
 }
 
 export async function start(opts: StartOptions): Promise<Daemon> {
-  const moduleDirName = `${sep}node_modules${sep}`;
   const ctx = await createSitekitContext(opts.handlers, opts.configRoot || ".");
   const { resolvedConfig, handlers: { writeTextFile } } = ctx;
 
@@ -31,7 +29,7 @@ export async function start(opts: StartOptions): Promise<Daemon> {
   });
 
   const srcWatcher = watch(resolvedConfig.src, {
-    ignored: (path, stats) => !(!path.includes(moduleDirName) && stats?.isFile() && /\.md$/.test(path)),
+    ignored: (path, stats) => !!(stats?.isFile() && !/\.md$/.test(path)),
   });
   srcWatcher.on("add", async path => {
     const woven = await weave(ctx, path);
@@ -51,7 +49,7 @@ export async function start(opts: StartOptions): Promise<Daemon> {
   });
 
   const themeWatcher = watch(resolvedConfig.theme, {
-    ignored: (path, stats) => !(stats?.isFile() && /\.html/.test(path)),
+    ignored: (path, stats) => !!(stats?.isFile() && !/\.html/.test(path)),
     ignoreInitial: true,
   });
   themeWatcher.on("add", async path => {
@@ -92,7 +90,7 @@ export async function start(opts: StartOptions): Promise<Daemon> {
     });
     await viteDevServer.listen();
     viteDevServer.printUrls();
-    viteDevServer.bindCLIShortcuts();
+    viteDevServer.bindCLIShortcuts({ print: true });
   } catch (e) {
     await close();
     throw e;
@@ -114,9 +112,13 @@ export function createViteUserConfig(targets: Set<string>): UserConfig {
   return {
     build: {
       rollupOptions: {
-        input
-      }
-    }
+        input,
+      },
+    },
+    esbuild: {
+      jsx: "automatic",
+      jsxImportSource: "kisspa",
+    },
   };
 }
 
