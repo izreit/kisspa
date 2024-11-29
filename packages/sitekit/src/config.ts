@@ -1,6 +1,9 @@
 import assert from "node:assert";
 import { dirname, join, posix, resolve } from "node:path";
-import { defaultHandlers, SitekitHandlers } from "./context";
+import { fileURLToPath } from "node:url";
+import { defaultHandlers, SitekitHandlers } from "./context.js";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export interface Config {
   /**
@@ -69,5 +72,5 @@ export async function loadConfig(handlers: SitekitHandlers | null, p: string): P
 }
 
 function asRequirePath(path: string): string {
-  return `./${posix.relative(".", path)}`;
+  return `./${posix.relative(__dirname, path)}`;
 }

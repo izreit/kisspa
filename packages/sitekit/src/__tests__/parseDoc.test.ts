@@ -26,8 +26,8 @@ describe("parseDoc()", () => {
     expect(markdown.split("\n")).toEqual([
       '<h1>foo</h1>',
       '<p>some text</p>',
-      '<div data-sitekit-embed="D0" style="display:none" /><p>followed by a block text</p>',
-      '<p>with <div data-sitekit-embed="D1" style="display:none" /> something.</p>',
+      '<div data-sitekit-embed="D0" style="display:none"></div><p>followed by a block text</p>',
+      '<p>with <div data-sitekit-embed="D1" style="display:none"></div> something.</p>',
       '',
     ]);
 
@@ -87,8 +87,8 @@ describe("parseDoc()", () => {
       markdown: '<p>  import from &#39;this-line/should-be-warned&#39;;</p>\n' +
         '<h1>foo</h1>\n' +
         '<p>some text</p>\n' +
-        '<div data-sitekit-embed="D0" style="display:none" /><p>followed by a block text</p>\n' +
-        '<p>with <div data-sitekit-embed="D1" style="display:none" /> something.</p>\n',
+        '<div data-sitekit-embed="D0" style="display:none"></div><p>followed by a block text</p>\n' +
+        '<p>with <div data-sitekit-embed="D1" style="display:none"></div> something.</p>\n',
       jsxs: [
         {
           marker: 'D0',

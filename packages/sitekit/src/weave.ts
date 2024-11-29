@@ -1,9 +1,15 @@
 import assert from "node:assert";
 import { createHash } from "node:crypto";
 import { basename, dirname, join, parse as parsePath, relative, resolve } from "node:path";
-import { Layout, SitekitContext } from "./context";
-import { parseDoc } from "./parseDoc";
-import { ParseFailure, parseLayout } from "./parseLayout";
+import { Layout, SitekitContext } from "./context.js";
+import { parseDoc } from "./parseDoc.js";
+import { ParseFailure, parseLayout } from "./parseLayout.js";
+
+const jsPrefixCode = `import { attach as __kisspa_attach__ } from "kisspa";\n`;
+
+function jsAttachJSXCode(marker: string, code: string): string {
+  return `__kisspa_attach__({ after: document.querySelector('[data-sitekit-embed="${marker}"]') }, ${code});\n`;
+}
 
 export function layoutNameOf(ctx: SitekitContext, path: string): string {
   return relative(ctx.resolvedConfig.theme, stripExt(resolve(path)));
@@ -64,18 +70,17 @@ export async function weave(ctx: SitekitContext, path: string): Promise<WeaveRes
 
   const outPathBase = resolve(resolvedConfig.workspace, stripExt(docRelPath));
   const outDir = dirname(outPathBase);
-  const outBasename = basename(outPathBase);
   const outPathHTML = outPathBase + ".html";
-  const outPathLayoutJS = outPathBase + ".layout.js";
-  const outPathDocJS = outPathBase + ".doc.js";
+  const outPathLayoutJS = outPathBase + ".layout.jsx";
+  const outPathDocJS = outPathBase + ".doc.jsx";
 
   const layoutJsFrags: string[] = [];
   const docJsFrags: string[] = [];
   const htmlFrags: string[] = [];
 
-  // weave .doc.js
+  // weave .doc.jsx
   if (jsxs.length > 0)
-    docJsFrags.push(`import { attach as __kisspa_attach__ } from "kisspa";\n`);
+    docJsFrags.push(jsPrefixCode);
   importData.forEach(frag => {
     switch (frag.type) {
       case "passthrough": {
@@ -101,7 +106,7 @@ export async function weave(ctx: SitekitContext, path: string): Promise<WeaveRes
     }
   });
   jsxs.forEach(({ marker, code }) => {
-    docJsFrags.push(`__kisspa_attach__(document.querySelector([data-sitekit-embed="${marker}"]), ${code});\n`);
+    docJsFrags.push(jsAttachJSXCode(marker, code));
   });
 
   let mode: "html" | "js" | "import" = "html";
@@ -122,10 +127,10 @@ export async function weave(ctx: SitekitContext, path: string): Promise<WeaveRes
         if (!foundJSX) {
           // TODO name literals, support other JSX libraries.
           // Ugh! how to avoid name conflit?
-          layoutJsFrags.unshift(`import { attach as __kisspa_attach__ } from "kisspa";\n`);
+          layoutJsFrags.unshift(jsPrefixCode);
           foundJSX = true;
         }
-        layoutJsFrags.push(`__kisspa_attach__(document.querySelector([data-sitekit-embed="${marker}"]), ${code});\n`);
+        layoutJsFrags.push(jsAttachJSXCode(marker, code));
         break;
       }
       default: {
@@ -134,7 +139,7 @@ export async function weave(ctx: SitekitContext, path: string): Promise<WeaveRes
     }
   };
 
-  // weave .html
+  // weave .html and .layout.jsx
   layout.fragments.forEach(frag => {
     switch (frag.type) {
       case "jsenter": {
@@ -143,7 +148,7 @@ export async function weave(ctx: SitekitContext, path: string): Promise<WeaveRes
       }
       case "jsleave": {
         mode = "html";
-        htmlFrags.push(`<div data-sitekit-embed="L${jsxCurrentKey}" style="display:none" />"`);
+        htmlFrags.push(`<div data-sitekit-embed="L${jsxCurrentKey}" style="display:none"></div>`);
         jsxCurrentKey++;
         break;
       }
@@ -179,8 +184,8 @@ export async function weave(ctx: SitekitContext, path: string): Promise<WeaveRes
       }
       case "closehtml": {
         htmlFrags.push(
-          `<script type="module" src="./${outBasename}.layout.js" />\n`,
-          `<script type="module" src="./${outBasename}.doc.js" />\n`,
+          `<script type="module" src="./${basename(outPathLayoutJS)}"></script>\n`,
+          `<script type="module" src="./${basename(outPathDocJS)}"></script>\n`,
         );
         break;
       }
