@@ -1,7 +1,7 @@
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
-import { resolve, dirname } from "node:path";
-import { loadConfig, ResolvedConfig } from "./config.js";
-import { LayoutFragment } from "./parseLayout.js";
+import { dirname, resolve } from "node:path";
+import { type DebugOptions, loadConfig, type ResolvedConfig } from "./config.js";
+import { type LayoutFragment } from "./parseLayout.js";
 
 export interface SitekitHandlers {
   readTextFile: (path: string) => Promise<string>;
@@ -54,12 +54,19 @@ export interface SitekitContext {
   handlers: SitekitHandlers;
 }
 
-export async function createSitekitContext(handlers: SitekitHandlers | null | undefined, configRoot: string): Promise<SitekitContext> {
+export interface CreateSitekitOptions {
+  configRoot: string;
+  handlers?: SitekitHandlers | null;
+  debugOptionsOverride?: DebugOptions;
+}
+
+export async function createSitekitContext(opts: CreateSitekitOptions): Promise<SitekitContext> {
+  const { configRoot, handlers, debugOptionsOverride } = opts;
   const h = handlers || defaultHandlers;
   const absConfigRoot = resolve(configRoot);
   return {
     configRoot: absConfigRoot,
-    resolvedConfig: await loadConfig(h, absConfigRoot),
+    resolvedConfig: await loadConfig(h, absConfigRoot, debugOptionsOverride),
     layouts: new Map(),
     staled: new Set(),
     handlers: h,

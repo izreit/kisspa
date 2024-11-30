@@ -1,12 +1,15 @@
-import { unlink } from "node:fs/promises";
 import { watch } from "chokidar";
+import { rmdirSync, rmSync } from "node:fs";
+import { unlink } from "node:fs/promises";
 import { createServer, type UserConfig, type ViteDevServer } from "vite";
+import { type DebugOptions } from "./config.js";
 import { createSitekitContext, SitekitHandlers } from "./context.js";
 import { layoutNameOf, resolveLayout, weave } from "./weave.js";
 
 export interface StartOptions {
   configRoot?: string;
   handlers?: SitekitHandlers | null;
+  debugOptionsOverride?: DebugOptions;
 }
 
 export interface Daemon {
@@ -16,7 +19,11 @@ export interface Daemon {
 }
 
 export async function start(opts: StartOptions): Promise<Daemon> {
-  const ctx = await createSitekitContext(opts.handlers, opts.configRoot || ".");
+  const ctx = await createSitekitContext({
+    handlers: opts.handlers,
+    configRoot: opts.configRoot || ".",
+    debugOptionsOverride: opts.debugOptionsOverride,
+  });
   const { resolvedConfig, handlers: { writeTextFile } } = ctx;
 
   const targets = createWatchedSet<string>(); // absolute paths
@@ -94,6 +101,29 @@ export async function start(opts: StartOptions): Promise<Daemon> {
   } catch (e) {
     await close();
     throw e;
+  }
+
+  if (!resolvedConfig.retainWorkspace) {
+    process.on("exit", () => {
+      // clear all written files (but not workspace itself, to ensure to not removing unrelated file)
+      const { workspace, userConfigPath } = resolvedConfig;
+
+      // must be the "sync" version because of the "exit" event.
+      // See https://nodejs.org/api/process.html#event-exit
+      rmSync(userConfigPath);
+
+      targetToPaths.forEach((paths) => {
+        paths.forEach(path => rmSync(path));
+      });
+
+      // delete workspace itself only if it's empty.
+      try {
+        rmdirSync(workspace);
+      } catch (e) {
+        if ((e as any)?.code !== "ENOTEMPTY")
+          throw e;
+      }
+    });
   }
 
   return {
