@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 import { defaultHandlers, SitekitHandlers } from "./context.js";
 import { tmpdir } from "node:os";
 import { mkdtemp } from "node:fs/promises";
+import { SitekitLogger, type LogLevel } from "./logger.js";
+import { Logger } from "vite";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -26,11 +28,31 @@ export interface Config {
    * Treated as "../" unless given.
    */
   src?: string;
+
   /**
    * The relative path to the output directory.
    * Treated as "./dist/" unless given.
    */
   out?: string;
+
+  /**
+   * Threshold to print log.
+   * Must be `("error" | "warn" | "info")`.
+   * Treated as `"info"` unless given.
+   */
+  logLevel?: LogLevel;
+
+  /**
+   * Custom logger for sitkit log.
+   * If given, `logLevel` is ignored.
+   */
+  customLogger?: SitekitLogger;
+
+  /**
+   * Custom logger for vite output.
+   */
+  viteCustomLogger?: Logger;
+
   /**
    * Debug options. No need to use in general.
    */
@@ -67,21 +89,50 @@ export interface ResolvedConfig {
    * If true, don't clear the workspace on exit.
    */
   retainWorkspace: boolean;
+
+  /**
+   * Threshold to print log.
+   * Must be `("error" | "warn" | "info")`.
+   * Treated as `"info"` unless given.
+   */
+  logLevel: LogLevel;
+
+  /**
+   * Custom logger for sitkit log.
+   * If given, `logLevel` is ignored.
+   */
+  customLogger: SitekitLogger | undefined;
+
+  /**
+   * Custom logger for vite output.
+   */
+  viteCustomLogger: Logger | undefined;
+
 }
 
-async function normalizeConfig(cfg: unknown, path: string, overrides: Config | null | undefined): Promise<ResolvedConfig> {
-  const given = (cfg || {}) as Config;
-  const { src, out } = { ...given, ...overrides };
-  const { workspace, retainWorkspace } = { ...given.debugOptions, ...overrides?.debugOptions };
+async function normalizeConfig(cfg: unknown, path: string, debugOptionsOverride: DebugOptions | null | undefined): Promise<ResolvedConfig> {
   const base = dirname(path);
-  const ws = workspace ? resolve(base, workspace) : await mkdtemp(join(tmpdir(), "skws-"));
+  const given = (cfg || {}) as Config;
+  const { src, out } = given;
+  const { workspace: givenWorkspace, retainWorkspace: givenRetainWorkspace } = given.debugOptions || {};
+
+  const workspace =
+    debugOptionsOverride?.workspace ||
+    (givenWorkspace ?
+      resolve(base, givenWorkspace) :
+      await mkdtemp(join(tmpdir(), "skws-")));
+  const retainWorkspace = !!(debugOptionsOverride?.retainWorkspace || givenRetainWorkspace);
+
   return {
     src: resolve(base, src || ".."),
     out: resolve(base, out || "dist"),
-    workspace: ws,
+    workspace,
     theme: resolve(base, "theme"),
-    userConfigPath: join(ws, "vite.config.mjs"),
-    retainWorkspace: !!retainWorkspace,
+    userConfigPath: join(workspace, "vite.config.mjs"),
+    retainWorkspace,
+    logLevel: given.logLevel || "info",
+    customLogger: given.customLogger,
+    viteCustomLogger: given.viteCustomLogger,
   };
 }
 
@@ -91,7 +142,7 @@ export interface LoadConfigOptions {
   workspace?: string;
 }
 
-export async function loadConfig(handlers: SitekitHandlers | null, path: string, overrides?: Config): Promise<ResolvedConfig> {
+export async function loadConfig(handlers: SitekitHandlers | null, path: string, debugOptionsOverride?: DebugOptions): Promise<ResolvedConfig> {
   const { isFile } = handlers || defaultHandlers;
   const filep = async (p: string) => (await isFile(p)) ? p : null;
   const actualPath = (
@@ -102,7 +153,7 @@ export async function loadConfig(handlers: SitekitHandlers | null, path: string,
   );
   assert(actualPath, "sitekit.config.js not found.");
   const content = (await import(asRequirePath(actualPath))).default;
-  return normalizeConfig(content, actualPath, overrides);
+  return normalizeConfig(content, actualPath, debugOptionsOverride);
 }
 
 function asRequirePath(path: string): string {
