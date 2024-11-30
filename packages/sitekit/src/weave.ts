@@ -16,7 +16,6 @@ export function layoutNameOf(ctx: SitekitContext, path: string): string {
 }
 
 export async function resolveLayout(ctx: SitekitContext, name: string): Promise<Layout | null> {
-  console.log(`INFO: Resolving layout ${name} ...`);
   const { resolvedConfig, layouts, staled, handlers } = ctx;
   const layoutPath = join(resolvedConfig.theme, `${name}.html`);
   assert(!relative(resolvedConfig.theme, layoutPath).startsWith(".."), `layout "${name}" is out of the theme directory.`);
@@ -28,7 +27,7 @@ export async function resolveLayout(ctx: SitekitContext, name: string): Promise<
     return cache;
 
   const parseResult = parseLayout(layoutSrc);
-  printFailure(parseResult.failures, layoutPath);
+  printFailure(ctx, parseResult.failures, layoutPath);
   if (!parseResult.success)
     return null;
 
@@ -41,7 +40,7 @@ export async function resolveLayout(ctx: SitekitContext, name: string): Promise<
 
   layouts.set(name, layout);
   cache?.refs.forEach(p => staled.add(p));
-  console.log(`INFO: Resolving layout ${name} done.`);
+  ctx.logger.info(`resolved layout "${name}"`);
   return layout;
 }
 
@@ -51,7 +50,6 @@ export interface WeaveResult {
 }
 
 export async function weave(ctx: SitekitContext, path: string): Promise<WeaveResult | null> {
-  console.log(`INFO: Weaving ${path} ...`);
   const { resolvedConfig, staled, handlers } = ctx;
   const docPath = resolve(resolvedConfig.src, path);
   const docDir = dirname(docPath);
@@ -60,7 +58,7 @@ export async function weave(ctx: SitekitContext, path: string): Promise<WeaveRes
 
   const docSrc = await handlers.readTextFile(docPath);
   const { markdown, jsxs, importData, frontmatter, failures } = parseDoc(docSrc);
-  printFailure(failures, docPath);
+  printFailure(ctx, failures, docPath);
   validateDocFrontmatter(frontmatter, docPath);
 
   const { layout: layoutName } = frontmatter;
@@ -201,7 +199,7 @@ export async function weave(ctx: SitekitContext, path: string): Promise<WeaveRes
 
   layout.refs.add(path);
   staled.delete(path);
-  console.log(`INFO: weaving ${path} done.`);
+  ctx.logger.info(`wove ${relative(ctx.configRoot, path)}`);
 
   return {
     entryPath: outPathHTML,
@@ -239,10 +237,10 @@ function stripExt(path: string): string {
   return join(dir, name);
 }
 
-function printFailure(failures: ParseFailure[], srcPath: string): void {
+function printFailure(ctx: SitekitContext, failures: ParseFailure[], srcPath: string): void {
   failures.forEach(({ type, col, line, msg }) => {
     const message = `${srcPath}(${line}, ${col}) ${msg}`;
-    (type === "error") ? console.error(message) : console.warn(message);
+    (type === "error") ? ctx.logger.error(message) : ctx.logger.warn(message);
   });
 
   if (failures.find(f => f.type === "error"))

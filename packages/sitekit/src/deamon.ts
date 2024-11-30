@@ -1,10 +1,11 @@
 import { watch } from "chokidar";
 import { rmdirSync, rmSync } from "node:fs";
 import { unlink } from "node:fs/promises";
-import { createServer, type UserConfig, type ViteDevServer } from "vite";
+import { createServer, type UserConfig, type ViteDevServer, type Logger } from "vite";
 import { type DebugOptions } from "./config.js";
 import { createSitekitContext, SitekitHandlers } from "./context.js";
 import { layoutNameOf, resolveLayout, weave } from "./weave.js";
+import { createNestCountPromise, createFloatingPromise } from "./util/promiseUtil.js";
 
 export interface StartOptions {
   configRoot?: string;
@@ -29,20 +30,29 @@ export async function start(opts: StartOptions): Promise<Daemon> {
   const targets = createWatchedSet<string>(); // absolute paths
   const targetToPaths = new Map<string, string[]>();
 
-  targets.addWather(async s => {
-    const userConfig = createViteUserConfig(s);
-    const content = `export default ${JSON.stringify(userConfig, null, 2)};`;
-    await writeTextFile(resolvedConfig.userConfigPath, content);
-  });
+  const promiseSrcWatcherReady = createFloatingPromise<void>();
+  const promiseInitialAddCount = createNestCountPromise();
+  let srcWatcherReady = false;
 
-  const srcWatcher = watch(resolvedConfig.src, {
-    ignored: (path, stats) => !!(stats?.isFile() && !/\.md$/.test(path)),
-  });
-  srcWatcher.on("add", async path => {
+  async function handleAddDoc(path: string): Promise<void> {
     const woven = await weave(ctx, path);
     if (!woven) return;
     targets.add(woven.entryPath);
     targetToPaths.set(woven.entryPath, woven.paths);
+  }
+  const srcWatcher = watch(resolvedConfig.src, {
+    ignored: (path, stats) => !!(stats?.isFile() && !/\.md$/.test(path)),
+  });
+  srcWatcher.on("ready", () => {
+    srcWatcherReady = true;
+    promiseSrcWatcherReady.resolveWith();
+  });
+  srcWatcher.on("add", path => {
+    if (srcWatcherReady) {
+      handleAddDoc(path);
+    } else {
+      promiseInitialAddCount.withCount(() => handleAddDoc(path));
+    }
   });
   srcWatcher.on("change", async path => {
     await weave(ctx, path);
@@ -83,26 +93,6 @@ export async function start(opts: StartOptions): Promise<Daemon> {
     setTimeout(flushStaled, 4);
   }
 
-  let viteDevServer: ViteDevServer | undefined;
-  async function close() {
-    await viteDevServer?.close();
-    await srcWatcher?.close();
-    await themeWatcher?.close();
-  }
-
-  try {
-    viteDevServer = await createServer({
-      root: ctx.resolvedConfig.workspace,
-      envFile: false,
-    });
-    await viteDevServer.listen();
-    viteDevServer.printUrls();
-    viteDevServer.bindCLIShortcuts({ print: true });
-  } catch (e) {
-    await close();
-    throw e;
-  }
-
   if (!resolvedConfig.retainWorkspace) {
     process.on("exit", () => {
       // clear all written files (but not workspace itself, to ensure to not removing unrelated file)
@@ -126,8 +116,44 @@ export async function start(opts: StartOptions): Promise<Daemon> {
     });
   }
 
+  let viteDevServer: ViteDevServer | undefined;
+
+  async function close() {
+    await viteDevServer?.close();
+    await srcWatcher?.close();
+    await themeWatcher?.close();
+  }
+
+  async function updateViteUserConfig(): Promise<void> {
+    const userConfig = createViteUserConfig(targets);
+    const content = `export default ${JSON.stringify(userConfig, null, 2)};`;
+    await writeTextFile(resolvedConfig.userConfigPath, content);
+  }
+
+  await Promise.all([
+    promiseSrcWatcherReady,
+    promiseInitialAddCount,
+  ]);
+
+  updateViteUserConfig();
+  targets.addWather(updateViteUserConfig);
+
+  try {
+    viteDevServer = await createServer({
+      root: ctx.resolvedConfig.workspace,
+      customLogger: ctx.resolvedConfig.viteCustomLogger,
+      envFile: false,
+    });
+    await viteDevServer.listen();
+    viteDevServer.printUrls();
+    viteDevServer.bindCLIShortcuts({ print: true });
+  } catch (e) {
+    await close();
+    throw e;
+  }
+
   return {
-    viteDevServer,
+    viteDevServer: viteDevServer!,
     restart: () => viteDevServer!.restart(),
     close,
   };

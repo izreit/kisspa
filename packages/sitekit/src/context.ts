@@ -1,6 +1,7 @@
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { type DebugOptions, loadConfig, type ResolvedConfig } from "./config.js";
+import { createSitekitLogger, type SitekitLogger, type LogLevel } from "./logger.js";
 import { type LayoutFragment } from "./parseLayout.js";
 
 export interface SitekitHandlers {
@@ -51,24 +52,32 @@ export interface SitekitContext {
    */
   staled: Set<string>;
 
+  /**
+   * The logger, only for sitekit (not used by Vite).
+   */
+  logger: SitekitLogger;
+
   handlers: SitekitHandlers;
 }
 
 export interface CreateSitekitOptions {
   configRoot: string;
   handlers?: SitekitHandlers | null;
+  loggerOverride?: SitekitLogger;
   debugOptionsOverride?: DebugOptions;
 }
 
 export async function createSitekitContext(opts: CreateSitekitOptions): Promise<SitekitContext> {
-  const { configRoot, handlers, debugOptionsOverride } = opts;
+  const { configRoot, handlers, loggerOverride, debugOptionsOverride } = opts;
   const h = handlers || defaultHandlers;
   const absConfigRoot = resolve(configRoot);
+  const config = await loadConfig(h, absConfigRoot, debugOptionsOverride);
   return {
     configRoot: absConfigRoot,
-    resolvedConfig: await loadConfig(h, absConfigRoot, debugOptionsOverride),
+    resolvedConfig: config,
     layouts: new Map(),
     staled: new Set(),
+    logger: loggerOverride || config.customLogger || createSitekitLogger(config.logLevel),
     handlers: h,
   };
 }
