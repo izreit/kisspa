@@ -1,9 +1,12 @@
 import assert from "node:assert";
 import { createHash } from "node:crypto";
 import { basename, dirname, join, parse as parsePath, relative, resolve } from "node:path";
+import pico from "picocolors";
 import { Layout, SitekitContext } from "./context.js";
 import { parseDoc } from "./parseDoc.js";
 import { ParseFailure, parseLayout } from "./parseLayout.js";
+
+const { dim, green } = pico;
 
 const jsPrefixCode = `import { attach as __kisspa_attach__ } from "kisspa";\n`;
 
@@ -40,7 +43,7 @@ export async function resolveLayout(ctx: SitekitContext, name: string): Promise<
 
   layouts.set(name, layout);
   cache?.refs.forEach(p => staled.add(p));
-  ctx.logger.info(`resolved layout "${name}"`);
+  ctx.logger.info(`${green("layout resolved")} ${dim(name)}`);
   return layout;
 }
 
@@ -199,7 +202,7 @@ export async function weave(ctx: SitekitContext, path: string): Promise<WeaveRes
 
   layout.refs.add(path);
   staled.delete(path);
-  ctx.logger.info(`wove ${relative(ctx.configRoot, path)}`);
+  ctx.logger.info(`${green("markdown processed")} ${dim(relative(ctx.configRoot, path))}`);
 
   return {
     entryPath: outPathHTML,

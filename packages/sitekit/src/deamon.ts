@@ -1,11 +1,14 @@
 import { watch } from "chokidar";
 import { rmdirSync, rmSync } from "node:fs";
 import { unlink } from "node:fs/promises";
+import pico from "picocolors";
 import { createServer, type UserConfig, type ViteDevServer, type Logger } from "vite";
 import { type DebugOptions } from "./config.js";
 import { createSitekitContext, SitekitHandlers } from "./context.js";
 import { layoutNameOf, resolveLayout, weave } from "./weave.js";
 import { createNestCountPromise, createFloatingPromise } from "./util/promiseUtil.js";
+
+const { dim } = pico;
 
 export interface StartOptions {
   configRoot?: string;
@@ -145,6 +148,7 @@ export async function start(opts: StartOptions): Promise<Daemon> {
       envFile: false,
     });
     await viteDevServer.listen();
+    ctx.logger.info(dim("vite server started\n"));
     viteDevServer.printUrls();
     viteDevServer.bindCLIShortcuts({ print: true });
   } catch (e) {
