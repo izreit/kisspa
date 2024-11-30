@@ -1,8 +1,8 @@
 import { parseArgs } from "node:util";
-import { start } from "./deamon";
+import { start } from "./deamon.js";
 
 export async function cli(args: string[]): Promise<void> {
-  const { positionals, values: { config: configPath } } = parseArgs({
+  const { positionals: _positionals, values: options } = parseArgs({
     allowPositionals: true,
     options: {
       config: {
@@ -10,11 +10,23 @@ export async function cli(args: string[]): Promise<void> {
         type: "string",
         default: ".",
       },
+      "debug-workspace": {
+        type: "string",
+        default: undefined,
+      },
+      "debug-retain-workspace": {
+        type: "boolean",
+        default: false,
+      },
     },
     args,
   });
 
-  console.log(positionals, configPath);
-
-  await start({ configRoot: configPath });
+  await start({
+    configRoot: options.config,
+    debugOptionsOverride: {
+      workspace: options["debug-workspace"],
+      retainWorkspace: options["debug-retain-workspace"],
+    },
+  });
 }
