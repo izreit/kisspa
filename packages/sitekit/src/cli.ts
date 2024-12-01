@@ -1,5 +1,5 @@
 import { parseArgs } from "node:util";
-import { start } from "./deamon.js";
+import { createSitekitDevServer } from "./devServer.js";
 
 export async function cli(args: string[]): Promise<void> {
   const { positionals: _positionals, values: options } = parseArgs({
@@ -22,7 +22,7 @@ export async function cli(args: string[]): Promise<void> {
     args,
   });
 
-  await start({
+  await createSitekitDevServer({
     configRoot: options.config,
     debugOptionsOverride: {
       workspace: options["debug-workspace"],

@@ -15,25 +15,3 @@ export function createFloatingPromise<T>(): FloatingPromise<T> {
   p.rejectWith = rej!;
   return p;
 }
-
-export interface NestCountPromise extends Promise<void> {
-  withCount(fun: () => Promise<void>): Promise<void>;
-}
-
-export function createNestCountPromise(): NestCountPromise {
-  const p = createFloatingPromise<void>();
-  const ret = p as Promise<void> as NestCountPromise;
-
-  let count = 0;
-  ret.withCount = async (fun) => {
-    try {
-      ++count;
-      return await fun();
-    } finally {
-      --count;
-      if (count === 0)
-        p.resolveWith();
-    }
-  };
-  return ret;
-}
