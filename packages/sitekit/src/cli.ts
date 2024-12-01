@@ -1,8 +1,10 @@
 import { parseArgs } from "node:util";
+import { build } from "./build.js";
+import { preview } from "./preview.js";
 import { createSitekitDevServer } from "./devServer.js";
 
 export async function cli(args: string[]): Promise<void> {
-  const { positionals: _positionals, values: options } = parseArgs({
+  const { positionals, values: options } = parseArgs({
     allowPositionals: true,
     options: {
       config: {
@@ -22,11 +24,44 @@ export async function cli(args: string[]): Promise<void> {
     args,
   });
 
-  await createSitekitDevServer({
-    configRoot: options.config,
-    debugOptionsOverride: {
-      workspace: options["debug-workspace"],
-      retainWorkspace: options["debug-retain-workspace"],
-    },
-  });
+  const [command] = positionals;
+  switch (command) {
+    case "dev": case "serve": {
+      await createSitekitDevServer({
+        configRoot: options.config,
+        debugOptionsOverride: {
+          workspace: options["debug-workspace"],
+          retainWorkspace: options["debug-retain-workspace"],
+        },
+      });
+      break;
+    }
+
+    case "build": {
+      await build({
+        configRoot: options.config,
+        debugOptionsOverride: {
+          workspace: options["debug-workspace"],
+          retainWorkspace: options["debug-retain-workspace"],
+        },
+      });
+      break;
+    }
+
+    case "preview": {
+      await preview({
+        configRoot: options.config,
+        debugOptionsOverride: {
+          workspace: options["debug-workspace"],
+          retainWorkspace: options["debug-retain-workspace"],
+        },
+      });
+      break;
+    }
+
+    default: {
+      console.error(`unknown command '${command}'`);
+      return;
+    }
+  }
 }
