@@ -202,7 +202,7 @@ export async function weave(ctx: SitekitContext, path: string): Promise<WeaveRes
 
   layout.refs.add(path);
   staled.delete(path);
-  ctx.logger.info(`${green("markdown processed")} ${dim(relative(ctx.configRoot, path))}`);
+  ctx.logger.info(`${green("markdown processed")} ${dim(relative(process.cwd(), path))}`);
 
   return {
     entryPath: outPathHTML,
