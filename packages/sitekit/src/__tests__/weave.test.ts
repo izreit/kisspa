@@ -1,7 +1,10 @@
-import { join, relative } from "node:path";
-import { describe, it, expect } from "vitest";
-import { weave } from "../weave";
+import { dirname, join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
 import { createSitekitContext, defaultHandlers, SitekitHandlers } from "../context";
+import { weave } from "../weave";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 interface EphemeralSitekitHandlers extends SitekitHandlers {
   written: { [path: string]: string };
