@@ -1,6 +1,6 @@
 import pico from "picocolors";
 
-const { cyan, yellow, red, dim, bold } = pico;
+const { cyan, yellow, red, gray, dim, bold } = pico;
 
 let _timeFormatterCache: Intl.DateTimeFormat;
 
@@ -13,7 +13,8 @@ const logLevels = {
   silent: 0,
   error: 1,
   warn: 2,
-  info: 3
+  info: 3,
+  debug: 4,
 } as const;
 
 export type LogLevel = Exclude<keyof typeof logLevels, "silent">;
@@ -25,6 +26,7 @@ export interface SitekitLogger {
   warn(msg: string): void;
   warnOnce(msg: string): void;
   error(msg: string): void;
+  debug(msg: string): void;
 }
 
 export function createSitekitLogger(level: LogLevel): SitekitLogger {
@@ -32,6 +34,7 @@ export function createSitekitLogger(level: LogLevel): SitekitLogger {
     error: red,
     warn: yellow,
     info: cyan,
+    debug: gray,
   };
 
   const prefix = "[sitekit]";
@@ -60,5 +63,8 @@ export function createSitekitLogger(level: LogLevel): SitekitLogger {
     error(msg) {
       output("error", msg);
     },
+    debug(msg) {
+      output("debug", msg);
+    }
   };
 }

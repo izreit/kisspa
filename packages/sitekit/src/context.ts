@@ -3,6 +3,9 @@ import { dirname, resolve } from "node:path";
 import { type DebugOptions, loadConfig, type ResolvedConfig } from "./config.js";
 import { createSitekitLogger, type SitekitLogger, type LogLevel } from "./logger.js";
 import { type LayoutFragment } from "./parseLayout.js";
+import pico from "picocolors";
+
+const { dim } = pico;
 
 export interface SitekitHandlers {
   readTextFile: (path: string) => Promise<string>;
@@ -72,12 +75,14 @@ export async function createSitekitContext(opts: CreateSitekitOptions): Promise<
   const h = handlers || defaultHandlers;
   const absConfigRoot = resolve(configRoot);
   const config = await loadConfig(h, absConfigRoot, debugOptionsOverride);
+  const logger = loggerOverride || config.customLogger || createSitekitLogger(config.logLevel);
+  logger.debug(`config ${dim(JSON.stringify(config, null, 2))}`);
   return {
     configRoot: absConfigRoot,
     resolvedConfig: config,
     layouts: new Map(),
     staled: new Set(),
-    logger: loggerOverride || config.customLogger || createSitekitLogger(config.logLevel),
+    logger,
     handlers: h,
   };
 }
