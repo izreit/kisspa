@@ -3,10 +3,10 @@ import { unlink } from "node:fs/promises";
 import { type UserConfig } from "vite";
 import { SitekitContext } from "./context.js";
 import { layoutNameOf, resolveLayout, weave } from "./weave.js";
-import { relative } from "node:path";
+import { relative, sep } from "node:path";
 import pico from "picocolors";
 
-const { dim, green } = pico;
+const { dim, green, yellow, yellowBright, gray } = pico;
 
 export interface Weaver {
   /**
@@ -179,18 +179,38 @@ export function createViteUserConfig(ctx: SitekitContext, targets: Set<string>):
   for (const target of targets.values())
     input[`i${count++}`] = target;
 
+  const { configRoot, resolvedConfig: { workspace, out }} = ctx;
+  const outDirIsOutsideOfConfigRoot = out.startsWith(appendSep(configRoot));
+
+  if (!outDirIsOutsideOfConfigRoot) {
+    ctx.logger.warnRaw(yellow(
+      "\n" +
+      `${yellowBright("(!)")} outDir ${gray(out)} is not inside project root and will not be emptied.\n` +
+      `Use --emptyOutDir (or 'emptyOutDir: true' in sitekit.config.js) to override. (BUT NOT IMPLEMENTED!)\n`
+    ));
+  }
+
   return {
     build: {
-      outDir: relative(ctx.configRoot, ctx.resolvedConfig.out),
+      outDir: relative(workspace, out),
       rollupOptions: {
         input,
       },
+
+      // By default Vite treats `emptyOutDir` as `true` when the `outDir` is under the directory
+      // containing vite.config.js. But we want to treat any location under the directory containing
+      // sitekit.config.js by default.
+      emptyOutDir: outDirIsOutsideOfConfigRoot,
     },
     esbuild: {
       jsx: "automatic",
       jsxImportSource: "kisspa",
     },
   };
+}
+
+function appendSep(path: string): string {
+  return (path[path.length - 1] === sep) ? path : path + sep;
 }
 
 interface WatchedSet<T> extends Set<T> {
