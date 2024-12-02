@@ -25,6 +25,7 @@ export interface SitekitLogger {
   info(msg: string): void;
   warn(msg: string): void;
   warnOnce(msg: string): void;
+  warnRaw(msg: string): void;
   error(msg: string): void;
   debug(msg: string): void;
 }
@@ -59,6 +60,9 @@ export function createSitekitLogger(level: LogLevel): SitekitLogger {
       if (warnedMessages.has(msg)) return;
       output("warn", msg);
       warnedMessages.add(msg);
+    },
+    warnRaw(msg) {
+      console.warn(msg);
     },
     error(msg) {
       output("error", msg);
