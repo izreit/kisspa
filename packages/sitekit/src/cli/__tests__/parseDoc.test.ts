@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseDoc } from "../parseDoc";
+import { parseDoc } from "../../parseDoc";
 
 describe("parseDoc()", () => {
   it("parses markdwon with JSX", () => {
