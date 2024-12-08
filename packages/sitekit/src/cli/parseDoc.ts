@@ -1,4 +1,4 @@
-import { marked, TokenizerAndRendererExtension, Tokens } from "marked";
+import { Marked, RendererObject, TokenizerAndRendererExtension, Tokens } from "marked";
 import { load as loadYAML } from "js-yaml";
 import { countNewlines, LayoutFragment, measureJSExpression, ParseFailure, parseImports } from "./parseLayout.js";
 
@@ -60,6 +60,25 @@ const jsxInlineExtension: TokenizerAndRendererExtension = {
   }
 };
 
+export interface HeadingEntry {
+  depth: number;
+  label: string;
+  hash: string;
+}
+
+let headingsBuffer: HeadingEntry[] = [];
+
+const customHeadingNameRenderer: RendererObject = {
+  heading({ depth, text }): string {
+    const reName = /(?:\s|^)\{#(?<name>[a-zA-Z0-9-]+)\s*\}\s*$/i;
+    const reNamePart = /(?<=\s|^)\{#[a-zA-Z0-9-]+\s*\}(?:\s*)$/i;
+    const m = text.match(reName);
+    const [actual, name] = m ? [text.replace(reNamePart, ""), m.groups!.name] : [text, text];
+    headingsBuffer.push({ depth, hash: `#${name}`, label: actual });
+    return `<h${depth} id="${name}">${actual}<a class="header-anchor" href="#${name}" aria-label="Permalink to &quot;${actual}&quot;"></a></h${depth}>`;
+  },
+}
+
 const reFrontmatterHead = /[\r\n]*---[\r\n]+/my;
 const reSearchFrontmatterEnd = /^---\s*$/m;
 
@@ -97,33 +116,42 @@ function preprocess(src: string): string {
   return markdown;
 }
 
-marked.use({
-  extensions: [jsxBlockExtension, jsxInlineExtension],
-  hooks: { preprocess },
-});
-
 export type DocParseResult = {
   frontmatter: unknown;
-  markdown: string;
+  renderedMarkdown: string;
   importData: LayoutFragment[];
+  headings: HeadingEntry[];
   jsxs: JSXInDocEntry[];
   failures: ParseFailure[];
 };
 
 export function parseDoc(src: string): DocParseResult {
+  const marked = new Marked();
+
+  marked.use({
+    gfm: true,
+    extensions: [jsxBlockExtension, jsxInlineExtension],
+    hooks: { preprocess },
+    renderer: customHeadingNameRenderer,
+  });
+
   jsxBuffer = [];
   jsxInDocNextKey = 0;
-  const markdown = marked.parse(src) as string;
+  headingsBuffer = [];
+  const renderedMarkdown = marked.parse(src) as string;
   const jsxs = jsxBuffer; // updated by marked extensions through marked.parse().
   const frontmatter = lastFrontmatter;
   const importData = lastImports;
+  const headings = headingsBuffer;
   const failures = lastImportsFailures;
 
   // Just to be sure: prevent to be refered unexpectedly.
   jsxBuffer = [];
+  jsxInDocNextKey = 0;
+  headingsBuffer = [];
   lastFrontmatter = undefined;
   lastImports = [];
   lastImportsFailures = [];
 
-  return { frontmatter, markdown, jsxs, importData, failures };
+  return { frontmatter, renderedMarkdown, jsxs, importData, headings, failures };
 }
