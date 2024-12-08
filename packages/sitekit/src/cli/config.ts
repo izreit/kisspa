@@ -1,4 +1,3 @@
-import assert from "node:assert";
 import { dirname, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defaultHandlers, SitekitHandlers } from "./context.js";
@@ -151,7 +150,8 @@ export async function loadConfig(handlers: SitekitHandlers | null, path: string,
     await filep(join(path, "sitekit.config.mjs")) ??
     await filep(join(path, "sitekit.config.cjs"))
   );
-  assert(actualPath, "sitekit.config.js not found.");
+  if (!actualPath)
+    throw new Error("sitekit.config.js not found.");
   const content = (await import(asRequirePath(actualPath))).default;
   return normalizeConfig(content, actualPath, debugOptionsOverride);
 }
