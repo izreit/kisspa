@@ -17,7 +17,7 @@ describe("parseLayout()", () => {
       `  foo -->`,
       `<d foo=true ja="foo" ><area/></d>`,
       `<NavList foo={true} ja={"foo"} j={<div>foo</div>} ><area/></NavList>`,
-      `<title>{%sitekit:title%} - Web</title>`,
+      `<title>{%kisstatic:title%} - Web</title>`,
       `<area foo="bee" tee:zoo doulbe='ppee"poo' />`,
     ].join("\n");
 
@@ -117,7 +117,7 @@ describe("parseLayout()", () => {
       `<html>`,
       `<title>Test Title</title>`,
       `<NavList foo={true} ja={"foo"} j={<div>foo</div>} ><area/></NavList>`,
-      `{%sitekit:body%}`,
+      `{%kisstatic:body%}`,
       `<area foo="bee" tee:zoo doulbe='ppee"poo' />`,
       `</html>`,
     ].join("\n");

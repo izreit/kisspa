@@ -219,7 +219,7 @@ function consumeJSValue(ctx: LayoutParseContext): boolean {
 }
 
 const reNonTagStart = /[^<{]+/my;
-const rePlaceholder = /{(?:%sitekit:(?<type>title|body)%})?/my;
+const rePlaceholder = /{(?:%kisstatic:(?<type>title|body)%})?/my;
 const reComment = /<!--(?:[^-]|-(?!->))*-->/my; // Intentionally loosen the spec to conform the actual browsers...
 const reDoctype = /<!DOCTYPE[ \t\r\n\f]+[^>]*[ \t\r\n\f]*>/imy;
 const reStartTagHead = /[ \t\r\n\f]*<(?<tagname>[\da-z]+)(?=[\s/>])/iy;

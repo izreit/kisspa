@@ -1,7 +1,7 @@
 ---
 layout: default
 ---
-import { TestComp } from "../.sitekit/theme/components/TestComp.tsx";
+import { TestComp } from "../.kisstatic/theme/components/TestComp.tsx";
 
 Some <TestComp /> page.
 

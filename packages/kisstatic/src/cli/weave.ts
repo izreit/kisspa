@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { createHash } from "node:crypto";
 import { basename, dirname, join, parse as parsePath, relative, resolve } from "node:path";
 import pico from "picocolors";
-import { Layout, SitekitContext } from "./context.js";
+import { Layout, KisstaticContext } from "./context.js";
 import { HeadingEntry, parseDoc } from "./parseDoc.js";
 import { ParseFailure, parseLayout } from "./parseLayout.js";
 
@@ -11,15 +11,15 @@ const { dim, green } = pico;
 const jsPrefixCode = `import { attach as __kisspa_attach__ } from "kisspa";\n`;
 
 function jsAttachJSXCode(marker: string, code: string): string {
-  return `__kisspa_attach__({ after: document.querySelector('[data-sitekit-embed="${marker}"]') }, ${code});\n`;
+  return `__kisspa_attach__({ after: document.querySelector('[data-kisstatic-embed="${marker}"]') }, ${code});\n`;
 }
 
-export function layoutNameOf(ctx: SitekitContext, path: string): string {
+export function layoutNameOf(ctx: KisstaticContext, path: string): string {
   return relative(ctx.resolvedConfig.theme, stripExt(resolve(path)));
 }
 
 // NOTE This name corresponds to the runtime. See usePageProps().
-const pagePropsVarName = "__sitekit_page_props__";
+const pagePropsVarName = "__kisstatic_page_props__";
 
 export interface PageProps {
   path: string;
@@ -27,7 +27,7 @@ export interface PageProps {
   headings: HeadingEntry[];
 }
 
-export async function resolveLayout(ctx: SitekitContext, name: string): Promise<Layout | null> {
+export async function resolveLayout(ctx: KisstaticContext, name: string): Promise<Layout | null> {
   const { resolvedConfig, layouts, staled, handlers } = ctx;
   const layoutPath = join(resolvedConfig.theme, `${name}.html`);
   assert(!relative(resolvedConfig.theme, layoutPath).startsWith(".."), `layout "${name}" is out of the theme directory.`);
@@ -61,7 +61,7 @@ export interface WeaveResult {
   paths: string[];
 }
 
-export async function weave(ctx: SitekitContext, path: string): Promise<WeaveResult | null> {
+export async function weave(ctx: KisstaticContext, path: string): Promise<WeaveResult | null> {
   const { resolvedConfig, staled, handlers } = ctx;
   const docPath = resolve(resolvedConfig.src, path);
   const docDir = dirname(docPath);
@@ -158,7 +158,7 @@ export async function weave(ctx: SitekitContext, path: string): Promise<WeaveRes
       }
       case "jsleave": {
         mode = "html";
-        htmlFrags.push(`<div data-sitekit-embed="L${jsxCurrentKey}" style="display:none"></div>`);
+        htmlFrags.push(`<div data-kisstatic-embed="L${jsxCurrentKey}" style="display:none"></div>`);
         jsxCurrentKey++;
         break;
       }
@@ -251,7 +251,7 @@ function stripExt(path: string): string {
   return join(dir, name);
 }
 
-function printFailure(ctx: SitekitContext, failures: ParseFailure[], srcPath: string): void {
+function printFailure(ctx: KisstaticContext, failures: ParseFailure[], srcPath: string): void {
   failures.forEach(({ type, col, line, msg }) => {
     const message = `${srcPath}(${line}, ${col}) ${msg}`;
     (type === "error") ? ctx.logger.error(message) : ctx.logger.warn(message);

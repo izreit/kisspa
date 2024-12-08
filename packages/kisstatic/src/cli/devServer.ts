@@ -2,26 +2,26 @@ import { watch } from "chokidar";
 import pico from "picocolors";
 import { createServer, type ViteDevServer } from "vite";
 import { type DebugOptions } from "./config.js";
-import { createSitekitContext, SitekitHandlers } from "./context.js";
+import { createKisstaticContext, KisstaticHandlers } from "./context.js";
 import { createWeaver } from "./weaver.js";
 import { createFloatingPromise } from "./util/promiseUtil.js";
 
 const { dim } = pico;
 
-export interface StartOptions {
+export interface CreateKisstaticDevServerOptions {
   configRoot?: string;
-  handlers?: SitekitHandlers | null;
+  handlers?: KisstaticHandlers | null;
   debugOptionsOverride?: DebugOptions;
 }
 
-export interface SitekitDevServer {
+export interface KisstaticDevServer {
   readonly viteDevServer: ViteDevServer;
   restart(): Promise<void>;
   close(): Promise<void>;
 }
 
-export async function createSitekitDevServer(opts: StartOptions): Promise<SitekitDevServer> {
-  const ctx = await createSitekitContext({
+export async function createKisstaticDevServer(opts: CreateKisstaticDevServerOptions): Promise<KisstaticDevServer> {
+  const ctx = await createKisstaticContext({
     handlers: opts.handlers,
     configRoot: opts.configRoot || ".",
     debugOptionsOverride: opts.debugOptionsOverride,

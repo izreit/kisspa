@@ -1,9 +1,9 @@
 import { dirname, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { defaultHandlers, SitekitHandlers } from "./context.js";
+import { defaultHandlers, KisstaticHandlers } from "./context.js";
 import { tmpdir } from "node:os";
 import { mkdtemp } from "node:fs/promises";
-import { SitekitLogger, type LogLevel } from "./logger.js";
+import { KisstaticLogger, type LogLevel } from "./logger.js";
 import { Logger } from "vite";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -45,7 +45,7 @@ export interface Config {
    * Custom logger for sitkit log.
    * If given, `logLevel` is ignored.
    */
-  customLogger?: SitekitLogger;
+  customLogger?: KisstaticLogger;
 
   /**
    * Custom logger for vite output.
@@ -100,7 +100,7 @@ export interface ResolvedConfig {
    * Custom logger for sitkit log.
    * If given, `logLevel` is ignored.
    */
-  customLogger: SitekitLogger | undefined;
+  customLogger: KisstaticLogger | undefined;
 
   /**
    * Custom logger for vite output.
@@ -137,21 +137,21 @@ async function normalizeConfig(cfg: unknown, path: string, debugOptionsOverride:
 
 export interface LoadConfigOptions {
   configRoot: string;
-  handlers: SitekitHandlers | null;
+  handlers: KisstaticHandlers | null;
   workspace?: string;
 }
 
-export async function loadConfig(handlers: SitekitHandlers | null, path: string, debugOptionsOverride?: DebugOptions): Promise<ResolvedConfig> {
+export async function loadConfig(handlers: KisstaticHandlers | null, path: string, debugOptionsOverride?: DebugOptions): Promise<ResolvedConfig> {
   const { isFile } = handlers || defaultHandlers;
   const filep = async (p: string) => (await isFile(p)) ? p : null;
   const actualPath = (
     await filep(join(path)) ??
-    await filep(join(path, "sitekit.config.js")) ??
-    await filep(join(path, "sitekit.config.mjs")) ??
-    await filep(join(path, "sitekit.config.cjs"))
+    await filep(join(path, "kisstatic.config.js")) ??
+    await filep(join(path, "kisstatic.config.mjs")) ??
+    await filep(join(path, "kisstatic.config.cjs"))
   );
   if (!actualPath)
-    throw new Error("sitekit.config.js not found.");
+    throw new Error("kisstatic.config.js not found.");
   const content = (await import(asRequirePath(actualPath))).default;
   return normalizeConfig(content, actualPath, debugOptionsOverride);
 }

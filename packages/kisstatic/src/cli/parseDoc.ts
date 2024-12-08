@@ -32,7 +32,7 @@ const jsxBlockExtension: TokenizerAndRendererExtension = {
     return { type: "jsxBlock", raw: src.slice(0, end), marker };
   },
   renderer(token) {
-    return `<div data-sitekit-embed="${token.marker}" style="display:none"></div>`;
+    return `<div data-kisstatic-embed="${token.marker}" style="display:none"></div>`;
   }
 };
 
@@ -56,7 +56,7 @@ const jsxInlineExtension: TokenizerAndRendererExtension = {
     return { type: "jsxBlock", raw: src.slice(0, end), marker };
   },
   renderer(token) {
-    return `<span data-sitekit-embed="${token.marker}" style="display:none"></span>`;
+    return `<span data-kisstatic-embed="${token.marker}" style="display:none"></span>`;
   }
 };
 

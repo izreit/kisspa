@@ -3,19 +3,19 @@ import { extname, join } from "node:path";
 import pico from "picocolors";
 import { build as viteBuild } from "vite";
 import { type DebugOptions } from "./config.js";
-import { createSitekitContext, type SitekitHandlers } from "./context.js";
+import { createKisstaticContext, type KisstaticHandlers } from "./context.js";
 import { createWeaver } from "./weaver.js";
 
 const { dim, green } = pico;
 
 export interface BuildOptions {
   configRoot?: string;
-  handlers?: SitekitHandlers | null;
+  handlers?: KisstaticHandlers | null;
   debugOptionsOverride?: DebugOptions;
 }
 
 export async function build(opts: BuildOptions): Promise<void> {
-  const ctx = await createSitekitContext({
+  const ctx = await createKisstaticContext({
     handlers: opts.handlers,
     configRoot: opts.configRoot || ".",
     debugOptionsOverride: opts.debugOptionsOverride,

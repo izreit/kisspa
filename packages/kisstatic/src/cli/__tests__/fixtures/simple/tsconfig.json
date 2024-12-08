@@ -108,6 +108,6 @@
     "skipLibCheck": true                                 /* Skip type checking all .d.ts files. */
   },
   "include": [
-    ".sitekit/**/*.tsx"
+    ".kisstatic/**/*.tsx"
   ]
 }

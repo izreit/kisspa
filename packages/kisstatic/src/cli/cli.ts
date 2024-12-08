@@ -1,7 +1,7 @@
 import { parseArgs } from "node:util";
 import { build } from "./build.js";
 import { preview } from "./preview.js";
-import { createSitekitDevServer } from "./devServer.js";
+import { createKisstaticDevServer } from "./devServer.js";
 
 export async function cli(args: string[]): Promise<void> {
   const { positionals, values: options } = parseArgs({
@@ -27,7 +27,7 @@ export async function cli(args: string[]): Promise<void> {
   const [command] = positionals;
   switch (command) {
     case "dev": case "serve": {
-      await createSitekitDevServer({
+      await createKisstaticDevServer({
         configRoot: options.config,
         debugOptionsOverride: {
           workspace: options["debug-workspace"],
