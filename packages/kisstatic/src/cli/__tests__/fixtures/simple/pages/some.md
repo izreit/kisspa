@@ -2,6 +2,7 @@
 layout: default
 ---
 import { TestComp } from "../.kisstatic/theme/components/TestComp.tsx";
+---
 
 Some <TestComp /> page.
 

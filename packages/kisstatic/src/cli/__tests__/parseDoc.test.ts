@@ -62,7 +62,8 @@ describe("parseDoc()", () => {
       "",
       "import { Foo } from './tee';",
       "import from '@___/module_never_exists';",
-      "  import from 'this-line/should-be-warned';",
+      "",
+      "---",
       "",
       "# foo",
       "",
@@ -87,8 +88,7 @@ describe("parseDoc()", () => {
       headings: [
         { depth: 1, hash: '#foo', label: 'foo' },
       ],
-      renderedMarkdown: '<p>  import from &#39;this-line/should-be-warned&#39;;</p>\n' +
-        '<h1 id=\"foo\">foo<a class=\"header-anchor\" href=\"#foo\" aria-label=\"Permalink to &quot;foo&quot;\"></a></h1>\n' +
+      renderedMarkdown: '<h1 id=\"foo\">foo<a class=\"header-anchor\" href=\"#foo\" aria-label=\"Permalink to &quot;foo&quot;\"></a></h1>\n' +
         '<p>some text</p>\n' +
         '<div data-kisstatic-embed="D0" style="display:none"></div><p>followed by a block text</p>\n' +
         '<p>with <div data-kisstatic-embed="D1" style="display:none"></div> something.</p>\n',
@@ -114,18 +114,10 @@ describe("parseDoc()", () => {
         { type: 'href', quote: "'", value: './tee' },
         { type: 'passthrough', code: "';\nimport from '" },
         { type: 'href', quote: "'", value: '@___/module_never_exists' },
-        { type: 'passthrough', code: "';\n" },
+        { type: 'passthrough', code: "';\n\n" },
         { type: 'importleave' }
       ],
-      failures: [
-        {
-          type: 'warn',
-          pos: 70,
-          line: 12,
-          col: 1,
-          msg: 'preamble imports must start from the first column of a line.'
-        }
-      ]
+      failures: []
     });
   });
 });

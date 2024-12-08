@@ -341,10 +341,10 @@ function consumeElement(ctx: LayoutParseContext): boolean {
 }
 
 const reEmptyLines = /[\r\n]*/my;
-const reImportHead = /import\s+(?:\*\s+as\s+\w+\s+|\{[^\}]+\}\s*)?from\s+["']/my;
+const reImportHead = /\s*import\s+(?:\*\s+as\s+\w+\s+|\{[^\}]+\}\s*)?from\s+["']/my;
 const reImportTail = /(?<target>[^"']+)(?<quote>["'])\s*;?[\t ]*[\r\n]*/my;
-const reImportInvalid = /^[\t ]+import\s+(?:\*\s+as\s+\w+\s+|\{[^\}]+\}\s*)?from\s+["'][^"']+["']\s*;?\s*[\r\n]*/my;
-const reSkipToImportEnd = /[^\r\n]*[\r\n]*/my;
+const reImportsEnd = /[\r\n\s]*^---\s*$[\r\n]*/my;
+const reSearchImportsEnd = /^---\s*$[\r\n]*/m;
 
 function consumeImports(ctx: LayoutParseContext): void {
   const { src, end, parsed } = ctx;
@@ -359,7 +359,7 @@ function consumeImports(ctx: LayoutParseContext): void {
 
     const p0 = ctx.pos;
     const m = runRe(ctx, reImportTail);
-    assertParse(m, ctx, "import statement broken.", reSkipToImportEnd);
+    assertParse(m, ctx, "import statement broken.", reSearchImportsEnd);
 
     const { target, quote } = m.groups!;
     parsed.push(
@@ -376,12 +376,10 @@ function consumeImports(ctx: LayoutParseContext): void {
 
   if (parsed[parsed.length - 1]?.type !== "importenter") {
     parsed.push({ type: "importleave" });
+    runRe(ctx, reImportsEnd);
   } else {
     parsed.pop(); // drop jsenter because no imports found.
   }
-
-  if (testRe(reImportInvalid, src, ctx.pos))
-    addParseFailure(ctx, "warn", "preamble imports must start from the first column of a line." + src.slice(ctx.pos, 20));
 }
 
 export type LayoutParseResult =
