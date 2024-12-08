@@ -21,7 +21,7 @@ export type LogLevel = Exclude<keyof typeof logLevels, "silent">;
 
 type PicocolorsColorizer = (input: string | number | null | undefined) => string
 
-export interface SitekitLogger {
+export interface KisstaticLogger {
   info(msg: string): void;
   warn(msg: string): void;
   warnOnce(msg: string): void;
@@ -30,7 +30,7 @@ export interface SitekitLogger {
   debug(msg: string): void;
 }
 
-export function createSitekitLogger(level: LogLevel): SitekitLogger {
+export function createKisstaticLogger(level: LogLevel): KisstaticLogger {
   const prefixColorizerTable: { [key in LogLevel]: PicocolorsColorizer } = {
     error: red,
     warn: yellow,
@@ -38,7 +38,7 @@ export function createSitekitLogger(level: LogLevel): SitekitLogger {
     debug: gray,
   };
 
-  const prefix = "[sitekit]";
+  const prefix = "[kisstatic]";
   const thresh = logLevels[level];
   const warnedMessages = new Set<string>();
 

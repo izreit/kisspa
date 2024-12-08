@@ -1,7 +1,7 @@
 import { rmdirSync, rmSync } from "node:fs";
 import { unlink } from "node:fs/promises";
 import { type UserConfig } from "vite";
-import { SitekitContext } from "./context.js";
+import { KisstaticContext } from "./context.js";
 import { layoutNameOf, resolveLayout, weave } from "./weave.js";
 import { relative, sep } from "node:path";
 import pico from "picocolors";
@@ -50,7 +50,7 @@ export interface Weaver {
    * Notify ready to build.
    *
    * When called, waits all doc file (given by notifyAddDoc()) is processed and
-   * then writes vite.config.js to `SitekitContext#resolvedConfig.userConfigPath`.
+   * then writes vite.config.js to `KisstaticContext#resolvedConfig.userConfigPath`.
    * After called, vite.config.js will be rewritten as notifyAddDoc() or notifyUnlinkDoc() called.
    *
    * @returns path of the directory containing the written vite.config.js
@@ -58,7 +58,7 @@ export interface Weaver {
   notifyReady(): Promise<string>;
 }
 
-export async function createWeaver(ctx: SitekitContext): Promise<Weaver> {
+export async function createWeaver(ctx: KisstaticContext): Promise<Weaver> {
   const { resolvedConfig, handlers: { writeTextFile } } = ctx;
 
   const targets = createWatchedSet<string>(); // absolute paths
@@ -173,7 +173,7 @@ export async function createWeaver(ctx: SitekitContext): Promise<Weaver> {
   };
 }
 
-export function createViteUserConfig(ctx: SitekitContext, targets: Set<string>): UserConfig {
+export function createViteUserConfig(ctx: KisstaticContext, targets: Set<string>): UserConfig {
   let count = 0;
   const input: NonNullable<NonNullable<UserConfig["build"]>["rollupOptions"]>["input"] = {};
   for (const target of targets.values())
@@ -186,7 +186,7 @@ export function createViteUserConfig(ctx: SitekitContext, targets: Set<string>):
     ctx.logger.warnRaw(yellow(
       "\n" +
       `${yellowBright("(!)")} outDir ${gray(out)} is not inside project root and will not be emptied.\n` +
-      `Use --emptyOutDir (or 'emptyOutDir: true' in sitekit.config.js) to override. (BUT NOT IMPLEMENTED!)\n`
+      `Use --emptyOutDir (or 'emptyOutDir: true' in kisstatic.config.js) to override. (BUT NOT IMPLEMENTED!)\n`
     ));
   }
 
@@ -199,7 +199,7 @@ export function createViteUserConfig(ctx: SitekitContext, targets: Set<string>):
 
       // By default Vite treats `emptyOutDir` as `true` when the `outDir` is under the directory
       // containing vite.config.js. But we want to treat any location under the directory containing
-      // sitekit.config.js by default.
+      // kisstatic.config.js by default.
       emptyOutDir: outDirIsOutsideOfConfigRoot,
     },
     esbuild: {

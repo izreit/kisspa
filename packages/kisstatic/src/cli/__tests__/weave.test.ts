@@ -1,16 +1,16 @@
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { createSitekitContext, defaultHandlers, SitekitHandlers } from "../context";
+import { createKisstaticContext, defaultHandlers, KisstaticHandlers } from "../context";
 import { weave } from "../weave";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-interface EphemeralSitekitHandlers extends SitekitHandlers {
+interface EphemeralKisstaticHandlers extends KisstaticHandlers {
   written: { [path: string]: string };
 }
 
-function createEphemeralSitekitHandlers(root: string): EphemeralSitekitHandlers {
+function createEphemeralKisstaticHandlers(root: string): EphemeralKisstaticHandlers {
   const written: { [path: string]: string } = {};
   return {
     ...defaultHandlers,
@@ -27,21 +27,21 @@ function createEphemeralSitekitHandlers(root: string): EphemeralSitekitHandlers 
 
 describe("weave", () => {
   it("can handle simple html using JSX", async () => {
-    const handlers = createEphemeralSitekitHandlers(__dirname);
-    const ctx = await createSitekitContext({
-      configRoot: join(__dirname, "fixtures/simple/.sitekit/"),
+    const handlers = createEphemeralKisstaticHandlers(__dirname);
+    const ctx = await createKisstaticContext({
+      configRoot: join(__dirname, "fixtures/simple/.kisstatic/"),
       handlers,
     });
     await weave(ctx, "../pages/index.md");
 
     const { written } = handlers;
     expect(Object.keys(written).sort()).toEqual([
-      'fixtures/simple/.sitekit/.wspace/index.doc.jsx',
-      'fixtures/simple/.sitekit/.wspace/index.html',
-      'fixtures/simple/.sitekit/.wspace/index.layout.jsx',
+      'fixtures/simple/.kisstatic/.wspace/index.doc.jsx',
+      'fixtures/simple/.kisstatic/.wspace/index.html',
+      'fixtures/simple/.kisstatic/.wspace/index.layout.jsx',
     ]);
 
-    expect(written['fixtures/simple/.sitekit/.wspace/index.html']).toEqual(
+    expect(written['fixtures/simple/.kisstatic/.wspace/index.html']).toEqual(
       '<!doctype html>\n' +
       '<title>Top</title>\n' +
       '\n' +
@@ -54,20 +54,20 @@ describe("weave", () => {
       '<p>Lorem ipsum dolor sit amet, consectetur ...</p>\n' +
       '\n' +
       '\n' +
-      '<div>Click to increment: <div data-sitekit-embed="L0" style="display:none"></div></div>\n' +
-      '<script type="text/javascript">const __sitekit_page_props__ = Object.freeze({"path":"index.md","frontmatter":{"layout":"default"},"headings":[{"depth":1,"hash":"#title-heading1","label":"Title Heading1"},{"depth":1,"hash":"#h2-elem","label":"H2 elem"}]})</script>\n' +
+      '<div>Click to increment: <div data-kisstatic-embed="L0" style="display:none"></div></div>\n' +
+      '<script type="text/javascript">const __kisstatic_page_props__ = Object.freeze({"path":"index.md","frontmatter":{"layout":"default"},"headings":[{"depth":1,"hash":"#title-heading1","label":"Title Heading1"},{"depth":1,"hash":"#h2-elem","label":"H2 elem"}]})</script>\n' +
       '<script type="module" src="./index.layout.jsx"></script>\n' +
       '<script type="module" src="./index.doc.jsx"></script>\n',
     );
 
-    expect(written['fixtures/simple/.sitekit/.wspace/index.layout.jsx']).toEqual(
+    expect(written['fixtures/simple/.kisstatic/.wspace/index.layout.jsx']).toEqual(
       'import { attach as __kisspa_attach__ } from "kisspa";\n' +
       'import { TestComp } from "../theme/components/TestComp";\n' +
       '\n' +
-      `__kisspa_attach__({ after: document.querySelector('[data-sitekit-embed="L0"]') }, <TestComp />);\n`,
+      `__kisspa_attach__({ after: document.querySelector('[data-kisstatic-embed="L0"]') }, <TestComp />);\n`,
     );
 
-    expect(written['fixtures/simple/.sitekit/.wspace/index.doc.jsx']).toEqual(
+    expect(written['fixtures/simple/.kisstatic/.wspace/index.doc.jsx']).toEqual(
       '\n'
     );
   });
