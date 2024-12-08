@@ -7,7 +7,7 @@ describe("parseLayout()", () => {
       `import * as   x from "some-lib";`,
       `import * as y from "./bar";`,
       `import { some, anotherSome as AS } from    "./foo";`,
-      ``,
+      `---`,
       `<!doctype html>`,
       `<script src="./foo.js">`,
       `var x = 100;`,
@@ -57,8 +57,7 @@ describe("parseLayout()", () => {
           value: "./foo",
         },
         {
-          code: "\";\n" +
-            "\n",
+          code: "\";\n",
           type: "passthrough",
         },
         { type: 'importleave' },
@@ -112,7 +111,7 @@ describe("parseLayout()", () => {
   it("detects the end of the html tag", () => {
     const src = [
       `import * as x from "some-lib";`,
-      ``,
+      `---`,
       `<!doctype html>`,
       `<html>`,
       `<title>Test Title</title>`,
@@ -129,7 +128,7 @@ describe("parseLayout()", () => {
         { type: 'importenter' },
         { type: 'passthrough', code: 'import * as x from "' },
         { type: 'href', quote: '"', value: 'some-lib' },
-        { type: 'passthrough', code: '";\n\n' },
+        { type: 'passthrough', code: '";\n' },
         { type: 'importleave' },
         {
           type: 'passthrough',
