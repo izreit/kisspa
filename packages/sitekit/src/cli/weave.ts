@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { basename, dirname, join, parse as parsePath, relative, resolve } from "node:path";
 import pico from "picocolors";
 import { Layout, SitekitContext } from "./context.js";
-import { parseDoc } from "./parseDoc.js";
+import { HeadingEntry, parseDoc } from "./parseDoc.js";
 import { ParseFailure, parseLayout } from "./parseLayout.js";
 
 const { dim, green } = pico;
@@ -16,6 +16,15 @@ function jsAttachJSXCode(marker: string, code: string): string {
 
 export function layoutNameOf(ctx: SitekitContext, path: string): string {
   return relative(ctx.resolvedConfig.theme, stripExt(resolve(path)));
+}
+
+// NOTE This name corresponds to the runtime. See usePageProps().
+const pagePropsVarName = "__sitekit_page_props__";
+
+export interface PageProps {
+  path: string;
+  frontmatter: object;
+  headings: HeadingEntry[];
 }
 
 export async function resolveLayout(ctx: SitekitContext, name: string): Promise<Layout | null> {
@@ -60,7 +69,7 @@ export async function weave(ctx: SitekitContext, path: string): Promise<WeaveRes
   assert(!docRelPath.startsWith(".."), `"${path}" is out of the document directory. ${resolvedConfig.src} to ${docPath} is ${docRelPath}`);
 
   const docSrc = await handlers.readTextFile(docPath);
-  const { markdown, jsxs, importData, frontmatter, failures } = parseDoc(docSrc);
+  const { renderedMarkdown, jsxs, importData, headings, frontmatter, failures } = parseDoc(docSrc);
   printFailure(ctx, failures, docPath);
   validateDocFrontmatter(frontmatter, docPath);
 
@@ -168,7 +177,7 @@ export async function weave(ctx: SitekitContext, path: string): Promise<WeaveRes
       case "placeholder": {
         const { value } = frag;
         if (value === "body") {
-          pushFrag(markdown);
+          pushFrag(renderedMarkdown);
         } else if (value === "title") {
           // TODO should detect the title-like string from headings in .md? or introdue the default title in layout?
           pushFrag(frontmatter.title ?? "");
@@ -184,7 +193,9 @@ export async function weave(ctx: SitekitContext, path: string): Promise<WeaveRes
         break;
       }
       case "closehtml": {
+        const pageProps: PageProps = { path: docRelPath, frontmatter, headings };
         htmlFrags.push(
+          `<script type="text/javascript">const ${pagePropsVarName} = Object.freeze(${JSON.stringify(pageProps)})</script>\n`,
           `<script type="module" src="./${basename(outPathLayoutJS)}"></script>\n`,
           `<script type="module" src="./${basename(outPathDocJS)}"></script>\n`,
         );
