@@ -47,11 +47,15 @@ describe("weave", () => {
       '\n' +
       '<h1>Test Top</h1>\n' +
       '\n' +
+      '<h1 id="title-heading1">Title Heading1<a class="header-anchor" href="#title-heading1" aria-label="Permalink to &quot;Title Heading1&quot;"></a></h1>\n' +
       '<p>string in markdown.</p>\n' +
       '<p><a href="./some.html">some</a></p>\n' +
+      '<h1 id="h2-elem">H2 elem<a class="header-anchor" href="#h2-elem" aria-label="Permalink to &quot;H2 elem&quot;"></a></h1>\n' +
+      '<p>Lorem ipsum dolor sit amet, consectetur ...</p>\n' +
       '\n' +
       '\n' +
       '<div>Click to increment: <div data-sitekit-embed="L0" style="display:none"></div></div>\n' +
+      '<script type="text/javascript">const __sitekit_page_props__ = Object.freeze({"path":"index.md","frontmatter":{"layout":"default"},"headings":[{"depth":1,"hash":"#title-heading1","label":"Title Heading1"},{"depth":1,"hash":"#h2-elem","label":"H2 elem"}]})</script>\n' +
       '<script type="module" src="./index.layout.jsx"></script>\n' +
       '<script type="module" src="./index.doc.jsx"></script>\n',
     );

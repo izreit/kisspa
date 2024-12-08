@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseDoc } from "../../parseDoc";
+import { parseDoc } from "../parseDoc";
 
 describe("parseDoc()", () => {
   it("parses markdwon with JSX", () => {
@@ -21,10 +21,10 @@ describe("parseDoc()", () => {
       "with <InlineCompo><div class={`foo ${1 + 2}`}>text</div></InlineCompo> something.",
     ].join("\n");
 
-    const { markdown, jsxs } = parseDoc(src)
+    const { renderedMarkdown, jsxs } = parseDoc(src)
 
-    expect(markdown.split("\n")).toEqual([
-      '<h1>foo</h1>',
+    expect(renderedMarkdown.split("\n")).toEqual([
+      '<h1 id=\"foo\">foo<a class=\"header-anchor\" href=\"#foo\" aria-label=\"Permalink to &quot;foo&quot;\"></a></h1>',
       '<p>some text</p>',
       '<div data-sitekit-embed="D0" style="display:none"></div><p>followed by a block text</p>',
       '<p>with <div data-sitekit-embed="D1" style="display:none"></div> something.</p>',
@@ -84,8 +84,11 @@ describe("parseDoc()", () => {
     const parseDocResult = parseDoc(src);
     expect(parseDocResult).toEqual({
       frontmatter: { title: 'A Test Title', tag: ['testtag1', 'testtag2'] },
-      markdown: '<p>  import from &#39;this-line/should-be-warned&#39;;</p>\n' +
-        '<h1>foo</h1>\n' +
+      headings: [
+        { depth: 1, hash: '#foo', label: 'foo' },
+      ],
+      renderedMarkdown: '<p>  import from &#39;this-line/should-be-warned&#39;;</p>\n' +
+        '<h1 id=\"foo\">foo<a class=\"header-anchor\" href=\"#foo\" aria-label=\"Permalink to &quot;foo&quot;\"></a></h1>\n' +
         '<p>some text</p>\n' +
         '<div data-sitekit-embed="D0" style="display:none"></div><p>followed by a block text</p>\n' +
         '<p>with <div data-sitekit-embed="D1" style="display:none"></div> something.</p>\n',

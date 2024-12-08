@@ -73,9 +73,13 @@ const customHeadingNameRenderer: RendererObject = {
     const reName = /(?:\s|^)\{#(?<name>[a-zA-Z0-9-]+)\s*\}\s*$/i;
     const reNamePart = /(?<=\s|^)\{#[a-zA-Z0-9-]+\s*\}(?:\s*)$/i;
     const m = text.match(reName);
-    const [actual, name] = m ? [text.replace(reNamePart, ""), m.groups!.name] : [text, text];
+    const [actual, name] =
+      m ?
+        [text.replace(reNamePart, ""), m.groups!.name] :
+        [text, text.trim().replace(/[\s\.#]+/g, "-").toLowerCase()]; // TODO escaping must be reconsidered.
     headingsBuffer.push({ depth, hash: `#${name}`, label: actual });
-    return `<h${depth} id="${name}">${actual}<a class="header-anchor" href="#${name}" aria-label="Permalink to &quot;${actual}&quot;"></a></h${depth}>`;
+    const permlinkElem = `<a class="header-anchor" href="#${name}" aria-label="Permalink to &quot;${actual}&quot;"></a>`;
+    return `<h${depth} id="${name}">${actual}${permlinkElem}</h${depth}>\n`;
   },
 }
 
