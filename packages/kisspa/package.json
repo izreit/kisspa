@@ -1,8 +1,7 @@
 {
   "name": "kisspa",
-  "private": true,
   "version": "0.1.0",
-  "description": "",
+  "description": "lightweight JSX-based library with utility-first CSS to make SPA development simple",
   "type": "module",
   "types": "dist/full/upwind/bundle.d.js",
   "main": "dist/full/upwind/bundle.cjs",
@@ -16,7 +15,7 @@
     "dist/",
     "lib/"
   ],
-  "keywords": [],
+  "keywords": ["kisspa", "ui", "reactive", "frontend"],
   "author": "izreit",
   "license": "MIT",
   "devDependencies": {
