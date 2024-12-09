@@ -1,17 +1,116 @@
 {
-  "name": "kisspa-root",
-  "version": "0.0.0",
-  "private": true,
-  "main": "",
+  "name": "kisspa",
+  "version": "0.1.0",
+  "description": "lightweight JSX-based library with utility-first CSS to make SPA development simple",
+  "type": "module",
+  "types": "dist/full/upwind/bundle.d.js",
+  "main": "dist/full/upwind/bundle.cjs",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prepare": "npm run build",
+    "build": "node ./scripts/build.mjs",
+    "test": "vitest",
+    "cov": "vitest run --coverage"
   },
-  "keywords": [],
-  "author": "",
+  "files": [
+    "dist/",
+    "lib/"
+  ],
+  "keywords": ["kisspa", "ui", "reactive", "frontend"],
+  "author": "izreit",
   "license": "MIT",
-  "description": "",
-  "workspaces": [
-    "packages/kisspa",
-    "packages/kisstatic"
-  ]
+  "devDependencies": {
+    "@vitest/coverage-istanbul": "^2.1.3",
+    "happy-dom": "^15.11.0",
+    "terser": "^5.31.1",
+    "typescript": "^5.6.3",
+    "vite": "^5.3.3",
+    "vitest": "^2.1.3"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/normal/upwind/bundle.d.ts",
+      "import": "./dist/normal/upwind/bundle.mjs",
+      "require": "./dist/normal/upwind/bundle.cjs"
+    },
+    "./jsx-runtime": {
+      "types": "./dist/normal/upwind/bundle.d.ts",
+      "import": "./dist/normal/upwind/bundle.mjs",
+      "require": "./dist/normal/upwind/bundle.cjs"
+    },
+    "./jsx-dev-runtime": {
+      "types": "./dist/normal/upwind/bundle.d.ts",
+      "import": "./dist/normal/upwind/bundle.mjs",
+      "require": "./dist/normal/upwind/bundle.cjs"
+    },
+    "./html": {
+      "types": "./dist/normal/html/bundle.d.ts",
+      "import": "./dist/normal/html/bundle.mjs",
+      "require": "./dist/normal/html/bundle.cjs"
+    },
+    "./html/jsx-runtime": {
+      "types": "./dist/normal/html/bundle.d.ts",
+      "import": "./dist/normal/html/bundle.mjs",
+      "require": "./dist/normal/html/bundle.cjs"
+    },
+    "./html/jsx-dev-runtime": {
+      "types": "./dist/normal/html/bundle.d.ts",
+      "import": "./dist/normal/html/bundle.mjs",
+      "require": "./dist/normal/html/bundle.cjs"
+    },
+    "./reactive": {
+      "types": "./dist/normal/reactive/index.d.ts",
+      "import": "./dist/normal/reactive/index.mjs",
+      "require": "./dist/normal/reactive/index.cjs"
+    },
+    "./full": {
+      "types": "./dist/full/upwind/bundle.d.ts",
+      "import": "./dist/full/upwind/bundle.mjs",
+      "require": "./dist/full/upwind/bundle.cjs"
+    },
+    "./full/jsx-runtime": {
+      "types": "./dist/full/upwind/bundle.d.ts",
+      "import": "./dist/full/upwind/bundle.mjs",
+      "require": "./dist/full/upwind/bundle.cjs"
+    },
+    "./full/jsx-dev-runtime": {
+      "types": "./dist/full/upwind/bundle.d.ts",
+      "import": "./dist/full/upwind/bundle.mjs",
+      "require": "./dist/full/upwind/bundle.cjs"
+    },
+    "./html/full": {
+      "types": "./dist/full/html/bundle.d.ts",
+      "import": "./dist/full/html/bundle.mjs",
+      "require": "./dist/full/html/bundle.cjs"
+    },
+    "./html/full/jsx-runtime": {
+      "types": "./dist/full/html/bundle.d.ts",
+      "import": "./dist/full/html/bundle.mjs",
+      "require": "./dist/full/html/bundle.cjs"
+    },
+    "./html/full/jsx-dev-runtime": {
+      "types": "./dist/full/html/bundle.d.ts",
+      "import": "./dist/full/html/bundle.mjs",
+      "require": "./dist/full/html/bundle.cjs"
+    },
+    "./reactive/full": {
+      "types": "./dist/full/reactive/index.d.ts",
+      "import": "./dist/full/reactive/index.mjs",
+      "require": "./dist/full/reactive/index.cjs"
+    },
+    "./preset/colors": {
+      "types": "./dist/full/upwind/preset/colors.d.ts",
+      "import": "./dist/full/upwind/preset/colors.mjs",
+      "require": "./dist/full/upwind/preset/colors.cjs"
+    },
+    "./raw": {
+      "types": "./dist/full/upwind/bundle.raw.d.ts",
+      "import": "./dist/full/upwind/bundle.raw.mjs",
+      "require": "./dist/full/upwind/bundle.cjs"
+    },
+    "./raw/jsx-dev-runtime": {
+      "types": "./dist/full/upwind/bundle.raw.d.ts",
+      "import": "./dist/full/upwind/bundle.raw.mjs",
+      "require": "./dist/full/upwind/bundle.cjs"
+    }
+  }
 }
