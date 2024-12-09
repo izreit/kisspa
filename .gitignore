@@ -2,3 +2,7 @@
 node_modules
 *.swp
 *.tgz
+
+dist/
+lib/
+coverage/
