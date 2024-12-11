@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { cloneutil } from "../cloneutil";
 import { autorun, bindObserver, cancelAutorun, debugGetInternal, observe, unwatch, watchDeep, watchShallow } from "../core";
-import { Key } from "../internal/reftable";
+import type { Key } from "../internal/reftable";
 
 describe("microstore", function () {
   it("can be read/modified", function () {

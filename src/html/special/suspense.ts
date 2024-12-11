@@ -1,5 +1,5 @@
-import { AssembleContext, Backing, assemble, createBackingCommon, createSpecial, disposeBackings, insertBackings } from "../core/backing";
-import { JSXNode, PropChildren } from "../core/types";
+import { type AssembleContext, type Backing, assemble, createBackingCommon, createSpecial, disposeBackings, insertBackings } from "../core/backing";
+import type { JSXNode, PropChildren } from "../core/types";
 import { arrayify, isFunction, mapCoerce } from "../core/util";
 
 export namespace Suspense {

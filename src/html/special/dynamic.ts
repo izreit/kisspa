@@ -1,7 +1,7 @@
 import { autorun } from "../../reactive";
-import { assemble, AssembleContext, Backing, createSimpleBacking, createSpecial } from "../core/backing";
+import { type AssembleContext, type Backing, assemble, createSimpleBacking, createSpecial } from "../core/backing";
 import { jsx } from "../core/h";
-import { Component } from "../core/types";
+import type { Component } from "../core/types";
 
 export namespace Dynamic {
   export type Props<T> = T & {

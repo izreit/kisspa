@@ -1,6 +1,6 @@
 import { autorun, signal } from "../../reactive";
-import { AssembleContext, Backing, assemble, createBackingCommon, createSpecial } from "../core/backing";
-import { JSXNode } from "../core/types";
+import { type AssembleContext, type Backing, assemble, createBackingCommon, createSpecial } from "../core/backing";
+import type { JSXNode } from "../core/types";
 import { arrayify } from "../core/util";
 import { lcs } from "./internal/lcs";
 

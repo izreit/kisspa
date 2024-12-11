@@ -4,7 +4,7 @@
 
 /// <reference lib="dom" />
 
-import { Accessor, AccessorOr, JSXNode, JSXNodeAsync, Ref } from './types';
+import type { Accessor, AccessorOr, JSXNode, JSXNodeAsync, Ref } from './types';
 
 type Booleanish = boolean | 'true' | 'false';
 

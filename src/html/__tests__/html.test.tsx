@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { signal } from "../../reactive";
-import { BackingRoot, JSXNode, PropRef, createRef, createRoot, h } from "../index";
+import { type BackingRoot, type JSXNode, type PropRef, createRef, createRoot, h } from "../index";
 
 describe("html", () => {
   let elem: HTMLElement;

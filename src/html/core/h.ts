@@ -1,6 +1,6 @@
 import { JSXInternal } from "./jsx";
-import { $h, Attributes, Component, JSXElement, JSXNode } from "./types";
-import { Arrayify, arrayify } from "./util";
+import { $h, type Attributes, type Component, type JSXElement, type JSXNode } from "./types";
+import { type Arrayify, arrayify } from "./util";
 
 export function h(name: string, attrs?: JSXInternal.HTMLAttributes | null, ...children: (JSXNode | JSXNode[])[]): JSXElement;
 export function h<P extends { children?: any[] }>(name: Component<P>, attrs?: P, ...children: Arrayify<P["children"]>): JSXElement;

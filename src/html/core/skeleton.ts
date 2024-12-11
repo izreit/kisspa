@@ -1,4 +1,4 @@
-import { $noel, JSXElement, JSXNode, isJSXElement } from "./types";
+import { $noel, type JSXElement, type JSXNode, isJSXElement } from "./types";
 import { isString, objEntries } from "./util";
 
 export interface Skeleton {

@@ -1,5 +1,5 @@
-import { assemble, AssembleContext, Backing, createSimpleBacking, createSpecial } from "../core/backing";
-import { PropChildren } from "../core/types";
+import { type AssembleContext, type Backing, assemble, createSimpleBacking, createSpecial } from "../core/backing";
+import type { PropChildren } from "../core/types";
 import { mapCoerce } from "../core/util";
 
 export namespace Fragment {
