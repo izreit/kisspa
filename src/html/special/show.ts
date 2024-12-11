@@ -1,6 +1,6 @@
 import { watchProbe } from "../../reactive";
-import { AssembleContext, Backing, assemble, createSimpleBacking, createSpecial } from "../core/backing";
-import { JSXNode, PropChildren } from "../core/types";
+import { type AssembleContext, type Backing, assemble, createSimpleBacking, createSpecial } from "../core/backing";
+import type { JSXNode, PropChildren } from "../core/types";
 import { mapCoerce } from "../core/util";
 
 export namespace Show {

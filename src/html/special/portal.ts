@@ -1,6 +1,6 @@
-import { AssembleContext, Backing, assemble, assignLocation, createBackingCommon, createLocation, createSpecial, disposeBackings, insertBackings, tailOf, tailOfBackings } from "../core/backing";
+import { type AssembleContext, type Backing, assemble, assignLocation, createBackingCommon, createLocation, createSpecial, disposeBackings, insertBackings, tailOf, tailOfBackings } from "../core/backing";
 import { isNode } from "../core/util";
-import { PropChildren } from "../core/types";
+import type { PropChildren } from "../core/types";
 import { lastOf, mapCoerce } from "../core/util";
 
 export namespace PortalDest {

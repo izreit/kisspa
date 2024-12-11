@@ -1,6 +1,6 @@
 import { autorun } from "../../reactive";
 import { allocateSkeletons } from "./skeleton";
-import { $noel, Component, JSXNode, Ref, isJSXElement } from "./types";
+import { $noel, type Component, type JSXNode, type Ref, isJSXElement } from "./types";
 import { arrayify, isFunction, isNode, isPromise, isString, objEntries } from "./util";
 
 export interface Backing {

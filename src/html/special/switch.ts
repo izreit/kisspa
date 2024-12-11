@@ -1,7 +1,7 @@
 import { autorun, signal, watchProbe } from "../../reactive";
-import { assemble, AssembleContext, Backing, createSimpleBacking, createSpecial } from "../core/backing";
+import { type AssembleContext, type Backing, assemble, createSimpleBacking, createSpecial } from "../core/backing";
 import { jsx } from "../core/h";
-import { JSXNode, PropChildren } from "../core/types";
+import type { JSXNode, PropChildren } from "../core/types";
 import { arrayify, isFunction, mapCoerce } from "../core/util";
 import { createContextFun } from "./context";
 import { Show } from "./show";

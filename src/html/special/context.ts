@@ -1,5 +1,5 @@
-import { AssembleContext, SimpleBacking, assemble, createSimpleBacking, createSpecial } from "../core/backing";
-import { Component, PropChildren } from "../core/types";
+import { type AssembleContext, type SimpleBacking, assemble, createSimpleBacking, createSpecial } from "../core/backing";
+import type { Component, PropChildren } from "../core/types";
 import { lastOf, mapCoerce } from "../core/util";
 
 export interface ContextProviderProps<T> {
