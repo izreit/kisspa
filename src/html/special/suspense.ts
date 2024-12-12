@@ -19,7 +19,9 @@ interface AllWaiter {
 function createAllWaiter(): AllWaiter {
   let generation = 0;
   let waiting = 0;
-  let allPromise: Promise<void>, resolve: () => void, reject: (e: unknown) => void;
+  let allPromise: Promise<void>;
+  let resolve: () => void;
+  let reject: (e: unknown) => void;
 
   function suspend(e: unknown) {
     generation = (generation + 1) & 0xffff;
