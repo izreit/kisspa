@@ -39,6 +39,7 @@ function printStat(path) {
 
 if (modeBuildUnbundle) {
   run("npx vite build -- -ct upwind-preset");
+  minifyByTerser("dist/full/upwind/preset/colors.raw.mjs");
 }
 
 if (modeBuildFull) {
