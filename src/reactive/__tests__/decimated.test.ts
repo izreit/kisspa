@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { decimated } from "../decimated";
 
-describe("decimated", function () {
+describe("decimated", () => {
   it("delays the wrapped function", async () => {
     let count = 0;
     const d = decimated(() => { count++; });

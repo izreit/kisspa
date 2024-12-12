@@ -20,7 +20,7 @@ export const For = createSpecial(function For<E>(actx: AssembleContext, props: F
 
   let backings: Backing[] = [];
   let backingTable: Map<any, Backing> = new Map();
-  let ixTable: WeakMap<Backing, [() => number, (v: number) => void]> = new WeakMap();
+  const ixTable: WeakMap<Backing, [() => number, (v: number) => void]> = new WeakMap();
 
   const base = createBackingCommon("For", () => backings);
   const loc = base.location_;
@@ -47,7 +47,7 @@ export const For = createSpecial(function For<E>(actx: AssembleContext, props: F
     if (loc.parent) {
       let ci = 0;
       let ni = 0;
-      let l = { ...loc };
+      const l = { ...loc };
       const commonBackings = lcs(backings, nextBackings);
       for (let cmi = 0; cmi < commonBackings.length; ++cmi) {
         const commonBacking = commonBackings[cmi];
