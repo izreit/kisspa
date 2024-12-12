@@ -27,7 +27,7 @@ const unwrapTable: WeakMap<Wrapped, Target> = new WeakMap();
 const valueCacheTable: WeakMap<Wrapped, Map<Key, any>> = new WeakMap();
 
 /** Stack of the current observers, used to update refTable */
-let activeObserverStack: Observer[] = [];
+const activeObserverStack: Observer[] = [];
 
 /** Properties that currently altered and not yet notified to its observers.  */
 // To reduce allocation, this is a heterogeneous array consists of
