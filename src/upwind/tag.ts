@@ -1,4 +1,4 @@
-import { mapCoerce, arrayify } from "../html/core/util";
+import { arrayify, mapCoerce } from "../html/core/util";
 import { createEmptyObj, objForEach, objKeys } from "./objutil";
 import { parse } from "./parse";
 

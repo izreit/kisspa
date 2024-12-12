@@ -1,17 +1,17 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { cloneutil } from "../cloneutil";
 import { autorun, bindObserver, cancelAutorun, debugGetInternal, observe, unwatch, watchDeep, watchShallow } from "../core";
 import type { Key } from "../internal/reftable";
 
-describe("microstore", function () {
-  it("can be read/modified", function () {
+describe("microstore", () => {
+  it("can be read/modified", () => {
     const [store, setStore] = observe({ foo: 4 });
     expect(store.foo).toBe(4);
     setStore(s => { s.foo *= 2 });
     expect(store.foo).toBe(8);
   });
 
-  it("can watch a simple object", async function () {
+  it("can watch a simple object", async () => {
     const internal = debugGetInternal();
 
     const raw = { foo: 4 };
@@ -42,7 +42,7 @@ describe("microstore", function () {
     expect(squareFoo).toBe(196);
   });
 
-  it("can watch array", async function () {
+  it("can watch array", async () => {
     const raw = [100, 20, 32, 5];
     const [store, setStore] = observe(raw);
 
@@ -58,7 +58,7 @@ describe("microstore", function () {
     expect(val).toBe(5);
   });
 
-  it("can watch nested values and its stractural modification", async function () {
+  it("can watch nested values and its stractural modification", async () => {
     interface Person {
       givenName: string;
       values: number[];
@@ -105,7 +105,7 @@ describe("microstore", function () {
     expect(lastValue).toBe(42);
   });
 
-  it("can be untracked", async function () {
+  it("can be untracked", async () => {
     const [store, setStore] = observe({ count: 0 });
 
     let countClone0 = 0;
@@ -124,7 +124,7 @@ describe("microstore", function () {
     expect(countClone1).toBe(32);
   });
 
-  it("doesn't call unrelated observers", async function () {
+  it("doesn't call unrelated observers", async () => {
     const raw = [
       { firstName: "john", age: 10 },
       { firstName: "mary", age: 24 },
@@ -172,7 +172,7 @@ describe("microstore", function () {
     expect(ageOfSecond).toBe(10);
   });
 
-  it("can suppress synchronous flush", async function () {
+  it("can suppress synchronous flush", async () => {
     const raw = { values: ["fee", "bar", "zoo", "buzz", "woohoo"] };
     const [store, setStore] = observe(raw);
 
@@ -191,13 +191,13 @@ describe("microstore", function () {
     expect(caps).toBe("bBbwA"); // non-lazyFlush setStore() also flush the modification
   });
 
-  it("rejects array modification outside setter", async function () {
+  it("rejects array modification outside setter", async () => {
     const raw = [100, 20, 32, 5];
     const [store, _setStore] = observe(raw);
     expect(() => store.sort((a, b) => a - b)).toThrow((/^can't set\/delete '\d+' without setter/));
   });
 
-  it("can watch multiple stores", async function () {
+  it("can watch multiple stores", async () => {
     const internal = debugGetInternal();
 
     const raw1 = { index: 1 };
@@ -239,7 +239,7 @@ describe("microstore", function () {
     expect(internal.refTable.reverseTable_.get(observer1)?.get(writeProxy2.values)?.has("3")).toBe(true);
   });
 
-  it("can alter array", async function () {
+  it("can alter array", async () => {
     const raw = { values: ["fee", "bar", "zoo", "buzz", "woohoo"] };
     const [store, setStore] = observe(raw);
 
@@ -254,7 +254,7 @@ describe("microstore", function () {
     expect(value).toBe("OOHOO:4");
   });
 
-  it("can detect delete", async function () {
+  it("can detect delete", async () => {
     const raw = { values: ["fee", "bar", "zoo", "buzz", "woohoo"] };
     const [store, setStore] = observe(raw);
 
@@ -266,7 +266,7 @@ describe("microstore", function () {
     expect(val).toBe(undefined);
   });
 
-  it("can be updated in nested", async function () {
+  it("can be updated in nested", async () => {
     const raw = {
       last: "initial",
       values: ["fee", "bar", "zoo", "buzz", "woohoo"]
@@ -286,7 +286,7 @@ describe("microstore", function () {
     expect(val).toBe("AppendAppend");
   });
 
-  it("does not run effects when set the identical value", async function () {
+  it("does not run effects when set the identical value", async () => {
     const raw = {
       values: ["fee", "glaa", "zoo"]
     };
@@ -314,7 +314,7 @@ describe("microstore", function () {
     expect(joined).toBe("fee,BAR,zoo");
   });
 
-  it("cancels nested autorun() when the parent is reevaluated.", async function () {
+  it("cancels nested autorun() when the parent is reevaluated.", async () => {
     const [store1, setStore1] = observe({ x: 1 });
     const [store2, setStore2] = observe({ y: 2 });
 
@@ -345,7 +345,7 @@ describe("microstore", function () {
     expect(acc2).toBe(15);
   });
 
-  it("cancels nested autorun() even if they are fired synchronously", async function () {
+  it("cancels nested autorun() even if they are fired synchronously", async () => {
     const [store1, setStore1] = observe({ x: 1, y: 2 });
 
     let acc1 = 0, acc2 = 0;
@@ -370,7 +370,7 @@ describe("microstore", function () {
   });
 
   describe("watchDeep()", () => {
-    it("can watch nested properties", async function () {
+    it("can watch nested properties", async () => {
       const raw = {
         values: ["fee", "glaa", "zoo"],
         anotherValue: false,
@@ -432,7 +432,7 @@ describe("microstore", function () {
       expect(lastVal).toBe(33);
     });
 
-    it("can watch non-root of store", async function () {
+    it("can watch non-root of store", async () => {
       const raw = {
         values: ["fee", "glaa", "zoo"],
         anotherValue: false,
@@ -484,7 +484,7 @@ describe("microstore", function () {
       expect(lastVal).toBe(10);
     });
 
-    it("notifies multiple at once", async function () {
+    it("notifies multiple at once", async () => {
       const raw = {
         values: ["fee", "glaa", "zoo"],
         anotherValue: false,
@@ -518,7 +518,7 @@ describe("microstore", function () {
       ]);
     });
 
-    it("notifies deletion", async function () {
+    it("notifies deletion", async () => {
       const raw = {
         values: ["fee", "glaa", "zoo"] as (string[] | undefined),  // type annotation to delete
         anotherValue: false,
@@ -548,7 +548,7 @@ describe("microstore", function () {
       ]);
     });
 
-    it("can be used to reactive clone", async function () {
+    it("can be used to reactive clone", async () => {
       const raw = {
         table: {
           k1: { id: 10, nameKey: "john" },
@@ -605,7 +605,7 @@ describe("microstore", function () {
       });
     });
 
-    it("can deal with DAG", async function () {
+    it("can deal with DAG", async () => {
       const raw1 = {
         table: {
           k1: { id: 10, nameStr: "john" },
@@ -654,7 +654,7 @@ describe("microstore", function () {
       expect(count2).toBe(2);
     });
 
-    it("does not reproduce a fixed bug - when modify-and-restoring a value, watchDeep() ignores restoring", async function () {
+    it("does not reproduce a fixed bug - when modify-and-restoring a value, watchDeep() ignores restoring", async () => {
       const raw = { foo: 10 };
       const [store, setStore] = observe(raw);
       const clone = cloneutil.cloneDeep(store);
@@ -670,7 +670,7 @@ describe("microstore", function () {
       expect(count).toBe(2);
     });
 
-    it("does not reproduce a fixed bug - notifying twice", async function () {
+    it("does not reproduce a fixed bug - notifying twice", async () => {
       const raw = { p1: { p2: [] as any[] } };
       const [store, setStore] = observe(raw);
       const clone = cloneutil.cloneDeep(store);
@@ -691,7 +691,7 @@ describe("microstore", function () {
       expect(count).toBe(1);
     });
 
-    it("does not reproduce a fixed bug - nested set resets writings", async function () {
+    it("does not reproduce a fixed bug - nested set resets writings", async () => {
       const [store, setStore] = observe({ a: 1, b: 1 });
 
       let ab = 1;
@@ -742,7 +742,7 @@ describe("microstore", function () {
   });
 
   describe("watchDeep() with applyHandler", () => {
-    it("can intercept unshift", async function () {
+    it("can intercept unshift", async () => {
       const raw = {
         values: ["fee", "glaa", "zoo"],
         anotherValue: false,
@@ -790,7 +790,7 @@ describe("microstore", function () {
       expect(callCount).toBe(1);
     });
 
-    it("tracks indices implicitly shifted by splice()", async function () {
+    it("tracks indices implicitly shifted by splice()", async () => {
       const raw = { values: [{ buf: [0] }] };
       const [store, setStore] = observe(raw);
 
@@ -819,7 +819,7 @@ describe("microstore", function () {
       expect(clone).toEqual(store);
     });
 
-    it("does not reproduce a fixed bug - calling applyHandler for unseen value (which makes duplication)", async function () {
+    it("does not reproduce a fixed bug - calling applyHandler for unseen value (which makes duplication)", async () => {
       const raw = {
         values: {
           0: { id: 0, nums: [3] }
