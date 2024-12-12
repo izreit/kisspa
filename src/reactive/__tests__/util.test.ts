@@ -1,8 +1,8 @@
-import { it, expect, describe } from "vitest";
+import { describe, expect, it } from "vitest";
 import { observe } from "../core";
 import { autorunDecimated, watchProbe } from "../util";
 
-describe("util", function () {
+describe("util", () => {
   describe("autorunDecimated", () => {
     it("decimates function call", async () => {
       const [store, setStore] = observe({ a: { nested: { value: 4 } } });
@@ -30,7 +30,7 @@ describe("util", function () {
   });
 
   describe("watchProbe", () => {
-    it("detects changes", async function () {
+    it("detects changes", async () => {
       const raw = {
         values: ["fee", "glaa", "zoo"]
       };
@@ -66,7 +66,7 @@ describe("util", function () {
       expect(history).toEqual(["fee", "boo"]);
     });
 
-    it("compares by array elements", async function () {
+    it("compares by array elements", async () => {
       const raw = {
         values: ["fee", "glaa", "zoo"],
         foo: 3,

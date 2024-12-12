@@ -1,8 +1,8 @@
 import { assert, dceNeverReach, throwError } from "./assert";
 import { decimated } from "./decimated";
-import { createMapset, type Mapset } from "./internal/mapset";
-import { createRefTable, type Key, type Observer, type Target, type Wrapped } from "./internal/reftable";
-import { createTrie, type Trie } from "./internal/trie";
+import { type Mapset, createMapset } from "./internal/mapset";
+import { type Key, type Observer, type Target, type Wrapped, createRefTable } from "./internal/reftable";
+import { type Trie, createTrie } from "./internal/trie";
 
 export interface StoreSetterOptions {
   lazyFlush?: boolean;
