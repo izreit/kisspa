@@ -1,5 +1,5 @@
-import type { JSXNode } from "./types";
 import { type Backing, assemble, createLocation } from "./backing";
+import type { JSXNode } from "./types";
 
 export interface BackingRoot {
   attach(jnode: JSXNode): void;
