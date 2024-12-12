@@ -87,7 +87,8 @@ function codeOf(target: JSXNode | { [key: string]: any }, prefix: string = "", h
 
   const { name, attrs, children } = target;
   if (!isString(name)) {
-    const a = codeOfEntries(objEntries(attrs)), c = codeOfChildren(children, "|");
+    const a = codeOfEntries(objEntries(attrs));
+    const c = codeOfChildren(children, "|");
     // "." has no meaning. just to correspond to $noel in collectSkeletonsImpl().
     const ret = `${hasParent ? "" : "."}${(a || c) ? `(${a}${c})` : ""}`;
     return ret && prefix + ret;
