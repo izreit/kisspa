@@ -4,8 +4,12 @@ import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
 
-const { KISSPA_BUILD } = process.env;
-const mode = /^normal|full|all|stat$/.test(KISSPA_BUILD) ? KISSPA_BUILD : "all";
+const mode = process.env.KISSPA_BUILD || "build:all";
+const modeBuildUnbundle = /^build:/.test(mode);
+const modeBuildNormal = /^build:(all|normal)$/.test(mode);
+const modeBuildFull = /^build:(all|full)$/.test(mode);
+const modeStatNormal = /^(build|stat):(all|normal)$/.test(mode);
+const modeStatFull = /^(build|stat):(all|full)$/.test(mode);
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = relative(process.cwd(), join(__dirname, ".."));
@@ -33,35 +37,39 @@ function printStat(path) {
   console.log(`${path}\t${stringifySize(input.byteLength)} | gzip: ${stringifySize(gzipLen)}`);
 }
 
-if (mode !== "stat") {
-  run(`npx vite build -- -ct upwind-preset`);
+if (modeBuildUnbundle) {
+  run("npx vite build -- -ct upwind-preset");
 }
 
-if (mode === "full" || mode === "all") {
-  run(`npx vite build -- -t reactive-full`);
-  run(`npx vite build -- -t html-full`);
-  run(`npx vite build -- -t whole-full`);
+if (modeBuildFull) {
+  run("npx vite build -- -t reactive-full");
+  run("npx vite build -- -t html-full");
+  run("npx vite build -- -t whole-full");
   run(`npx tsc -p ${path("tsconfig.build.json ")} --emitDeclarationOnly --outDir ${path("dist/full")}`);
   minifyByTerser("dist/full/reactive/index.raw.mjs");
   minifyByTerser("dist/full/html/bundle.raw.mjs");
   minifyByTerser("dist/full/upwind/bundle.raw.mjs");
 }
 
-if (mode === "normal" || mode === "all") {
-  run(`npx vite build -- -t reactive`);
-  run(`npx vite build -- -t html`);
-  run(`npx vite build -- -t whole`);
+if (modeBuildNormal) {
+  run("npx vite build -- -t reactive");
+  run("npx vite build -- -t html");
+  run("npx vite build -- -t whole");
   run(`npx tsc -p ${path("tsconfig.build.json ")} --emitDeclarationOnly --outDir ${path("dist/normal")}`);
   minifyByTerser("dist/normal/reactive/index.raw.mjs");
   minifyByTerser("dist/normal/html/bundle.raw.mjs");
   minifyByTerser("dist/normal/upwind/bundle.raw.mjs");
 }
 
-if (mode === "all" || mode === "stat") {
-  console.log("=== stat ===");
+if (modeStatFull) {
+  console.log("=== stats full ===");
   printStat("dist/full/reactive/index.mjs");
   printStat("dist/full/html/bundle.mjs");
   printStat("dist/full/upwind/bundle.mjs");
+}
+
+if (modeStatNormal) {
+  console.log("=== stats normal ===");
   printStat("dist/normal/reactive/index.mjs");
   printStat("dist/normal/html/bundle.mjs");
   printStat("dist/normal/upwind/bundle.mjs");
