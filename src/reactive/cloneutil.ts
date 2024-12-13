@@ -14,6 +14,7 @@ export namespace cloneutil {
   }
 
   export function assign(target: any, path: readonly Key[], val: any, del?: boolean): void {
+    // biome-ignore lint/correctness/noVoidTypeReturn: allow never as void.
     if (__DCE_DISABLE_WATCH__) return dceNeverReach();
     const last = path.length - 1;
     for (let i = 0; i < last; ++i)
@@ -22,6 +23,7 @@ export namespace cloneutil {
   }
 
   export function apply(target: any, path: readonly Key[], fun: Function, args: any[]): void {
+    // biome-ignore lint/correctness/noVoidTypeReturn: allow never as void.
     if (__DCE_DISABLE_WATCH__) return dceNeverReach();
     for (let i = 0; i < path.length; ++i)
       target = target[path[i]];

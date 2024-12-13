@@ -261,6 +261,7 @@ describe("microstore", () => {
     let val = "";
     autorun(() => { val = store.values[1]; });
 
+    // biome-ignore lint/performance/noDelete: intentional. testing delete.
     setStore(v => { delete v.values[1]; });
 
     expect(val).toBe(undefined);
@@ -540,7 +541,9 @@ describe("microstore", () => {
       });
 
       setStore(s => s.a.deeply.nested = { value: 1 });
+      // biome-ignore lint/performance/noDelete: intentional. testing delete.
       setStore(s => { delete s.values![1]; });
+      // biome-ignore lint/performance/noDelete: intentional. testing delete.
       setStore(s => { delete s.values; });
       expect(history).toEqual([
         { path: ["a", "deeply", "nested"], val: { value: 1 } },
@@ -572,6 +575,7 @@ describe("microstore", () => {
       setStore(s => {
         s.arr.push({ v: "dee" });
         s.table.A1 = { id: 13, nameKey: "nix" };
+        // biome-ignore lint/performance/noDelete: intentional. testing delete.
         delete s.table.k1;
       });
       setStore(s => { s.count++ });
@@ -641,6 +645,7 @@ describe("microstore", () => {
       expect(count2).toBe(1);
 
       // delete is notified only store1's watcher.
+      // biome-ignore lint/performance/noDelete: intentional. testing delete.
       setStore1(s => { delete s.table.k1; });
       expect(clone1).toEqual(store1);
       expect(clone2).toEqual(store2);
@@ -887,6 +892,7 @@ describe("microstore", () => {
         ["added", 90, false],
       ]);
 
+      // biome-ignore lint/performance/noDelete: intentional. testing delete.
       setStore((s) => { delete s.added; }); // delete
       expect(logs).toEqual([
         ["added", 100, false],

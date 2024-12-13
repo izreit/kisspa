@@ -1,0 +1,56 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "formatter": {
+    "enabled": false,
+    "indentStyle": "space"
+  },
+  "linter": {
+    // We aggressively disable several rules since we are sticky to smaller footprint on minified JS.
+    "rules": {
+      "complexity": {
+        // Disabled for footprint. The optional-chaining operator is verbose when it's downpiled.
+        // (i.e. `x && x.foo` is far shorter than `x != null ? x.foo : undefined`.)
+        "useOptionalChain": "off",
+        // Not for footprint: to allow `Function` as type, inevitable for this library to handle
+        // untyped functions in so many places, such as Proxy traps or inside JSX.
+        "noBannedTypes": "off"
+      },
+      "suspicious": {
+        // Disabled for footprint.
+        "noAssignInExpressions": "off",
+        // Disabled for footprint. We 'break' if-statements when it's shorter.
+        "noConfusingLabels": "off",
+        // Not for footprint. JSX is type-checked but its types cannot be refered from JS...
+        "noExplicitAny": "off"
+      },
+      "style": {
+        // Disabled for footprint. (e.g. ("foo " + x) is shorter than (`foo ${x}`))
+        "useTemplate": "off",
+        // Disabled for footprint. To omit `return` in short but multiple expression functions.
+        "noCommaOperator": "off",
+        // Disabled for footprint.
+        "noParameterAssign": "off",
+        // Disabled for footprint. Prefer Infinity than Number.POSITIVE_INFINITY.
+        "useNumberNamespace": "off",
+        // Too many violation we have because skeleton-allocation step and assemble step are splitted...
+        "noNonNullAssertion": "off"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "include": ["tsconfig.*.json"],
+      "json": {
+        "parser": {
+          "allowComments": true,
+          "allowTrailingCommas": true
+        }
+      }
+    }
+  ]
+}

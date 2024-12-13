@@ -33,6 +33,7 @@ export namespace JSXInternal {
   export type AsyncElement = JSXNodeAsync;
 	export type Element = JSXNode;
 
+	// biome-ignore lint/suspicious/noEmptyInterface: required for JSX even empty.
 	export interface ElementAttributesProperty {
 		// props: any;
 	}
