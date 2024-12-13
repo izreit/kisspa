@@ -195,7 +195,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
     }
 
     let skelCh: Node | null | undefined = el!.firstChild;
-    let chLoc = createLocation(el!);
+    const chLoc = createLocation(el!);
     for (const v of children) {
       let ch: Backing | Node;
       // IMPORTANT This condition, for consuming the skeleton, must be correspondent with collectSkeletons().
