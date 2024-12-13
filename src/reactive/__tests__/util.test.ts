@@ -74,7 +74,7 @@ describe("util", () => {
       const [store, setStore] = observe(raw);
 
       let count = 0;
-      let history: ([[string, number], [string, number] | undefined])[] = [];
+      const history: ([[string, number], [string, number] | undefined])[] = [];
       watchProbe(() => [store.values[1], store.foo] as [string, number], (cur, prev) => {
         count++;
         history.push([cur, prev]);
