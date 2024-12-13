@@ -243,9 +243,8 @@ export function createTag(target?: Tag.TargetStyleSheet): Tag {
     if (properties) {
       objForEach(properties, (v, k) => {
         if (k.includes("<trbl>")) {
-          trbl.forEach(([abbrev, expanded]) => {
+          for (const [abbrev, expanded] of trbl)
             config.properties[k.replace("<trbl>", abbrev)] = mapCoerce(expanded, e => v.replace("<trbl>", e));
-          });
         } else {
           config.properties[k] = [v];
         }

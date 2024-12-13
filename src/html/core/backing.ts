@@ -72,7 +72,7 @@ export function createBackingCommon(
     },
     tail: () => tailOfBackings(resolveChildren(), loc.prev),
     dispose() {
-      disposers.forEach(d => d());
+      callAll(disposers);
       disposeBackings(resolveChildren());
     },
     addDisposer_: f => disposers.push(f),
@@ -102,7 +102,7 @@ function createNodeBackingIfNeeded(node: Node, staticParent: boolean, disposers?
   if (staticParent) {
     if (!disposers || !disposers.length)
       return node;
-    const dispose = (disposers.length === 1) ? disposers[0] : () => disposers.forEach(d => d());
+    const dispose = (disposers.length === 1) ? disposers[0] : () => callAll(disposers);
     return { insert: doNothing, dispose, tail: () => node, name: node };
   }
 
@@ -115,7 +115,7 @@ function createNodeBackingIfNeeded(node: Node, staticParent: boolean, disposers?
   };
   const dispose = () => {
     insert();
-    disposers && disposers.forEach(d => d());
+    disposers && callAll(disposers);
   };
   return { insert, dispose, tail: () => node, name: node };
 }
@@ -210,8 +210,10 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
         disposers.push(ch.dispose);
     }
 
-    if (refVal)
-      refVal.forEach(r => resolveRef(el as HTMLElement, r));
+    if (refVal) {
+      for (const r of refVal)
+        resolveRef(el as HTMLElement, r);
+    }
 
     return createNodeBackingIfNeeded(el!, staticParent, disposers);
   }
@@ -325,11 +327,20 @@ export function insertBackings(bs: Backing[] | null | undefined, loc: BackingLoc
       const parent = loc.parent;
       bs.reduce((prev, b) => (b.insert({ parent, prev }), b), loc.prev);
     } else {
-      bs.forEach(b => b.insert());
+      for (const b of bs)
+        b.insert();
     }
   }
 }
 
 export function disposeBackings(bs: Backing[] | null | undefined): void {
-  bs && bs.forEach(b => b.dispose());
+  if (bs) {
+    for (const b of bs)
+      b.dispose();
+  }
+}
+
+export function callAll(fs: (() => unknown)[]): void {
+  for (const f of fs)
+    f();
 }

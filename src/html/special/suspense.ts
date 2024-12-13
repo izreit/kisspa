@@ -75,7 +75,8 @@ export const Suspense = createSpecial(function Suspense(actx: AssembleContext, p
   const push = (p: Promise<void> | Promise<void>[]) => {
     const ps = arrayify(p);
     if (ps.length > 0) {
-      ps.forEach(p => waiter.push_(p));
+      for (const p of ps)
+        waiter.push_(p);
       waiter.then_(() => {
         setCurrent(backings);
         disposeBackings(fallbackBackings);

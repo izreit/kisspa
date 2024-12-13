@@ -1,5 +1,5 @@
 import { autorun, signal, watchProbe } from "../../reactive";
-import { type AssembleContext, type Backing, assemble, createSimpleBacking, createSpecial } from "../core/backing";
+import { type AssembleContext, type Backing, assemble, callAll, createSimpleBacking, createSpecial } from "../core/backing";
 import { jsx } from "../core/h";
 import type { JSXNode, PropChildren } from "../core/types";
 import { arrayify, isFunction, mapCoerce } from "../core/util";
@@ -27,7 +27,7 @@ function createSwitchContextValue(): SwitchContextValue {
       return idx;
     },
     active_: activeIndex,
-    dispose_() { disposers.forEach(c => c()); }
+    dispose_() { callAll(disposers); }
   };
 }
 

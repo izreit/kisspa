@@ -52,10 +52,8 @@ function isWrappable(v: any): v is object {
 function collectObserverDescendants(fun: Observer, acc: Set<Observer>): void {
   const cs = childObservers.get(fun);
   if (cs && cs.size) {
-    cs.forEach(c => {
-      acc.add(c);
-      collectObserverDescendants(c, acc);
-    });
+    for (const c of cs)
+      collectObserverDescendants(c, acc.add(c));
     cs.clear();
   }
 }
@@ -105,11 +103,11 @@ export const requestFlush = (() => {
     finishNotifyPropChange();
 
     observerDescendants.forEach(refTable.clear_);
-    observers.forEach(fun => {
+    for (const fun of observers) {
       // re-run and re-register observer, if not canceled as a descendant of others.
       if (!observerDescendants.has(fun))
         callWithObserver(fun, fun);
-    });
+    }
     observers.clear();
     observerDescendants.clear();
   });
@@ -306,8 +304,10 @@ function registerParentRef(wid: PropWatcherId, target: object, key: Key, child: 
     pref.minKey_ = key;
   }
 
-  if (deep)
-    Object.entries(child).forEach(([key, grandChild]) => { registerParentRef(wid, child, key, grandChild, norm + 1, true); });
+  if (deep) {
+    for (const [key, grandChild] of Object.entries(child))
+      registerParentRef(wid, child, key, grandChild, norm + 1, true);
+  }
 }
 
 function unregisterParentRefs(wid: PropWatcherId, parent: object, prop: Key, child: any): void {
@@ -394,7 +394,8 @@ const flushingWatchers: Set<PropWatcherId> = new Set();
 
 function finishNotifyPropChange(): void {
   if (__DCE_DISABLE_WATCH__) return;
-  flushingWatchers.forEach(wid => { propWatcherTable.get(wid)?.onEndFlush?.(); });
+  for (const wid of flushingWatchers)
+    propWatcherTable.get(wid)?.onEndFlush?.();
   flushingWatchers.clear();
 }
 
@@ -435,8 +436,8 @@ function notifyPropChange(target: Wrapped, prop: Key, val: any, prev: any): void
       onAssign(pathTrie.childFor_(prop).trace_(), (val !== DELETE_MARKER) ? val : undefined, val === DELETE_MARKER);
   });
 
-  stale.forEach(wid => {
+  for (const wid of stale) {
     if (tableFromChild.delete(wid) && tableFromChild.size === 0)
       parentRefTable.delete(target);
-  });
+  }
 }
