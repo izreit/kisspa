@@ -88,7 +88,7 @@ describe("microstore", () => {
     expect(callCount).toBe(1);
     expect(lastValue).toBe(120);
 
-    setStore(v => { v.table["ccc"].values.push(-45); });
+    setStore(v => { v.table.ccc.values.push(-45); });
     expect(callCount).toBe(1);
     expect(lastValue).toBe(120);
 
@@ -100,7 +100,7 @@ describe("microstore", () => {
     expect(callCount).toBe(3);
     expect(lastValue).toBe(10001);
 
-    setStore(v => { v.table["ccc"] = { givenName: "Alice", values: [42] }; });
+    setStore(v => { v.table.ccc = { givenName: "Alice", values: [42] }; });
     expect(callCount).toBe(4);
     expect(lastValue).toBe(42);
   });
@@ -348,7 +348,8 @@ describe("microstore", () => {
   it("cancels nested autorun() even if they are fired synchronously", async () => {
     const [store1, setStore1] = observe({ x: 1, y: 2 });
 
-    let acc1 = 0, acc2 = 0;
+    let acc1 = 0;
+    let acc2 = 0;
     autorun(() => {
       acc1 += store1.x;
       autorun(() => {
@@ -570,8 +571,8 @@ describe("microstore", () => {
 
       setStore(s => {
         s.arr.push({ v: "dee" });
-        s.table["A1"] = { id: 13, nameKey: "nix" };
-        delete s.table["k1"];
+        s.table.A1 = { id: 13, nameKey: "nix" };
+        delete s.table.k1;
       });
       setStore(s => { s.count++ });
       expect(c).toEqual(store);
@@ -873,20 +874,20 @@ describe("microstore", () => {
 
       setStore((s) => { s.a.nested.value++; }); // not detected because it is deep mod.
       setStore((s) => { s.values[0] = ""; }); // ditto.
-      setStore((s) => { s["added"] = 100; }); // detected.
+      setStore((s) => { s.added = 100; }); // detected.
 
       expect(logs).toEqual([
         ["added", 100, false],
       ]);
 
-      setStore((s) => { s["added"] -= 10; }); // modifications are also detected.
+      setStore((s) => { s.added -= 10; }); // modifications are also detected.
 
       expect(logs).toEqual([
         ["added", 100, false],
         ["added", 90, false],
       ]);
 
-      setStore((s) => { delete s["added"]; }); // delete
+      setStore((s) => { delete s.added; }); // delete
       expect(logs).toEqual([
         ["added", 100, false],
         ["added", 90, false],
@@ -894,7 +895,7 @@ describe("microstore", () => {
       ]);
 
       unwatch(wid);
-      setStore((s) => { s["added"] = 100; });
+      setStore((s) => { s.added = 100; });
       expect(logs.length).toBe(3); // nothing is notified because unwatched
 
       expect(parentRefTable.has(writeProxy)).toBe(false); // no entry remains
