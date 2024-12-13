@@ -45,7 +45,8 @@ export function createRefTable(): RefTable {
       if (revent && revent.size) {
         revent.forEach((keys, wrapped) => {
           const refent = refTable.get(wrapped)!;
-          keys.forEach(key => refent.get(key)?.delete(o));
+          for (const key of keys)
+            refent.get(key)?.delete(o);
         });
         revent.clear();
       }
