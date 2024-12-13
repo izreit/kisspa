@@ -315,7 +315,7 @@ function unregisterParentRefs(wid: PropWatcherId, parent: object, prop: Key, chi
   const wchild = wrap(child)[1];
   const pref = parentRefTable.get(wchild)?.get(wid);
   if (!pref) return;
-  if (pref.minParent_ == parent) {
+  if (pref.minParent_ === parent) {
     pref.minNorm_ = Infinity;
     pref.minKey_ = pref.minParent_ = null;
   }
