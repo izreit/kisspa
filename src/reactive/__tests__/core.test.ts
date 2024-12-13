@@ -23,7 +23,7 @@ describe("microstore", () => {
     expect(internal.refTable.table_.has(store)).toBe(false);
     expect(internal.memoizedTable.get(writeProxy)?.[0]).toBe(store);
 
-    let squareFoo: number = 0;
+    let squareFoo = 0;
     const observer = () => { squareFoo = store.foo ** 2; };
     autorun(observer);
     expect(store.foo).toBe(4);
@@ -258,7 +258,7 @@ describe("microstore", () => {
     const raw = { values: ["fee", "bar", "zoo", "buzz", "woohoo"] };
     const [store, setStore] = observe(raw);
 
-    let val: string = "";
+    let val = "";
     autorun(() => { val = store.values[1]; });
 
     setStore(v => { delete v.values[1]; });
@@ -273,7 +273,7 @@ describe("microstore", () => {
     };
     const [store, setStore] = observe(raw);
 
-    let val: string = "";
+    let val = "";
     autorun(() => { val = store.last + store.last; });
     expect(val).toBe("initialinitial");
     autorun(() => {
@@ -293,7 +293,7 @@ describe("microstore", () => {
     const [store, setStore] = observe(raw);
 
     let count = 0;
-    let joined: string = "";
+    let joined = "";
     autorun(() => {
       count++;
       joined = store.values.join(",");

@@ -61,18 +61,18 @@ function assignSkeletons(skels: Skeleton[], jnode: JSXNode): void {
   }
 }
 
-function codeOfEntries(entries: [string, JSXNode | { [key: string]: any }][], prefix: string = "", postfix: string = ""): string {
+function codeOfEntries(entries: [string, JSXNode | { [key: string]: any }][], prefix = "", postfix = ""): string {
    const ret = entries.map(([k, v]) => codeOf(v, k + ":")).join(",");
    return ret && prefix + ret + postfix;
 }
 
-function codeOfChildren(children: JSXNode[], prefix: string = "", postfix: string = "", hasParent?: boolean): string {
+function codeOfChildren(children: JSXNode[], prefix = "", postfix = "", hasParent?: boolean): string {
   const ret = children.map(c => codeOf(c, "", hasParent)).join(",");
   return ret && prefix + ret + postfix;
 }
 
 // IMPORTANT This must be coresspondent with how collectSkeletons() creates Node hierarchy.
-function codeOf(target: JSXNode | { [key: string]: any }, prefix: string = "", hasParent?: boolean): string {
+function codeOf(target: JSXNode | { [key: string]: any }, prefix = "", hasParent?: boolean): string {
   if (isString(target) && hasParent)
     return prefix + "T"; // "T" has no meaning. just to indicate a text node.
 
