@@ -97,7 +97,7 @@ const trbl: [string, string | string[]][] = [
   ["e", "-inline-end"],
 ];
 
-function escape(s: string): string {
+function escapeClassName(s: string): string {
   return s.replace(/[^a-zA-Z0-9_-]/g, c => "\\" + c);
 }
 
@@ -193,7 +193,7 @@ export function createTag(target?: Tag.TargetStyleSheet): Tag {
         return className;
 
       // wrap selector by selector modifiers (e.g. :active, :hover_peer~)
-      let selector = "." + escape(className);
+      let selector = "." + escapeClassName(className);
       for (let i = 0; i < modifiers.length; ++i) {
         const { modKey, target } = modifiers[i];
         if (modKey[0] === ":") {
