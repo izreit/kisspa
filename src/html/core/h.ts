@@ -19,8 +19,7 @@ export function jsx<P>(
   name: string | Component<P>,
   attrs?: ((JSXInternal.HTMLAttributes & { children?: JSXNode | JSXNode[]; }) | null) | P | null
 ): JSXElement {
-  const a = { ...(attrs ?? {}) } as (Exclude<typeof attrs, null | undefined> & { children?: any });
-  delete a.children;
+  const a = { ...(attrs ?? {}), children: undefined } as (Exclude<typeof attrs, null | undefined> & { children?: any });
   const cs = attrs && (attrs as any).children;
   return makeJSXElement(name, a, arrayify(cs), cs);
 }
