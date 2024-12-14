@@ -12,8 +12,7 @@ export namespace Suspense {
 
 interface AllWaiter {
   push_(p: Promise<void>): void;
-  then_(f: () => void): this;
-  catch_(f: (e: unknown) => void): this;
+  then_(onfulfilled: () => void, onrejected: (e: unknown) => void): this;
 }
 
 function createAllWaiter(): AllWaiter {
@@ -34,15 +33,15 @@ function createAllWaiter(): AllWaiter {
   }
 
   const ret: AllWaiter = {
-    push_(promise: Promise<void>): void {
+    push_(promise): void {
       if (waiting++ === 0) start();
       const genStart = generation;
-      promise
-        .then(() => (genStart === generation && --waiting === 0 && resolve()))
-        .catch(e => (genStart === generation && suspend(e)));
+      promise.then(
+        () => (genStart === generation && --waiting === 0 && resolve()),
+        e => (genStart === generation && suspend(e))
+      );
     },
-    then_: (f: () => void) => (allPromise.then(f), ret),
-    catch_: (f: (e: unknown) => void) => (allPromise.catch(f), ret),
+    then_: (onfulfilled, onrejected) => (allPromise.then(onfulfilled, onrejected), ret),
   };
   return ret;
 }
@@ -77,11 +76,14 @@ export const Suspense = createSpecial(function Suspense(actx: AssembleContext, p
     if (ps.length > 0) {
       for (const p of ps)
         waiter.push_(p);
-      waiter.then_(() => {
-        setCurrent(backings);
-        disposeBackings(fallbackBackings);
-        fallbackBackings = null;
-      }).catch_(handleError);
+      waiter.then_(
+        () => {
+          setCurrent(backings);
+          disposeBackings(fallbackBackings);
+          fallbackBackings = null;
+        },
+        handleError
+      );
       fallbackBackings = fallback ? [assemble(actx, fallback)] : null;
       setCurrent(fallbackBackings);
     } else {
