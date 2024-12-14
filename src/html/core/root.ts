@@ -1,12 +1,12 @@
 import { type Backing, assemble, createLocation } from "./backing";
 import type { JSXNode } from "./types";
 
-export interface BackingRoot {
+export interface Root {
   attach(jnode: JSXNode): void;
   detach(): void;
 }
 
-export function createRoot(parent: Element | null | undefined, prev?: Node | null): BackingRoot {
+export function createRoot(parent: Element | null | undefined, prev?: Node | null): Root {
   let b: Backing | null | undefined;
   const attach = (jnode: JSXNode) => {
     b && b.dispose();
@@ -20,7 +20,7 @@ export function createRoot(parent: Element | null | undefined, prev?: Node | nul
   return { attach, detach };
 }
 
-export function attach(jnode: JSXNode, location: Element | null | undefined, prev?: Node | null): BackingRoot {
+export function attach(jnode: JSXNode, location: Element | null | undefined, prev?: Node | null): Root {
   const r = createRoot(location, prev);
   r.attach(jnode);
   return r;

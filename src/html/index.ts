@@ -3,7 +3,7 @@ export { assemble, assignLocation, createSpecial, lazy, tailOf, useComponentMeth
 export type { Backing, BackingLocation, ComponentMethods } from "./core/backing";
 export { h, jsx, jsxs, jsxDEV, jsxsDEV } from "./core/h";
 export { attach, createRoot } from "./core/root";
-export type { BackingRoot } from "./core/root";
+export type { Root } from "./core/root";
 export { $h, createRef } from "./core/types";
 export type { Accessor, AccessorOr, Attributes, Component, JSXElement, JSXNode, JSXNodeAsync, JSXNodeSync, PropChildren, PropRef, Ref } from "./core/types";
 export { createContext } from "./special/context";

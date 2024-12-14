@@ -1,10 +1,10 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { signal } from "../../reactive";
-import { type BackingRoot, type JSXNode, type PropRef, createRef, createRoot, h } from "../index";
+import { type JSXNode, type PropRef, type Root, createRef, createRoot, h } from "../index";
 
 describe("html", () => {
   let elem: HTMLElement;
-  let root: BackingRoot;
+  let root: Root;
   beforeAll(() => {
     elem = document.createElement("div");
     root = createRoot(elem);
