@@ -27,7 +27,7 @@ const unwrapTable: WeakMap<Wrapped, Target> = new WeakMap();
 const valueCacheTable: WeakMap<Wrapped, Map<Key, any>> = new WeakMap();
 
 /** Stack of the current observers, used to update refTable */
-const activeObserverStack: Observer[] = [];
+let activeObserverStack: Observer[] = [];
 
 /** Properties that currently altered and not yet notified to its observers.  */
 // To reduce allocation, this is a heterogeneous array consists of
@@ -66,11 +66,10 @@ export function cancelAutorun(fun: Observer): void {
 }
 
 export const requestFlush = (() => {
-  const observers = new Set<Observer>();
-  const observerDescendants = new Set<Observer>();
-
   return decimated(function flush() {
     if (!writtens.length) return;
+    const observers = new Set<Observer>();
+    const observerDescendants = new Set<Observer>();
 
     for (let i = 0; i < writtens.length; i += 5) {
       const wrapped = writtens[i];
@@ -250,10 +249,17 @@ export function autorun(fun: () => void): () => void {
 export function bindObserver<A extends [...any], R>(fun: (...args: A) => R, observer?: () => void): (...args: A) => R {
   const resolvedObserver = observer ?? activeObserverStack[activeObserverStack.length - 1];
   assert(!!resolvedObserver, "bindObserver(): neither in autorun() nor observer is given");
+  return (...args: A) => autorunImpl(() => fun(...args), resolvedObserver);
+}
 
-  return (...args: A) => {
-    return autorunImpl(() => fun(...args), resolvedObserver);
-  };
+export function withoutObserver<T>(fun: () => T): T {
+  const orig = activeObserverStack;
+  try {
+    activeObserverStack = [];
+    return fun();
+  } finally {
+    activeObserverStack = orig;
+  }
 }
 
 // --- watch ----

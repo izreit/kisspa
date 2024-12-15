@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { cloneutil } from "../cloneutil";
-import { autorun, bindObserver, cancelAutorun, debugGetInternal, observe, unwatch, watchDeep, watchShallow } from "../core";
+import { autorun, bindObserver, cancelAutorun, debugGetInternal, observe, unwatch, watchDeep, watchShallow, withoutObserver } from "../core";
 import type { Key } from "../internal/reftable";
+import { createLogBuffer } from "./testutil";
 
 describe("microstore", () => {
   it("can be read/modified", () => {
@@ -953,6 +954,56 @@ describe("microstore", () => {
       setStore(m => { m.a.nested.value += 100; });
       await Promise.resolve();
       expect(results).toEqual([4, 104]); // updated!
+    });
+  });
+
+  describe("withoutObserver", () => {
+    it("prevents observer reset by parent", async () => {
+      const [store, setStore] = observe({ a: 4, b: 0 });
+      const logger = createLogBuffer();
+
+      const clear = autorun(() => {
+        logger.log("o" + store.b);
+        autorun(() => logger.log("i" + store.a));
+      });
+
+      // --- The control group ---
+      expect(logger.reap()).toEqual(["o0", "i4"]);
+      setStore(s => s.a++);
+      expect(logger.reap()).toEqual(["i5"]);
+      // kick both autorun,
+      setStore(s => {
+        s.a++;
+        s.b++;
+      });
+      // but only outer autorun was run again: "i5" is appeared once because internal autorun() are reset.
+      expect(logger.reap()).toEqual(["o1", "i6"]);
+
+      // --- reset ---
+      clear();
+      setStore(s => {
+        s.a = 4;
+        s.b = 0;
+      });
+
+      // --- The test target ---
+      autorun(() => {
+        logger.log("o" + store.b);
+        withoutObserver(() => {
+          autorun(() => logger.log("i" + store.a));
+        });
+      });
+
+      expect(logger.reap()).toEqual(["o0", "i4"]);
+      setStore(s => s.a++);
+      expect(logger.reap()).toEqual(["i5"]);
+      // kick both autorun,
+      setStore(s => {
+        s.a++;
+        s.b++;
+      });
+      // then the inner autorun ran twice because the outer duplicates the inner.
+      expect(logger.reap()).toEqual(["i6", "o1", "i6"]);
     });
   });
 });
