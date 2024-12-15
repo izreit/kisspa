@@ -1,7 +1,8 @@
-import { assert, dceNeverReach, throwError } from "./assert";
+import { dceNeverReach, throwError } from "./assert";
 import { decimated } from "./decimated";
 import { type Mapset, createMapset } from "./internal/mapset";
 import { type Key, type Observer, type Target, type Wrapped, createRefTable } from "./internal/reftable";
+import { type ScopedStack, createScopedStack } from "./internal/stack";
 import { type Trie, createTrie } from "./internal/trie";
 
 export interface StoreSetterOptions {
@@ -27,7 +28,7 @@ const unwrapTable: WeakMap<Wrapped, Target> = new WeakMap();
 const valueCacheTable: WeakMap<Wrapped, Map<Key, any>> = new WeakMap();
 
 /** Stack of the current observers, used to update refTable */
-let activeObserverStack: Observer[] = [];
+const activeObserverStack: ScopedStack<Observer> = createScopedStack();
 
 /** Properties that currently altered and not yet notified to its observers.  */
 // To reduce allocation, this is a heterogeneous array consists of
@@ -105,7 +106,7 @@ export const requestFlush = (() => {
     for (const fun of observers) {
       // re-run and re-register observer, if not canceled as a descendant of others.
       if (!observerDescendants.has(fun))
-        callWithObserver(fun, fun);
+        activeObserverStack.callWith_(fun, fun);
     }
     observers.clear();
     observerDescendants.clear();
@@ -121,8 +122,11 @@ const mustGetRaw: ((o: any, p: PropertyKey) => boolean | undefined) =
     ((d = Object.getOwnPropertyDescriptor(o, p)) && !d.configurable && !d.writable);
 
 function addRef(writeProxy: Wrapped, prop: Key, val: unknown) {
-  refTable.add_(writeProxy, prop, activeObserverStack[activeObserverStack.length - 1]);
-  (valueCacheTable.get(writeProxy) ?? valueCacheTable.set(writeProxy, new Map()).get(writeProxy)!).set(prop, val);
+  const observer = activeObserverStack.top_();
+  if (observer) {
+    refTable.add_(writeProxy, prop, observer);
+    (valueCacheTable.get(writeProxy) ?? valueCacheTable.set(writeProxy, new Map()).get(writeProxy)!).set(prop, val);
+  }
 }
 
 export function observe<T extends object>(initial: T): [T, StoreSetter<T>] {
@@ -150,8 +154,7 @@ function wrap<T extends object>(initial: T): [T, T] {
   const readProxy = new Proxy(initial, {
     get(target, prop, receiver) {
       const raw = unwrap(Reflect.get(target, prop, receiver));
-      if (activeObserverStack.length > 0)
-        addRef(writeProxy, prop, raw); // Note refTable and valueCacheTable are keyed by writeProxy
+      addRef(writeProxy, prop, raw); // Note refTable and valueCacheTable are keyed by writeProxy
       return (!isWrappable(raw) || mustGetRaw(target, prop)) ? raw : wrap(raw)[0];
     },
     set: rejectWithPropName,
@@ -174,8 +177,7 @@ function wrap<T extends object>(initial: T): [T, T] {
 
     get(target, prop, receiver) {
       const raw = Reflect.get(target, prop, receiver);
-      if (activeObserverStack.length > 0)
-        addRef(writeProxy, prop, raw);
+      addRef(writeProxy, prop, raw);
       return (!isWrappable(raw) || mustGetRaw(target, prop)) ? raw : wrap(raw)[1];
     },
 
@@ -225,20 +227,11 @@ export function unwrap<T extends object>(val: T): T {
   return unwrapTable.get(val) as T ?? val;
 }
 
-function callWithObserver<T>(fun: () => T, observer: () => void): T {
-  try {
-    activeObserverStack.push(observer);
-    return fun();
-  } finally {
-    activeObserverStack.pop();
-  }
-}
-
-function autorunImpl<T>(fun: () => T, observer: () => void): T {
-  const parentObserver = activeObserverStack[activeObserverStack.length - 1];
-  if (parentObserver)
+function autorunImpl<T>(fun: () => T, observer: (() => void) | null | undefined): T {
+  const parentObserver = activeObserverStack.top_();
+  if (observer && parentObserver)
     (childObservers.get(parentObserver) ?? (childObservers.set(parentObserver, new Set())).get(parentObserver))!.add(observer);
-  return callWithObserver(fun, observer);
+  return activeObserverStack.callWith_(fun, observer);
 }
 
 export function autorun(fun: () => void): () => void {
@@ -246,20 +239,16 @@ export function autorun(fun: () => void): () => void {
   return () => cancelAutorun(fun);
 }
 
-export function bindObserver<A extends [...any], R>(fun: (...args: A) => R, observer?: () => void): (...args: A) => R {
-  const resolvedObserver = observer ?? activeObserverStack[activeObserverStack.length - 1];
-  assert(!!resolvedObserver, "bindObserver(): neither in autorun() nor observer is given");
-  return (...args: A) => autorunImpl(() => fun(...args), resolvedObserver);
+function bindObserverImpl<A extends [...any], R>(fun: (...args: A) => R, observer: (() => void) | null | undefined): (...args: A) => R {
+  return (...args: A) => autorunImpl(() => fun(...args), observer);
+}
+
+export function bindObserver<A extends [...any], R>(fun: (...args: A) => R, observer?: (() => void) | null | undefined): (...args: A) => R {
+  return bindObserverImpl(fun, observer ?? activeObserverStack.top_());
 }
 
 export function withoutObserver<T>(fun: () => T): T {
-  const orig = activeObserverStack;
-  try {
-    activeObserverStack = [];
-    return fun();
-  } finally {
-    activeObserverStack = orig;
-  }
+  return activeObserverStack.callWith_(fun, null);
 }
 
 // --- watch ----
