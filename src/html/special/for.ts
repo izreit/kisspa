@@ -1,5 +1,5 @@
-import { autorun, signal } from "../../reactive";
-import { type AssembleContext, type Backing, assemble, createBackingCommon, createSpecial } from "../core/backing";
+import { autorun, signal, withoutObserver } from "../../reactive";
+import { type AssembleContext, type Backing, assemble, createBackingCommon, createSpecial, tailOf } from "../core/backing";
 import type { JSXNode } from "../core/types";
 import { arrayify } from "../core/util";
 import { lcs } from "./internal/lcs";
@@ -27,45 +27,47 @@ export const For = createSpecial(function For<E>(actx: AssembleContext, props: F
 
   base.addDisposer_(autorun(() => {
     const nextTable: Map<any, Backing> = new Map();
-    const nextBackings = each().map((e, i) => {
-      const k = key?.(e, i) ?? e;
-      let b = backingTable.get(k);
-      if (b) {
-        backingTable.delete(k);
-      } else {
-        const ixSignal = signal(i);
-        const jnode = fun(e as E, ixSignal[0]);
-        b = assemble(actx, jnode);
-        ixTable.set(b, ixSignal);
+    const nextBackings: Backing[] = [];
+    const es = each();
+    for (let i = 0; i < es.length; ++i) { // not map() but for-loop, to skip deleted elements.
+      const e = es[i];
+      if (e != null) {
+        const k = key?.(e, i) ?? e;
+        let b = backingTable.get(k);
+        if (b) {
+          ixTable.get(b!)![1](i); // update index
+          backingTable.delete(k);
+        } else {
+          const ixSignal = signal(i);
+          b = withoutObserver(() => assemble(actx, fun(e as E, ixSignal[0])));
+          ixTable.set(b, ixSignal);
+        }
+        nextTable.set(k, b);
+        nextBackings.push(b);
       }
-      nextTable.set(k, b);
-      return b;
-    });
+    }
+
+    // Dispose dropped backings. This makes stale elements of `backings` removed from loc.parent.
+    // So the following part only inject `nextBackings` into `commonBackings`, without removing slated.
+    for (const [, b] of backingTable)
+      b.dispose();
+
     backingTable.clear();
     backingTable = nextTable;
 
     if (loc.parent) {
-      let ci = 0;
       let ni = 0;
       const l = { ...loc };
-      const commonBackings = lcs(backings, nextBackings);
+      const commonBackings: (Backing | null)[] = lcs(backings, nextBackings);
+      commonBackings.push(null); // The sentinel. Must be different to any valid backings.
       for (let cmi = 0; cmi < commonBackings.length; ++cmi) {
         const commonBacking = commonBackings[cmi];
-        for (let cb = backings[ci]; ci < backings.length && backings[ci] !== commonBacking; ++ci, cb = backings[ci])
-          cb.dispose();
         for (let nb = nextBackings[ni]; ni < nextBackings.length && nb !== commonBacking; ++ni, nb = nextBackings[ni]) {
           nb.insert(l);
           l.prev = nb;
         }
-        ++ci;
         ++ni;
         l.prev = commonBacking;
-      }
-      for (let cb = backings[ci]; ci < backings.length; ++ci, cb = backings[ci])
-        cb.dispose();
-      for (let nb = nextBackings[ni]; ni < nextBackings.length; ++ni, nb = nextBackings[ni]) {
-        nb.insert(l);
-        l.prev = nb;
       }
     }
 
