@@ -286,7 +286,7 @@ export function assemble(actx: AssembleContext, jnode: JSXNode): Backing {
     b.insert(l);
     if (!mounted && l && l.parent) {
       mounted = true;
-      // Check the length each time to for onMount() called in onMount()
+      // Check the length each time for onMount() called inside onMount()
       for (let i = 0; i < onMounts.length; ++i)
         onMounts[i]();
     }

@@ -19,7 +19,7 @@ export namespace JSXInternal {
       | Ref<HTMLElement>
       | ((v: HTMLElement) => void)
       | (Ref<HTMLElement> | ((v: HTMLElement) => void))[];
-		key?: any;
+		// key?: any; // React compatible key. We use different `key` in <For>.
 	}
 
 	// export type ElementType<P = any> =
