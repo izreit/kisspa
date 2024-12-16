@@ -13,12 +13,13 @@ export namespace Suspense {
 interface AllWaiter {
   push_(p: Promise<void>): void;
   then_(onfulfilled: () => void, onrejected: (e: unknown) => void): this;
+  currentPromise_(): Promise<void>;
 }
 
 function createAllWaiter(): AllWaiter {
   let generation = 0;
   let waiting = 0;
-  let allPromise: Promise<void>;
+  let allPromise: Promise<void> = Promise.resolve();
   let resolve: () => void;
   let reject: (e: unknown) => void;
 
@@ -42,6 +43,7 @@ function createAllWaiter(): AllWaiter {
       );
     },
     then_: (onfulfilled, onrejected) => (allPromise.then(onfulfilled, onrejected), ret),
+    currentPromise_: () => allPromise,
   };
   return ret;
 }
@@ -100,12 +102,14 @@ export const Suspense = createSpecial(function Suspense(actx: AssembleContext, p
       const promises: Promise<any>[] = [];
       const childActx: AssembleContext = { suspenseContext_: promises };
       backings = mapCoerce(children, c => assemble(childActx, c));
+      push(promises);
+
+      // As <Suspense />, we need .catch() to stop propagation of rejection.
+      actx.suspenseContext_.push(waiter.currentPromise_().catch(_ => {}));
 
       // NOTE It's important to overwrite suspenseContext_ to make it accessible from `children` through `childActx` later.
-      // (e.g. A <Show> inside children may be toggled later, assemble() of its descendant and obtain Promise)
+      // (e.g. A <Show> inside children may be shown later, assemble() the descendants and obtains Promises)
       childActx.suspenseContext_ = { push };
-
-      push(promises);
     } catch (e) {
       handleError(e);
     }

@@ -39,7 +39,7 @@ export const For = createSpecial(function For<E>(actx: AssembleContext, props: F
           backingTable.delete(k);
         } else {
           const ixSignal = signal(i);
-          b = withoutObserver(() => assemble(actx, fun(e as E, ixSignal[0])));
+          b = assemble(actx, withoutObserver(() => fun(e as E, ixSignal[0])));
           ixTable.set(b, ixSignal);
         }
         nextTable.set(k, b);

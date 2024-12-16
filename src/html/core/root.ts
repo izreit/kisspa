@@ -2,16 +2,18 @@ import { type Backing, assemble, createLocation } from "./backing";
 import type { JSXNode } from "./types";
 
 export interface Root {
-  attach(jnode: JSXNode): void;
+  attach(jnode: JSXNode): Promise<unknown>;
   detach(): void;
 }
 
 export function createRoot(parent: Element | null | undefined, prev?: Node | null): Root {
   let b: Backing | null | undefined;
   const attach = (jnode: JSXNode) => {
+    const suspenseContext: Promise<unknown>[] = [];
     b && b.dispose();
-    b = assemble({ suspenseContext_: null }, jnode);
+    b = assemble({ suspenseContext_: suspenseContext }, jnode);
     b.insert(createLocation(parent || prev!.parentElement, prev));
+    return Promise.all(suspenseContext);
   };
   const detach = () => {
     b && b.dispose();
