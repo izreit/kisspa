@@ -1,4 +1,4 @@
-import { autorun } from "../../reactive";
+import { autorun, withoutObserver } from "../../reactive";
 import { allocateSkeletons } from "./skeleton";
 import { $noel, type Component, type JSXNode, type Ref, isJSXElement } from "./types";
 import { arrayify, isFunction, isNode, isPromise, isString, objEntries } from "./util";
@@ -46,7 +46,7 @@ function insertAfter(node: Node, parent: Node, prev: Backing | Node | null | und
 }
 
 export interface AssembleContext {
-  suspenseContext_: Promise<void>[] | { push: (p: Promise<void>) => void } | null;
+  suspenseContext_: Promise<void>[] | { push: (p: Promise<void>) => void };
   // TODO? Not yet considered but may be efficent to gather disposers
   // disposeContext_: (() => void)[];
 }
@@ -138,7 +138,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
     const p = jnode.then((j) => {
       disposed || b.setBackings_([assemble(actx, j)]);
     });
-    actx.suspenseContext_ && actx.suspenseContext_.push(p);
+    actx.suspenseContext_.push(p);
     return b;
   }
 
@@ -265,39 +265,41 @@ export function useComponentMethods(): ComponentMethods {
 }
 
 export function assemble(actx: AssembleContext, jnode: JSXNode): Backing {
-  if (isJSXElement(jnode) && !jnode.el)
-    allocateSkeletons(jnode);
+  return withoutObserver(() => {
+    if (isJSXElement(jnode) && !jnode.el)
+      allocateSkeletons(jnode);
 
-  let b: Backing;
-  let cctx: typeof componentContexts[number];
-  componentContexts.push(null);
-  try {
-    b = assembleImpl(actx, jnode);
-  } finally {
-    cctx = componentContexts.pop()!;
-  }
-  if (!cctx)
-    return b;
-
-  // wrap insert() and dispose() to call lifecycle methods if onMount()/onCleanup() is called.
-  const { onMounts, onCleanups } = cctx[0];
-  let mounted = false;
-  const insert = (l: BackingLocation | null | undefined): void => {
-    b.insert(l);
-    if (!mounted && l && l.parent) {
-      mounted = true;
-      // Check the length each time for onMount() called inside onMount()
-      for (let i = 0; i < onMounts.length; ++i)
-        onMounts[i]();
+    let b: Backing;
+    let cctx: typeof componentContexts[number];
+    componentContexts.push(null);
+    try {
+      b = assembleImpl(actx, jnode);
+    } finally {
+      cctx = componentContexts.pop()!;
     }
-  };
-  const dispose = (): void => {
-    b.dispose();
-    // Revserse order for notify detach from decendants to ancestors.
-    for (let i = onCleanups.length - 1; i >= 0; --i)
-      onCleanups[i]();
-  };
-  return { ...b, insert, dispose };
+    if (!cctx)
+      return b;
+
+    // wrap insert() and dispose() to call lifecycle methods if onMount()/onCleanup() is called.
+    const { onMounts, onCleanups } = cctx[0];
+    let mounted = false;
+    const insert = (l: BackingLocation | null | undefined): void => {
+      b.insert(l);
+      if (!mounted && l && l.parent) {
+        mounted = true;
+        // Check the length each time for onMount() called inside onMount()
+        for (let i = 0; i < onMounts.length; ++i)
+          onMounts[i]();
+      }
+    };
+    const dispose = (): void => {
+      b.dispose();
+      // Revserse order for notify detach from decendants to ancestors.
+      for (let i = onCleanups.length - 1; i >= 0; --i)
+        onCleanups[i]();
+    };
+    return { ...b, insert, dispose };
+  });
 }
 
 const specials: WeakMap<Component<any>, (actx: AssembleContext, props: any) => Backing> = new WeakMap();
