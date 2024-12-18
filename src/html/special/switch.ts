@@ -31,7 +31,7 @@ function createSwitchContextValue(): SwitchContextValue {
   };
 }
 
-const { ProviderFun: switchContextProviderFun, useContext: useSwitchContext } = createContextFun(createSwitchContextValue());
+const { ProviderFun: switchContextProviderFun, use: useSwitchContext } = createContextFun(createSwitchContextValue());
 
 export namespace Switch {
   export interface Props {
