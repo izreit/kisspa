@@ -60,8 +60,8 @@ export function PortalImpl(actx: AssembleContext, props: Portal.Props): Backing 
     if (showing === toShow) return;
     showing = toShow;
     if (toShow) {
-      if (!childBackings)
-        childBackings = mapCoerce(children, c => assemble(actx, c));
+      // assert(!childBackings);
+      childBackings = mapCoerce(children, c => assemble(actx, c));
       insertBackings(childBackings, physicalLoc);
     } else {
       disposeBackings(childBackings);
@@ -75,7 +75,7 @@ export function PortalImpl(actx: AssembleContext, props: Portal.Props): Backing 
         updateShow();
     },
     tail: () => tailOfBackings(childBackings, physicalLoc.prev),
-    dispose: () => {},
+    dispose: () => physicalBacking.insert(), // Just disconnect. Disposed along with the 'virtual' backing
     name: "PortalSrcPhys",
   };
 
