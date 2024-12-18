@@ -14,24 +14,24 @@ export namespace JSXInternal {
   // namespace when `isolatedModules: true`...
   export const _ = 1;
 
-	export interface IntrinsicAttributes {
-    ref?:
-      | Ref<HTMLElement>
-      | ((v: HTMLElement) => void)
-      | (Ref<HTMLElement> | ((v: HTMLElement) => void))[];
-		// key?: any; // React compatible key. We use different `key` in <For>.
-	}
-
-	// export type ElementType<P = any> =
-	// 	| {
-	// 			[K in keyof IntrinsicElements]: P extends IntrinsicElements[K]
-	// 				? K
-	// 				: never;
-	// 	  }[keyof IntrinsicElements]
-	// 	| ComponentType<P>;
+	// export interface IntrinsicAttributes {
+  //   ref?: // React compatible ref. We have no ref for components and moreover, IntrinsicAttributes cannot specify subclass of HTMLElement.
+  //     | Ref<HTMLElement>
+  //     | ((v: HTMLElement) => void)
+  //     | (Ref<HTMLElement> | ((v: HTMLElement) => void))[];
+	// 	// key?: any; // React compatible key. We use different `key` in <For>.
+	// }
 
   export type AsyncElement = JSXNodeAsync;
 	export type Element = JSXNode;
+
+	export type ElementType<P = any> =
+		| {
+				[K in keyof IntrinsicElements]: P extends IntrinsicElements[K]
+					? K
+					: never;
+		  }[keyof IntrinsicElements]
+		| ((props: P) => Element);
 
 	// biome-ignore lint/suspicious/noEmptyInterface: required for JSX even empty.
 	export interface ElementAttributesProperty {
@@ -709,12 +709,16 @@ export namespace JSXInternal {
 
 	type AriaRole = WAIAriaRole | DPubAriaRole;
 
-	export interface KisspaAttributes {
+	export interface KisspaAttributes<RefType extends EventTarget = EventTarget> {
 		children?: Element | Element[];
+    ref?:
+      | Ref<RefType>
+      | ((v: RefType) => void)
+      | (Ref<RefType> | ((v: RefType) => void))[];
 	}
 
 	export interface HTMLAttributes<RefType extends EventTarget = EventTarget>
-		extends DOMAttributes<RefType>, AriaAttributes, IntrinsicAttributes, KisspaAttributes
+		extends DOMAttributes<RefType>, AriaAttributes, KisspaAttributes<RefType>
 	{
 		// Standard HTML Attributes
 		accept?: string | undefined | Accessor<string | undefined>;
