@@ -9,7 +9,7 @@ export interface ContextProviderProps<T> {
 
 export type ContextFunPair<T> = {
   ProviderFun: (actx: AssembleContext, props: ContextProviderProps<T>) => SimpleBacking;
-  useContext: () => T;
+  use: () => T;
 };
 
 export function createContextFun<T>(initial: T): ContextFunPair<T> {
@@ -28,16 +28,16 @@ export function createContextFun<T>(initial: T): ContextFunPair<T> {
 
   return {
     ProviderFun: ProviderImpl,
-    useContext: () => lastOf(stack)!,
+    use: () => lastOf(stack)!,
   };
 }
 
 export type ContextPair<T> = {
   Provider: Component<ContextProviderProps<T>>
-  useContext: () => T;
+  use: () => T;
 };
 
 export function createContext<T>(initial: T): ContextPair<T> {
-  const { ProviderFun: ProviderImpl, useContext } = createContextFun(initial);
-  return { Provider: createSpecial(ProviderImpl), useContext };
+  const { ProviderFun: ProviderImpl, use } = createContextFun(initial);
+  return { Provider: createSpecial(ProviderImpl), use };
 }
