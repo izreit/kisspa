@@ -99,5 +99,36 @@ describe("util", () => {
       setStore(s => { s.foo++; s.foo--; });
       expect(count).toBe(2);
     });
+
+    it("accepts user condition", async () => {
+      const raw = {
+        values: ["fee", "glaa", "zoo"]
+      };
+      const [store, setStore] = observe(raw);
+
+      let count = 0;
+      let history: [string, string | undefined] | null = null;
+      watchProbe(
+        () => store.values[1],
+        (cur, prev) => {
+          count++;
+          history = [cur, prev];
+        },
+        (cur, prev) => (cur.length - prev.length === 1) // only reports when the length become longer just one character.
+      );
+      expect(count).toBe(1);
+      expect(history).toEqual(["glaa", undefined]);
+
+      setStore(s => s.values[1] = "glaa0");
+      expect(count).toBe(2);
+      expect(history).toEqual(["glaa0", "glaa"]);
+
+      setStore(s => s.values[1] = "a");
+      expect(count).toBe(2); // unchanged becaue the modification doesn't satisfies the condition.
+
+      setStore(s => s.values[1] = "ab");
+      expect(count).toBe(3);
+      expect(history).toEqual(["ab", "a"]); // the previous value is "a" because it's detected even not reported.
+    });
   });
 });
