@@ -19,19 +19,23 @@ export function autorunDecimated(f: () => void): AutorunDecimatedResult {
   };
 }
 
-export function watchProbe<T>(probe: () => T, fun: (current: T, previous: T | undefined) => void): () => void {
-  let prev: T | undefined = undefined;
+export function watchProbe<T>(
+  probe: () => T,
+  fun: (current: T, previous: T | undefined) => void,
+  cond: (current: T, prevous: T) => boolean = shallowNotEqual
+): () => void {
+  let prev: T | undefined;
   return autorun(() => {
     const cur = probe();
-    if ((Array.isArray(cur) && Array.isArray(prev)) ? arrayEqual(cur, prev) : cur === prev) return;
 
     // Update `prev' before calling fun() because fun() may reach here recursively by modifying other values.
-    // This is not the essentical solution for recursive call of autorun() (since not all values cannot be
+    // This is not the essential solution for recursive call of autorun() (since not all values cannot be
     // comapred by the === operator). Users may need to wrap fun() by decimated().
     const p = prev;
     prev = cur;
 
-    fun(cur, p);
+    if (p === undefined || cond(cur, p))
+      fun(cur, p);
   });
 }
 
@@ -40,9 +44,11 @@ export function signal<T>(val: T): [() => T, (v: T) => void] {
   return [() => store.v, v => set(s => { s.v = v; })];
 }
 
-function arrayEqual<T extends unknown[]>(xs: T, ys: T[]): boolean {
-  if (xs.length !== ys.length) return false;
+function shallowNotEqual<T>(xs: T | T[], ys: T | T[]): boolean {
+  if (!Array.isArray(xs) || !Array.isArray(ys))
+    return xs !== ys;
+  if (xs.length !== ys.length) return true;
   for (let i = 0; i < xs.length; ++i)
-    if (xs[i] !== ys[i]) return false;
-  return true;
+    if (xs[i] !== ys[i]) return true;
+  return false;
 }
