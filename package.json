@@ -106,12 +106,12 @@
       "require": "./dist/full/upwind/preset/colors.cjs"
     },
     "./raw": {
-      "types": "./dist/full/upwind/bundle.raw.d.ts",
+      "types": "./dist/full/upwind/bundle.d.ts",
       "import": "./dist/full/upwind/bundle.raw.mjs",
       "require": "./dist/full/upwind/bundle.cjs"
     },
     "./raw/jsx-dev-runtime": {
-      "types": "./dist/full/upwind/bundle.raw.d.ts",
+      "types": "./dist/full/upwind/bundle.d.ts",
       "import": "./dist/full/upwind/bundle.raw.mjs",
       "require": "./dist/full/upwind/bundle.cjs"
     }
