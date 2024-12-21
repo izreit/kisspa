@@ -103,10 +103,14 @@ export const requestFlush = (() => {
     finishNotifyPropChange();
 
     observerDescendants.forEach(refTable.clear_);
-    for (const fun of observers) {
-      // re-run and re-register observer, if not canceled as a descendant of others.
-      if (!observerDescendants.has(fun))
-        activeObserverStack.callWith_(fun, fun);
+    for (const observer of observers) {
+      // re-run and re-register observer, if it's
+      if (
+        !observerDescendants.has(observer) && // not a descendant of other observers (will be re-registered by them), and
+        refTable.observing_(observer) // not canceled by preceding observers.
+      ) {
+        activeObserverStack.callWith_(observer, observer);
+      }
     }
     observers.clear();
     observerDescendants.clear();

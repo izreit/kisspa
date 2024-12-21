@@ -52,4 +52,23 @@ describe("Show", () => {
     setStore(s => s.foo++);
     expect(elem.innerHTML).toBe("<div><p>Foo 2</p></div>");
   });
+
+  describe("regression", () => {
+    it("diposes function backing when hidden", async () => {
+      const [store, setStore] = observe({ x: 0 });
+
+      await root.attach(
+        <Show when={() => (store.x % 4) === 0}>
+          {() => store.x}
+        </Show>
+      );
+      expect(elem.innerHTML).toBe("0");
+
+      setStore(s => s.x += 2);
+      expect(elem.innerHTML).toBe("");
+
+      setStore(s => s.x += 2);
+      expect(elem.innerHTML).toBe("4");
+    });
+  });
 });

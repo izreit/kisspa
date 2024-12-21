@@ -8,6 +8,7 @@ export interface RefTable {
   readonly reverseTable_: WeakMap<Observer, Map<Wrapped, Set<Key>>>;
   add_(obj: Wrapped, key: Key, o: Observer): void;
   forEachObserver_(obj: Wrapped, key: Key, f: (o: Observer) => void): void;
+  observing_(o: Observer): boolean;
   clear_(o: Observer): void;
 }
 
@@ -40,13 +41,15 @@ export function createRefTable(): RefTable {
       refTable.get(obj)?.get(key)?.forEach(f);
     },
 
-    clear_(o) {
-      const revent = reverseRefTable.get(o);
+    observing_: (observer) => !!reverseRefTable.get(observer)?.size,
+
+    clear_(observer) {
+      const revent = reverseRefTable.get(observer);
       if (revent && revent.size) {
         revent.forEach((keys, wrapped) => {
           const refent = refTable.get(wrapped)!;
           for (const key of keys)
-            refent.get(key)?.delete(o);
+            refent.get(key)?.delete(observer);
         });
         revent.clear();
       }
