@@ -107,4 +107,27 @@ describe("Portal", () => {
     setShowFrom(true);
     expect(elem.innerHTML).toBe("<main><section>bar</section><p><div>x is 10</div>foo</p></main>");
   });
+
+  it("allows empty", async () => {
+    const key = Symbol("portalKey");
+
+    function Comp0(): JSXNode {
+      return (
+        <section>
+          <Portal to={key} />
+        </section>
+      );
+    }
+
+    root.attach(
+      <main>
+        <Comp0 />
+        <p>
+          <PortalDest from={key} />
+          foo
+        </p>
+      </main>
+    );
+    expect(elem.innerHTML).toBe("<main><section></section><p>foo</p></main>");
+  });
 });
