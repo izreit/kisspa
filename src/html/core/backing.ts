@@ -230,10 +230,6 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
   return assembleImpl(actx, allocateSkeletons(expanded, name), loc);
 }
 
-export function lazy<C extends Component<any>>(p: Promise<{ default: C }>): C {
-  return (props => p.then(c => c.default(props))) as C;
-}
-
 interface ComponentMethodState {
   onMounts: (() => void)[];
   onCleanups: (() => void)[];
