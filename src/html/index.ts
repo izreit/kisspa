@@ -5,7 +5,7 @@ export { h, jsx, jsxs, jsxDEV } from "./core/h";
 export { attach, createRoot } from "./core/root";
 export type { Root } from "./core/root";
 export { $h, createRef } from "./core/types";
-export type { Accessor, AccessorOr, Attributes, Component, JSXElement, JSXNode, JSXNodeAsync, JSXNodeSync, PropChildren, PropRef, Ref } from "./core/types";
+export type { Accessor, AccessorOr, Attributes, Component, JSXElement, JSXNode, JSXNodeAsync, JSXNodeAsyncValue, JSXNodeSync, PropChildren, PropRef, Ref } from "./core/types";
 export { createContext } from "./special/context";
 export type { ContextPair, ContextProviderProps } from "./special/context";
 export { Dynamic } from "./special/dynamic";

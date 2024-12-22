@@ -31,8 +31,8 @@ export function assignLocation(self: BackingLocation, loc: BackingLocation | nul
   return differ;
 }
 
-function isStrOrNum(v: any): v is number | string {
-  return typeof v === "string" || typeof v === "number";
+function isStrOrNumOrbool(v: any): v is number | string | boolean {
+  return typeof v === "string" || typeof v === "number" || typeof v === "boolean";
 }
 
 export function tailOf(p: Backing | Node | null | undefined): Node | null | undefined {
@@ -124,8 +124,8 @@ function resolveRef(el: HTMLElement, r: Ref<HTMLElement> | ((e: HTMLElement) => 
   isFunction(r) ? r(el) : (r.value = el);
 }
 
-function assignAttribute(el: HTMLElement, k: string, v: string | null): void {
-  (v != null) ? el.setAttribute(k, v) : el.removeAttribute(k);
+function assignAttribute(el: HTMLElement, k: string, v: string | number | boolean | null): void {
+  (v != null) ? el.setAttribute(k, "" + v) : el.removeAttribute(k);
 }
 
 function assembleImpl(actx: AssembleContext, jnode: JSXNode): Backing;
@@ -175,8 +175,8 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
         refVal = arrayify(v);
         continue;
       }
-      if (isStrOrNum(v)) {
-        (el as any)[k] = v;
+      if (isStrOrNumOrbool(v)) {
+        assignAttribute(el as HTMLElement, k, v);
       } else if (isFunction(v)) {
         if (k[0] === "o" && k[1] === "n") {
           (el as any)[k.toLowerCase()] = v;
@@ -185,7 +185,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
         }
       } else if (typeof v === "object" && v) {
         for (const [vk, vv] of objEntries(v)) {
-          if (isStrOrNum(vv)) {
+          if (isStrOrNumOrbool(vv)) {
             (el as any)[k][vk] = vv;
           } else if (isFunction(vv)) {
             disposers.push(autorun(() => { (el as any)[k][vk] = vv(); }));

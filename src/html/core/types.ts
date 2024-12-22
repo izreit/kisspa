@@ -40,7 +40,8 @@ export interface JSXElement {
 export type JSXNodeSync =
   | null | string | number | JSXElement | (() => JSXNodeSync);
 
-export type JSXNodeAsync = Promise<null | string | number | JSXElement | (() => JSXNode)>;
+export type JSXNodeAsyncValue = null | string | number | JSXElement | (() => JSXNode);
+export type JSXNodeAsync = Promise<JSXNodeAsyncValue>;
 
 export type JSXNode =
   | null | string | number | JSXElement | (() => JSXNode)
