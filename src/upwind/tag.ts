@@ -97,10 +97,6 @@ const trbl: [string, string | string[]][] = [
   ["e", "-inline-end"],
 ];
 
-function escapeClassName(s: string): string {
-  return s.replace(/[^a-zA-Z0-9_-]/g, c => "\\" + c);
-}
-
 function copyProps<T extends object>(lhs: T, rhs: T): void {
   objForEach(rhs, (v, k) => { lhs[k] = v; });
 }
@@ -188,16 +184,17 @@ export function createTag(target?: Tag.TargetStyleSheet): Tag {
 
       const declSrc = s.slice(begin, end);
       const modPrefix = modifiers.map(m => s.slice(m.begin, m.end)).join(".");
-      const className = `${prefix}${modPrefix ? (modPrefix + ".") : ""}${declSrc}`;
+      // escape " " to equivalent "_" because HTMLElement's `class` attribute uses " " as the delimiter.
+      const className = (`${prefix}${modPrefix ? (modPrefix + ".") : ""}${declSrc}`).replace(/ /g, "_");
       if (registered.has(className))
         return className;
 
       // wrap selector by selector modifiers (e.g. :active, :hover_peer~)
-      let selector = "." + escapeClassName(className);
+      let selector = "." + CSS.escape(className);
       for (let i = 0; i < modifiers.length; ++i) {
         const { modKey, target } = modifiers[i];
         if (modKey[0] === ":") {
-          selector = target ? `${target.name}${modKey} ${target.rel ?? ""} ${selector}` : `${selector}${modKey}`;
+          selector = target ? `.${target.name}${modKey} ${target.rel ?? ""} ${selector}` : `${selector}${modKey}`;
         } else {
           const decl = modifierTable[modKey];
           if (!decl || decl.type_ !== modifierPlaceHolderWhole)

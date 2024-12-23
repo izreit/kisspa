@@ -11,6 +11,7 @@ export default defineConfig({
     },
     environmentMatchGlobs: [
       ["src/html/**", "happy-dom"],
+      ["src/upwind/**", "happy-dom"],
     ],
   },
 });
