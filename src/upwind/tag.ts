@@ -172,9 +172,9 @@ export function createTag(target?: Tag.TargetStyleSheet): Tag {
       return "";
 
     if (checkFirst && !/^\s/.test(s))
-      console.warn(`upwind: ${JSON.stringify(s)} should begin with " " since treated as if there.`);
+      console.warn(`upwind: ${JSON.stringify(s)} should begin with " " to be treated as such.`);
     if (checkLast && !/\s$/.test(s))
-      console.warn(`upwind: ${JSON.stringify(s)} should end with " " since treated as if there.`);
+      console.warn(`upwind: ${JSON.stringify(s)} should end with " " to be treated as such.`);
 
     const { prefix, modifiers: modifierTable, aliases: aliasTable } = config;
     const klasses = parsed.val_.map(decl => {
@@ -280,23 +280,25 @@ export function createTag(target?: Tag.TargetStyleSheet): Tag {
   }
 
   const ret = ((strs: TemplateStringsArray, ...exprs: (string | (() => string))[]): () => string => {
-    // assert(strs.length > 0); // as long as this is used as a tag funtion for tagged template literals.
-
-    const parsed: (string | (() => string))[] = [];
-    for (let i = 0; i < strs.length - 1; ++i) {
-      parsed.push(parseAndRegister(strs[i], i > 0, true));
+    // assert(strs.length > 0 && strs.length === exprs.length + 1); // always true as long as used as a tagged template literal.
+    const base: (string | number)[] = [];
+    const funs: [number, () => string][] = [];
+    let i = 0;
+    for (; i < exprs.length; ++i) {
       const e = exprs[i]!;
-      parsed.push((typeof e === "string") ? parseAndRegister(e) : e);
+      base.push(
+        parseAndRegister(strs[i], i > 0, true),
+        typeof e === "string" ?
+          parseAndRegister(e) :
+          funs.push([2 * i + 1, e]) // never referred: just used as placeholder
+      );
     }
-    parsed.push(parseAndRegister(strs[strs.length - 1], strs.length > 1, false));
+    base.push(parseAndRegister(strs[i], i > 0, false));
 
     return () => {
-      let ret = "";
-      for (let i = 0; i < parsed.length; ++i) {
-        const p = parsed[i];
-        ret += " " + ((typeof p === "string") ? p : p());
-      };
-      return ret;
+      for (const [i, f] of funs)
+        base[i] = f();
+      return base.join(" ");
     };
   }) as Tag;
 
