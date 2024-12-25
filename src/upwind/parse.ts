@@ -119,9 +119,9 @@ function parseMod(src: string, ix: number): ParseResult<Mod> | null {
   const modKey = mMod.val_[0];
 
   if (src[ix] === "_") {
-    const mTargetName = matchRe(src, ix + 1, /[^/:\s~\+]+/y); // +1 for "_"
+    const mTargetName = matchRe(src, ix + 1, /[^/:\s~\+>]+/y); // +1 for "_"
     if (mTargetName) {
-      const mRel = matchRe(src, mTargetName.end_, /[~\+]?/y)!;
+      const mRel = matchRe(src, mTargetName.end_, /[~\+>]?/y)!;
       ix = mRel.end_;
       target = { name: mTargetName.val_[0], rel: mRel.val_[0] || null };
     }
