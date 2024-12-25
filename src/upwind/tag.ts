@@ -59,13 +59,13 @@ export namespace Tag {
      * })
      * ```
      */
-    modifiers: { [key: string]: ModifierDef };
+    modifiers: { [key: string]: ModifierDef | undefined };
 
-    properties: { [key: string]: string[] };
-    colors: { [colorName: string]: { [colorVal: string]: ColorStr } };
+    properties: { [key: string]: string[] | undefined };
+    colors: { [colorName: string]: { [colorVal: string]: ColorStr | undefined } | undefined };
     colorRe: RegExp | null;
     num: (v: number) => string;
-    aliases: { [key: string]: string };
+    aliases: { [key: string]: string | undefined };
   }
 
   export interface ExtendOptions {
@@ -120,7 +120,8 @@ function replaceValue(val: string[], config: Tag.Config): void {
       val[i] = num(Number(v));
     } else if (colorRe && (m = v.match(colorRe))) {
       const alpha = m[3] ? Math.ceil(255 * parseInt(m[3]) / 100).toString(16) : "";
-      val[i] = `${color[m[1]][m[2]]}${alpha}`;
+      const colorTable = color[m[1]];
+      val[i] = `${colorTable && colorTable[m[2]]}${alpha}`;
     }
   }
 }
@@ -197,7 +198,7 @@ export function createTag(target?: Tag.TargetStyleSheet): Tag {
           selector = target ? `.${target.name}${modKey} ${target.rel ?? ""} ${selector}` : `${selector}${modKey}`;
         } else {
           const decl = modifierTable[modKey];
-          if (!decl || decl.type_ !== modifierPlaceHolderWhole)
+          if (decl && decl.type_ !== modifierPlaceHolderWhole)
             selector = `${decl.prefix_}${selector}${decl.postfix_}`;
         }
       }
@@ -293,8 +294,8 @@ export function createTag(target?: Tag.TargetStyleSheet): Tag {
     base.push(parseAndRegister(strs[i], i > 0, false));
 
     return () => {
-      for (const [i, f] of funs)
-        base[i] = f();
+      for (const [i, e] of funs)
+        base[i] = parseAndRegister(e());
       return base.join(" ");
     };
   }) as Tag;
