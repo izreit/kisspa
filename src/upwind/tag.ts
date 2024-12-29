@@ -1,13 +1,12 @@
 import { arrayify, mapCoerce } from "../html/core/util";
 import { createEmptyObj, objForEach, objKeys } from "./objutil";
 import { parse } from "./parse";
+import { type CSSGroupingRuleLike, createSheet } from "./sheet";
 
 export namespace Tag {
   export type ColorStr = string;
 
-  export interface TargetStyleSheet {
-    insertRule(s: string): void;
-  }
+  export type StyleSheetLike = CSSGroupingRuleLike;
 
   export interface ModifierDef {
     type_: "<whole>" | "<selector>";
@@ -82,7 +81,7 @@ export namespace Tag {
 export interface Tag {
   (strs: TemplateStringsArray, ...exprs: (string | (() => string))[]): () => string;
   extend(opts: Tag.ExtendOptions): void;
-  insert(rule: string): void;
+  add(rule: string): void;
 }
 
 const trbl: [string, string | string[]][] = [
@@ -129,16 +128,14 @@ function replaceValue(val: string[], config: Tag.Config): void {
 const reModifierPlaceHolder = /(<(?:selector|whole)>)/;
 const modifierPlaceHolderWhole = "<whole>";
 
-export function createTag(target?: Tag.TargetStyleSheet): Tag {
+export function createTag(target?: Tag.StyleSheetLike): Tag {
   if (!target) {
     const el = document.createElement("style");
     document.head.appendChild(el);
     target = el.sheet!;
   }
-
-  function insertRule(s: string): void {
-    target!.insertRule(s);
-  }
+  const sheet = createSheet(target);
+  const addRule = (s: string) => sheet.addRule_(s);
 
   const config: Tag.Config = {
     prefix: "",
@@ -150,7 +147,7 @@ export function createTag(target?: Tag.TargetStyleSheet): Tag {
     num: n => `${n / 4}rem`,
   };
 
-  function makeCSSDeclarations(name: string[], value: string[]): string {
+  const makeCSSDeclarations = (name: string[], value: string[]): string => {
     const { properties: propTable } = config;
     const propNames = product(...name.map(n => propTable[n] ?? n));
     replaceValue(value, config);
@@ -211,7 +208,7 @@ export function createTag(target?: Tag.TargetStyleSheet): Tag {
           style = `${decl.prefix_}${style}${decl.postfix_}`;
       }
 
-      insertRule(style);
+      addRule(style);
       registered.add(className);
       return className;
     });
@@ -272,7 +269,7 @@ export function createTag(target?: Tag.TargetStyleSheet): Tag {
           const cssdecl = value ? makeCSSDeclarations(name, value) : (aliasTable[name.join("-")] ?? "");
           return `${timings}{${cssdecl}}`;
         }).join("");
-        insertRule(`@keyframes ${k} {${rules}}`);
+        addRule(`@keyframes ${k} {${rules}}`);
       });
     }
   }
@@ -301,6 +298,6 @@ export function createTag(target?: Tag.TargetStyleSheet): Tag {
   }) as Tag;
 
   ret.extend = extend;
-  ret.insert = insertRule;
+  ret.add = addRule;
   return ret;
 }
