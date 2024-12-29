@@ -1,21 +1,6 @@
-import { expect, describe, it, beforeAll, beforeEach } from "vitest";
-import { createSheet, type CSSGroupingRuleLike, type Sheet } from "../sheet";
-
-interface MockCSSGroupingRuleLike extends CSSGroupingRuleLike {
-  readonly ruleText: string;
-}
-
-function createMockCSSGroupRuleLike(ruleText: string): MockCSSGroupingRuleLike {
-  const rs: MockCSSGroupingRuleLike[] = [];
-  return {
-    ruleText,
-    cssRules: rs,
-    insertRule(childRuleText, index) {
-      rs.splice(index, 0, createMockCSSGroupRuleLike(childRuleText));
-      return index;
-    },
-  }
-}
+import { beforeEach, describe, expect, it } from "vitest";
+import { type Sheet, createSheet } from "../sheet";
+import { type MockCSSGroupingRuleLike, createMockCSSGroupRuleLike } from "./mock/MockCSSGroupingRuleLike";
 
 describe("Sheet", () => {
   let styleSheetMock: MockCSSGroupingRuleLike;
@@ -27,7 +12,7 @@ describe("Sheet", () => {
 
   it("can insert rule", () => {
     sheet.addRule_("rule1");
-    expect(styleSheetMock.cssRules[0]).toMatchObject({ ruleText: "rule1" });
+    expect(styleSheetMock.cssRules[0]).toMatchObject({ ruleTextSpy: "rule1" });
   });
 
   it("can register conditional", () => {
@@ -36,9 +21,9 @@ describe("Sheet", () => {
     sheetSmall.addRule_(".foo { color: red }");
     expect(styleSheetMock.cssRules[0]).toMatchObject({
       cssRules: [
-        { ruleText: ".foo { color: red }" }
+        { ruleTextSpy: ".foo { color: red }" }
       ],
-      ruleText: "@media (min-width: 320px)",
+      ruleTextSpy: "@media (min-width: 320px)",
     });
   });
 
@@ -54,11 +39,11 @@ describe("Sheet", () => {
     expect(styleSheetMock.cssRules).toMatchObject([
       {
         cssRules: [
-          { ruleText: ".foo { color: red }" }
+          { ruleTextSpy: ".foo { color: red }" }
         ],
-        ruleText: "@media (min-width: 320px)",
+        ruleTextSpy: "@media (min-width: 320px)",
       },
-      { ruleText: ".foo { color: blue }" },
+      { ruleTextSpy: ".foo { color: blue }" },
     ]);
   });
 
@@ -91,18 +76,18 @@ describe("Sheet", () => {
     expect(styleSheetMock.cssRules).toMatchObject([
       {
         cssRules: [
-          { ruleText: ".foo { color: red }" },
-          { ruleText: ".bar:hover { background: silver }" }
+          { ruleTextSpy: ".foo { color: red }" },
+          { ruleTextSpy: ".bar:hover { background: silver }" }
         ],
-        ruleText: "@media (min-width: 320px)",
+        ruleTextSpy: "@media (min-width: 320px)",
       },
       {
         cssRules: [
-          { ruleText: ".foo { color: purple }" },
+          { ruleTextSpy: ".foo { color: purple }" },
         ],
-        ruleText: "@media (min-width: 640px)",
+        ruleTextSpy: "@media (min-width: 640px)",
       },
-      { ruleText: ".foo { color: blue }" },
+      { ruleTextSpy: ".foo { color: blue }" },
     ]);
   });
 
@@ -123,14 +108,14 @@ describe("Sheet", () => {
         cssRules: [
           {
             cssRules: [
-              { ruleText: ".bar { background: white }" }
+              { ruleTextSpy: ".bar { background: white }" }
             ],
-            ruleText: "@media printer",
+            ruleTextSpy: "@media printer",
           },
-          { ruleText: ".foo { color: red }" },
-          { ruleText: ".bar { background: black }" }
+          { ruleTextSpy: ".foo { color: red }" },
+          { ruleTextSpy: ".bar { background: black }" }
         ],
-        ruleText: "@media (min-width: 320px)",
+        ruleTextSpy: "@media (min-width: 320px)",
       },
     ]);
   });

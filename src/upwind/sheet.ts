@@ -20,7 +20,7 @@ export interface CSSGroupingRuleLike {
 
 export function createSheet(target: CSSGroupingRuleLike): Sheet {
   let nextPrio = 0;
-  const table: { [name: string]: { prio_: number, cond_: string } | undefined } = {};
+  const table: { [name: string]: { prio_: number, initial_: string } | undefined } = {};
   const ruleToSheetTable: WeakMap<CSSGroupingRuleLike, [number, SubSheet]> = new WeakMap();
 
   const createSub = (rule: CSSGroupingRuleLike): SubSheet => ({
@@ -38,7 +38,7 @@ export function createSheet(target: CSSGroupingRuleLike): Sheet {
         if (targetPrio < prio)
           break;
       }
-      const inserted = rule.cssRules[rule.insertRule(table[name]!.cond_, i)]! as CSSGroupingRuleLike;
+      const inserted = rule.cssRules[rule.insertRule(table[name]!.initial_, i)]! as CSSGroupingRuleLike;
       const ret = createSub(inserted);
       ruleToSheetTable.set(inserted, [targetPrio, ret]);
       return ret;
@@ -48,7 +48,7 @@ export function createSheet(target: CSSGroupingRuleLike): Sheet {
   return {
     ...createSub(target),
     registerConditional_(name, cond) {
-      table[name] = { prio_: nextPrio++, cond_: cond };
+      table[name] = { prio_: nextPrio++, initial_: cond + "{}" };
     },
   }
 }
