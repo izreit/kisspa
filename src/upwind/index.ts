@@ -1,2 +1,2 @@
-export { $, defaultProperties, defaultModifiers } from "./default";
+export { $, defaultProperties, defaultConditions } from "./default";
 export { createTag } from "./tag";
