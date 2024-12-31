@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { type Tag, createTag } from "../tag";
 import type { CSSRuleListLike } from "../sheet";
+import { type Tag, createTag } from "../tag";
 import { createMockCSSGroupRuleLike } from "./mock/MockCSSGroupingRuleLike";
 
 describe("tag", () => {
