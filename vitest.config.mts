@@ -8,6 +8,7 @@ export default defineConfig({
     coverage: {
       provider: "istanbul", // or "v8"
       reporter: "html-spa",
+      include: ["src/**/*"],
     },
     environmentMatchGlobs: [
       ["src/html/**", "happy-dom"],
