@@ -1,9 +1,8 @@
 import { createTag } from "./tag";
 
-const mediaStr = (s: string) => `@media ${s} { <whole> }`;
-const minWidthStr = (n: number) => mediaStr(`(min-width: ${n}px)`);
+const minWidthStr = (n: number) => `@media (min-width: ${n}px)`;
 
-export const defaultModifiers = {
+export const defaultConditions = {
   sm: minWidthStr(640),
   md: minWidthStr(768),
   lg: minWidthStr(1024),
@@ -23,6 +22,8 @@ export const defaultProperties = {
 
 export const $ = createTag();
 $.extend({
-  modifiers: defaultModifiers,
+  modifiers: {
+    conditions: defaultConditions,
+  },
   properties: defaultProperties,
 });

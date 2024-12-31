@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { type Tag, createTag } from "../tag";
-import { defaultModifiers, defaultProperties } from "../default";
+import { defaultConditions, defaultProperties } from "../default";
 import type { CSSRuleListLike } from "../sheet";
 import { createMockCSSGroupRuleLike } from "./mock/MockCSSGroupingRuleLike";
 
@@ -34,9 +34,8 @@ describe("default", () => {
     ]);
   });
 
-  /*
-  it("provides default modifiers", () => {
-    $.extend({ modifiers: defaultModifiers });
+  it("provides default conditions", () => {
+    $.extend({ modifiers: { conditions: defaultConditions } });
     const { classes, rule } = run($`sm/margin:10px 2xl/margin:auto`);
     expect(classes).toEqual(["sm.margin:10px", "2xl.margin:auto"]);
     expect(rule).toMatchObject([
@@ -54,5 +53,4 @@ describe("default", () => {
       }
     ]);
   });
-  */
 });

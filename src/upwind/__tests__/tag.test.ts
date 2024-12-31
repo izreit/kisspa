@@ -146,16 +146,25 @@ describe("tag", () => {
   it("can use custom modifiers", () => {
     $.extend({
       modifiers: {
-        dark: "<selector>:is(.dark *)",
-        sm: "@media (min-width: 640px) { <whole> }",
+        conditions: {
+          sm: "@media (min-width: 640px)",
+        },
+        selectors: {
+          dark: ":is(.dark *)",
+        },
       },
     });
     const { classes, rule } = run($`sm/background:red :disabled/border-width:4px_1px dark/font-weight:bold`)
     expect(classes).toEqual(["sm.background:red", ":disabled.border-width:4px_1px", "dark.font-weight:bold"]);
     expect(rule).toMatchObject([
-      { cssText: "@media (min-width: 640px) { .sm\\.background\\:red{background: red} }" },
       { cssText: ".\\:disabled\\.border-width\\:4px_1px:disabled{border-width: 4px 1px}" },
       { cssText: ".dark\\.font-weight\\:bold:is(.dark *){font-weight: bold}" },
+      {
+        conditionText: "(min-width: 640px)",
+        cssRules: [
+           { cssText: ".sm\\.background\\:red{background: red}" },
+        ],
+      },
     ]);
   });
 
@@ -163,16 +172,25 @@ describe("tag", () => {
     $.extend({
       prefix: "pfx_",
       modifiers: {
-        dark: "<selector>:is(.dark *)",
-        sm: "@media (min-width: 640px) { <whole> }",
+        conditions: {
+          sm: "@media (min-width: 640px)",
+        },
+        selectors: {
+          dark: ":is(.dark *)",
+        },
       },
     });
     const { classes, rule } = run($`sm/background:red :disabled/border-width:4px_1px dark/font-weight:bold`)
     expect(classes).toEqual(["pfx_sm.background:red", "pfx_:disabled.border-width:4px_1px", "pfx_dark.font-weight:bold"]);
     expect(rule).toMatchObject([
-      { cssText: "@media (min-width: 640px) { .pfx_sm\\.background\\:red{background: red} }" },
       { cssText: ".pfx_\\:disabled\\.border-width\\:4px_1px:disabled{border-width: 4px 1px}" },
       { cssText: ".pfx_dark\\.font-weight\\:bold:is(.dark *){font-weight: bold}" },
+      {
+        conditionText: "(min-width: 640px)",
+        cssRules: [
+           { cssText: ".pfx_sm\\.background\\:red{background: red}" },
+        ],
+      },
     ]);
   });
 

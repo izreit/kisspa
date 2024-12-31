@@ -1,64 +1,18 @@
-import { arrayify, mapCoerce } from "../html/core/util";
+import { arrayify, isString, mapCoerce } from "../html/core/util";
 import { createEmptyObj, objForEach, objKeys } from "./objutil";
 import { parse } from "./parse";
-import { type CSSGroupingRuleLike, createSheet } from "./sheet";
+import { type CSSGroupingRuleLike, type Sheet, createRootSheet } from "./sheet";
 
 export namespace Tag {
   export type ColorStr = string;
 
   export type StyleSheetLike = CSSGroupingRuleLike;
 
-  export interface ModifierDef {
-    type_: "<whole>" | "<selector>";
-    prefix_: string;
-    postfix_: string;
-  }
-
   export interface Config {
     prefix: string;
 
-    /**
-     * Define modifiers.
-     *
-     * The keys of the properties will be modifier names. The values are their expansion form.
-     * A value must include either `"<whole>" or `"<selector>".
-     * `"<whole>"` is replaced by the generated declaration.
-     * `"<selector>"` is replaced by the selector of the generated declaration.
-     *
-     * For example, the following declares a modifier `print`:
-     *
-     * ```
-     * $.extend({
-     *   modifiers: {
-     *     // modifier for style only applied for printers
-     *     print: "@media printer { <whole> }",
-     *   }
-     * });
-     * ```
-     *
-     * then you can use it (e.g. ``` $`print/background:white` ```).
-     *
-     * Another example:
-     *
-     * ```
-     * $.extend({
-     *   modifiers: {
-     *     // override a screen size breakpoint.
-     *     xl: "@media (min-width: 1700px) { <whole> }",
-     *
-     *     // dark mode modifier that uses preferes-color-scheme
-     *     dark: "@media (prefers-color-scheme: dark) { <whole> }",
-     *
-     *     // dark mode modifier that uses className "dark".
-     *     dark: "<selector>:is(.dark *)",
-     *
-     *     // dark mode modifier that uses a data attribute `data-darkmode`.
-     *     dark: "<selector>:where([data-darkmode="true"], [data-darkmode="true"] *)",
-     *   }
-     * })
-     * ```
-     */
-    modifiers: { [key: string]: ModifierDef | undefined };
+    conditionNames: Set<string>;
+    selectorModifiers: { [key: string]: [string, string] | undefined };
 
     properties: { [key: string]: string[] | undefined };
     colors: { [colorName: string]: { [colorVal: string]: ColorStr | undefined } | undefined };
@@ -69,7 +23,68 @@ export namespace Tag {
 
   export interface ExtendOptions {
     prefix?: string;
-    modifiers?: { [key: string]: string };
+
+    modifiers?: {
+      /**
+       * Define modifiers for CSSConditionRule (e.g. @media).
+       *
+       * The keys of the properties will be modifier names. The values are their @-rule definition.
+       * For example, the following declares a modifier `print`:
+       *
+       * ```
+       * $.extend({
+       *   conditions: {
+       *     // modifier for style only applied for printers
+       *     print: "@media printer",
+       *   }
+       * });
+       * ```
+       *
+       * then you can use it (e.g. ``` $`print/background:white` ```).
+       *
+       * Another example:
+       *
+       * ```
+       * $.extend({
+       *   conditions: {
+       *     // override a screen size breakpoint.
+       *     xl: "@media (min-width: 1700px)",
+       *
+       *     // dark mode modifier that uses preferes-color-scheme (see also selectors)
+       *     dark: "@media (prefers-color-scheme: dark)",
+       *
+       *     // modifier to apply only browsers supporting CSS grid.
+       *     hasgrid: "@supports (display: grid)",
+       *   }
+       * })
+       * ```
+       */
+      conditions?: { [key: string]: string };
+
+      /**
+       * Define modifiers for selectors (e.g. :is()).
+       *
+       * The keys of the properties will be modifier names.
+       * The values must be `string` or `[string, string]`.
+       * When the value is a string, it is appended to the selector.
+       * When the value is an array, the first element is prependend,
+       * the second element is appended to the selector.
+       *
+       * ```
+       * $.extend({
+       *   selmodifiers: {
+       *     // dark mode modifier that uses className "dark".
+       *     dark: ":is(.dark *)",
+       *
+       *     // dark mode modifier that uses a data attribute `data-darkmode`.
+       *     dark: ":where([data-darkmode="true"], [data-darkmode="true"] *)",
+       *   }
+       * })
+       * ```
+       */
+      selectors?: { [key: string]: string | [string, string] };
+    },
+
     properties?: { [key: string]: string };
     colors?: { [colorName: string]: { [colorVal: string]: ColorStr } };
     num?: (v: number) => string;
@@ -125,21 +140,19 @@ function replaceValue(val: string[], config: Tag.Config): void {
   }
 }
 
-const reModifierPlaceHolder = /(<(?:selector|whole)>)/;
-const modifierPlaceHolderWhole = "<whole>";
-
 export function createTag(target?: Tag.StyleSheetLike): Tag {
   if (!target) {
     const el = document.createElement("style");
     document.head.appendChild(el);
     target = el.sheet!;
   }
-  const sheet = createSheet(target);
+  const sheet = createRootSheet(target);
   const addRule = (s: string) => sheet.addRule_(s);
 
   const config: Tag.Config = {
     prefix: "",
-    modifiers: createEmptyObj(),
+    conditionNames: new Set(),
+    selectorModifiers: createEmptyObj(),
     properties: createEmptyObj(),
     aliases: createEmptyObj(),
     colors: createEmptyObj(),
@@ -170,7 +183,7 @@ export function createTag(target?: Tag.StyleSheetLike): Tag {
     if (checkLast && !/\s$/.test(s))
       console.warn(`upwind: ${JSON.stringify(s)} should end with " " to be treated as such.`);
 
-    const { prefix, modifiers: modifierTable, aliases: aliasTable } = config;
+    const { prefix, conditionNames: conditionNameTable, selectorModifiers: selmodsTable, aliases: aliasTable } = config;
     const klasses = parsed.val_.map(decl => {
       const { mods: modifiers, name, value, begin, end } = decl;
 
@@ -189,26 +202,21 @@ export function createTag(target?: Tag.StyleSheetLike): Tag {
 
       // wrap selector by selector modifiers (e.g. :active, :hover_peer~)
       let selector = "." + CSS.escape(className);
+      let targetSheet: Sheet = sheet;
       for (let i = 0; i < modifiers.length; ++i) {
         const { modKey, target } = modifiers[i];
         if (modKey[0] === ":") {
           selector = target ? `.${target.name}${modKey} ${target.rel ?? ""} ${selector}` : `${selector}${modKey}`;
+        } else if (conditionNameTable.has(modKey)) {
+          targetSheet = targetSheet.sheetFor_(modKey);
         } else {
-          const decl = modifierTable[modKey];
-          if (decl && decl.type_ !== modifierPlaceHolderWhole)
-            selector = `${decl.prefix_}${selector}${decl.postfix_}`;
+          const selmod = selmodsTable[modKey];
+          if (selmod)
+            selector = `${selmod[0]}${selector}${selmod[1]}`;
         }
       }
 
-      // wrap style by whole modifiers (e.g. sm, md)
-      let style = `${selector}{${makeCSSDeclarations(name, value)}}`;
-      for (let i = 0; i < modifiers.length; ++i) {
-        const decl = modifierTable[modifiers[i].modKey];
-        if (decl && decl.type_ === modifierPlaceHolderWhole)
-          style = `${decl.prefix_}${style}${decl.postfix_}`;
-      }
-
-      addRule(style);
+      targetSheet.addRule_(`${selector}{${makeCSSDeclarations(name, value)}}`);
       registered.add(className);
       return className;
     });
@@ -220,18 +228,21 @@ export function createTag(target?: Tag.StyleSheetLike): Tag {
 
   function extend(opts: Tag.ExtendOptions): void {
     const { prefix, modifiers, properties, aliases, colors, keyframes, num } = opts;
+    const { conditions, selectors } = modifiers || {};
 
     if (prefix != null)
       config.prefix = prefix;
 
-    if (modifiers) {
-      objForEach(modifiers, (v, k) => {
-        const m  = v.match(reModifierPlaceHolder);
-        if (m) {
-          const type_ = m[0] as "<whole>" | "<selector>";
-          const [prefix_, postfix_] = v.split(m[0]);
-          config.modifiers[k] = { type_, prefix_, postfix_: postfix_ ?? "" };
-        }
+    if (conditions) {
+      objForEach(conditions, (v, k) => {
+        config.conditionNames.add(k);
+        sheet.registerConditional_(k, v);
+      });
+    }
+
+    if (selectors) {
+      objForEach(selectors, (v, k) => {
+        config.selectorModifiers[k] = isString(v) ? ["", v] : v;
       });
     }
 
