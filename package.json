@@ -7,9 +7,10 @@
   "main": "dist/full/upwind/bundle.cjs",
   "scripts": {
     "prepare": "npm run build",
+    "dev": "vitest",
     "build": "node ./scripts/build.mjs",
     "lint": "biome check",
-    "test": "vitest",
+    "test": "vitest run",
     "cov": "vitest run --coverage"
   },
   "files": [
