@@ -5,9 +5,6 @@ import type { CSSRuleListLike } from "../sheet";
 import { createMockCSSGroupRuleLike } from "./mock/MockCSSGroupingRuleLike";
 
 describe("default", () => {
-  it("notyet", () => expect(1).toBe(1));
-
-  /*
   const el = document.createElement("div");
   let sheet: Tag.StyleSheetLike;
   let $: Tag;
@@ -30,20 +27,31 @@ describe("default", () => {
     const { classes, rule } = run($`d:flex m:3 :hover/py:1px max-w:10`);
     expect(classes).toEqual(["d:flex", "m:3", ":hover.py:1px", "max-w:10"]);
     expect(rule).toMatchObject([
-      { ruleText: ".d\\:flex{display: flex}" },
-      { ruleText: ".m\\:3{margin: 0.75rem}" },
-      { ruleText: ".\\:hover\\.py\\:1px:hover{padding-top: 1px;padding-bottom: 1px}" },
-      { ruleText: ".max-w\\:10{max-width: 2.5rem}" },
+      { cssText: ".d\\:flex{display: flex}" },
+      { cssText: ".m\\:3{margin: 0.75rem}" },
+      { cssText: ".\\:hover\\.py\\:1px:hover{padding-top: 1px;padding-bottom: 1px}" },
+      { cssText: ".max-w\\:10{max-width: 2.5rem}" },
     ]);
   });
 
+  /*
   it("provides default modifiers", () => {
     $.extend({ modifiers: defaultModifiers });
     const { classes, rule } = run($`sm/margin:10px 2xl/margin:auto`);
     expect(classes).toEqual(["sm.margin:10px", "2xl.margin:auto"]);
     expect(rule).toMatchObject([
-      { ruleText: "@media (min-width: 640px) { .sm\\.margin\\:10px{margin: 10px} }" },
-      { ruleText: "@media (min-width: 1536px) { .\\32 xl\\.margin\\:auto{margin: auto} }" },
+      {
+        conditionText: "(min-width: 640px)",
+        cssRules: [
+          { cssText: ".sm\\.margin\\:10px{margin: 10px}" },
+        ],
+      },
+      {
+        conditionText: "(min-width: 1536px)",
+        cssRules: [
+          { cssText: ".\\32 xl\\.margin\\:auto{margin: auto}" },
+        ]
+      }
     ]);
   });
   */

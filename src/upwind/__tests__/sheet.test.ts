@@ -12,7 +12,7 @@ describe("Sheet", () => {
 
   it("can insert rule", () => {
     sheet.addRule_("rule1");
-    expect(styleSheetMock.cssRules[0]).toMatchObject({ ruleTextSpy: "rule1" });
+    expect(styleSheetMock.cssRules[0]).toMatchObject({ cssText: "rule1" });
   });
 
   it("can register conditional", () => {
@@ -21,9 +21,9 @@ describe("Sheet", () => {
     sheetSmall.addRule_(".foo { color: red }");
     expect(styleSheetMock.cssRules[0]).toMatchObject({
       cssRules: [
-        { ruleTextSpy: ".foo { color: red }" }
+        { cssText: ".foo { color: red }" }
       ],
-      ruleTextSpy: "@media (min-width: 320px)",
+      conditionText: "(min-width: 320px)",
     });
   });
 
@@ -39,11 +39,11 @@ describe("Sheet", () => {
     expect(styleSheetMock.cssRules).toMatchObject([
       {
         cssRules: [
-          { ruleTextSpy: ".foo { color: red }" }
+          { cssText: ".foo { color: red }" }
         ],
-        ruleTextSpy: "@media (min-width: 320px)",
+        conditionText: "(min-width: 320px)",
       },
-      { ruleTextSpy: ".foo { color: blue }" },
+      { cssText: ".foo { color: blue }" },
     ]);
   });
 
@@ -76,18 +76,18 @@ describe("Sheet", () => {
     expect(styleSheetMock.cssRules).toMatchObject([
       {
         cssRules: [
-          { ruleTextSpy: ".foo { color: red }" },
-          { ruleTextSpy: ".bar:hover { background: silver }" }
+          { cssText: ".foo { color: red }" },
+          { cssText: ".bar:hover { background: silver }" }
         ],
-        ruleTextSpy: "@media (min-width: 320px)",
+        conditionText: "(min-width: 320px)",
       },
       {
         cssRules: [
-          { ruleTextSpy: ".foo { color: purple }" },
+          { cssText: ".foo { color: purple }" },
         ],
-        ruleTextSpy: "@media (min-width: 640px)",
+        conditionText: "(min-width: 640px)",
       },
-      { ruleTextSpy: ".foo { color: blue }" },
+      { cssText: ".foo { color: blue }" },
     ]);
   });
 
@@ -108,14 +108,14 @@ describe("Sheet", () => {
         cssRules: [
           {
             cssRules: [
-              { ruleTextSpy: ".bar { background: white }" }
+              { cssText: ".bar { background: white }" }
             ],
-            ruleTextSpy: "@media printer",
+            conditionText: "printer",
           },
-          { ruleTextSpy: ".foo { color: red }" },
-          { ruleTextSpy: ".bar { background: black }" }
+          { cssText: ".foo { color: red }" },
+          { cssText: ".bar { background: black }" }
         ],
-        ruleTextSpy: "@media (min-width: 320px)",
+        conditionText: "(min-width: 320px)",
       },
     ]);
   });

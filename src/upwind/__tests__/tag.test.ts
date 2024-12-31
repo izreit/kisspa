@@ -25,15 +25,15 @@ describe("tag", () => {
     const { classes, rule } = run($`margin:3px text-decoration:underline`)
     expect(classes).toEqual(["margin:3px", "text-decoration:underline"]);
     expect(rule).toMatchObject([
-      { ruleTextSpy: ".margin\\:3px{margin: 3px}" },
-      { ruleTextSpy: ".text-decoration\\:underline{text-decoration: underline}" },
+      { cssText: ".margin\\:3px{margin: 3px}" },
+      { cssText: ".text-decoration\\:underline{text-decoration: underline}" },
     ]);
   });
 
   it("caches/reuses declaration", () => {
     const expectingRule = [
-      { ruleTextSpy: ".margin\\:3px{margin: 3px}" },
-      { ruleTextSpy: ".text-decoration\\:underline{text-decoration: underline}" },
+      { cssText: ".margin\\:3px{margin: 3px}" },
+      { cssText: ".text-decoration\\:underline{text-decoration: underline}" },
     ] as const;
 
     const { classes, rule } = run($`margin:3px text-decoration:underline`);
@@ -57,9 +57,9 @@ describe("tag", () => {
     const { classes, rule } = run($`margin-bottom:1rem ${"color:" + "black"} padding:1`);
     expect(classes).toEqual(["margin-bottom:1rem", "color:black", "padding:1"]);
     expect(rule).toMatchObject([
-      { ruleTextSpy: ".margin-bottom\\:1rem{margin-bottom: 1rem}" },
-      { ruleTextSpy: ".color\\:black{color: black}" },
-      { ruleTextSpy: ".padding\\:1{padding: 0.25rem}" },
+      { cssText: ".margin-bottom\\:1rem{margin-bottom: 1rem}" },
+      { cssText: ".color\\:black{color: black}" },
+      { cssText: ".padding\\:1{padding: 0.25rem}" },
     ]);
   });
 
@@ -67,8 +67,8 @@ describe("tag", () => {
     const { classes, rule } = run($`margin-bottom:1rem ${() => "color:black"}`)
     expect(classes).toEqual(["margin-bottom:1rem", "color:black"]);
     expect(rule).toMatchObject([
-      { ruleTextSpy: ".margin-bottom\\:1rem{margin-bottom: 1rem}" },
-      { ruleTextSpy: ".color\\:black{color: black}" },
+      { cssText: ".margin-bottom\\:1rem{margin-bottom: 1rem}" },
+      { cssText: ".color\\:black{color: black}" },
     ]);
   });
 
@@ -76,8 +76,8 @@ describe("tag", () => {
     const { classes, rule } = run($`margin-bottom:1rem foo color:black should-be-ignored`)
     expect(classes).toEqual(["margin-bottom:1rem", "foo", "color:black", "should-be-ignored"]);
     expect(rule).toMatchObject([
-      { ruleTextSpy: ".margin-bottom\\:1rem{margin-bottom: 1rem}" },
-      { ruleTextSpy: ".color\\:black{color: black}" },
+      { cssText: ".margin-bottom\\:1rem{margin-bottom: 1rem}" },
+      { cssText: ".color\\:black{color: black}" },
     ]);
   });
 
@@ -85,7 +85,7 @@ describe("tag", () => {
     const { classes, rule } = run($`font-family:Verdana,_'"MS Gothic"'`)
     expect(classes).toEqual(["font-family:Verdana,_'\"MS_Gothic\"'"]);
     expect(rule).toMatchObject([
-      { ruleTextSpy: ".font-family\\:Verdana\\,_\\'\\\"MS_Gothic\\\"\\'{font-family: Verdana, \"MS Gothic\"}" },
+      { cssText: ".font-family\\:Verdana\\,_\\'\\\"MS_Gothic\\\"\\'{font-family: Verdana, \"MS Gothic\"}" },
     ]);
   });
 
@@ -93,8 +93,8 @@ describe("tag", () => {
     const { classes, rule } = run($`:hover/background:red :active/padding:1px`)
     expect(classes).toEqual([":hover.background:red", ":active.padding:1px"]);
     expect(rule).toMatchObject([
-      { ruleTextSpy: ".\\:hover\\.background\\:red:hover{background: red}" },
-      { ruleTextSpy: ".\\:active\\.padding\\:1px:active{padding: 1px}" },
+      { cssText: ".\\:hover\\.background\\:red:hover{background: red}" },
+      { cssText: ".\\:active\\.padding\\:1px:active{padding: 1px}" },
     ]);
   });
 
@@ -102,7 +102,7 @@ describe("tag", () => {
     const { classes, rule } = run($`:hover_group1~/background:red`)
     expect(classes).toEqual([":hover_group1~.background:red"]);
     expect(rule).toMatchObject([
-      { ruleTextSpy: ".group1:hover ~ .\\:hover_group1\\~\\.background\\:red{background: red}" },
+      { cssText: ".group1:hover ~ .\\:hover_group1\\~\\.background\\:red{background: red}" },
     ]);
   });
 
@@ -110,7 +110,7 @@ describe("tag", () => {
     const { classes, rule } = run($`:hover_group1>/background:red`)
     expect(classes).toEqual([":hover_group1>.background:red"]);
     expect(rule).toMatchObject([
-      { ruleTextSpy: ".group1:hover > .\\:hover_group1\\>\\.background\\:red{background: red}" },
+      { cssText: ".group1:hover > .\\:hover_group1\\>\\.background\\:red{background: red}" },
     ]);
   });
 
@@ -118,7 +118,7 @@ describe("tag", () => {
     const { classes, rule } = run($`:hover_group1/background:red`)
     expect(classes).toEqual([":hover_group1.background:red"]);
     expect(rule).toMatchObject([
-      { ruleTextSpy: ".group1:hover  .\\:hover_group1\\.background\\:red{background: red}" },
+      { cssText: ".group1:hover  .\\:hover_group1\\.background\\:red{background: red}" },
     ]);
   });
 
@@ -126,7 +126,7 @@ describe("tag", () => {
     const { classes, rule } = run($`foo/background:red`)
     expect(classes).toEqual(["foo.background:red"]);
     expect(rule).toMatchObject([
-      { ruleTextSpy: ".foo\\.background\\:red{background: red}" },
+      { cssText: ".foo\\.background\\:red{background: red}" },
     ]);
   });
 
@@ -137,9 +137,9 @@ describe("tag", () => {
     const { classes, rule } = run($`background:red :disabled/border-width:4px_1px font-weight:bold`)
     expect(classes).toEqual(["pfx_background:red", "pfx_:disabled.border-width:4px_1px", "pfx_font-weight:bold"]);
     expect(rule).toMatchObject([
-      { ruleTextSpy: ".pfx_background\\:red{background: red}" },
-      { ruleTextSpy: ".pfx_\\:disabled\\.border-width\\:4px_1px:disabled{border-width: 4px 1px}" },
-      { ruleTextSpy: ".pfx_font-weight\\:bold{font-weight: bold}" },
+      { cssText: ".pfx_background\\:red{background: red}" },
+      { cssText: ".pfx_\\:disabled\\.border-width\\:4px_1px:disabled{border-width: 4px 1px}" },
+      { cssText: ".pfx_font-weight\\:bold{font-weight: bold}" },
     ]);
   });
 
@@ -153,9 +153,9 @@ describe("tag", () => {
     const { classes, rule } = run($`sm/background:red :disabled/border-width:4px_1px dark/font-weight:bold`)
     expect(classes).toEqual(["sm.background:red", ":disabled.border-width:4px_1px", "dark.font-weight:bold"]);
     expect(rule).toMatchObject([
-      { ruleTextSpy: "@media (min-width: 640px) { .sm\\.background\\:red{background: red} }" },
-      { ruleTextSpy: ".\\:disabled\\.border-width\\:4px_1px:disabled{border-width: 4px 1px}" },
-      { ruleTextSpy: ".dark\\.font-weight\\:bold:is(.dark *){font-weight: bold}" },
+      { cssText: "@media (min-width: 640px) { .sm\\.background\\:red{background: red} }" },
+      { cssText: ".\\:disabled\\.border-width\\:4px_1px:disabled{border-width: 4px 1px}" },
+      { cssText: ".dark\\.font-weight\\:bold:is(.dark *){font-weight: bold}" },
     ]);
   });
 
@@ -170,9 +170,9 @@ describe("tag", () => {
     const { classes, rule } = run($`sm/background:red :disabled/border-width:4px_1px dark/font-weight:bold`)
     expect(classes).toEqual(["pfx_sm.background:red", "pfx_:disabled.border-width:4px_1px", "pfx_dark.font-weight:bold"]);
     expect(rule).toMatchObject([
-      { ruleTextSpy: "@media (min-width: 640px) { .pfx_sm\\.background\\:red{background: red} }" },
-      { ruleTextSpy: ".pfx_\\:disabled\\.border-width\\:4px_1px:disabled{border-width: 4px 1px}" },
-      { ruleTextSpy: ".pfx_dark\\.font-weight\\:bold:is(.dark *){font-weight: bold}" },
+      { cssText: "@media (min-width: 640px) { .pfx_sm\\.background\\:red{background: red} }" },
+      { cssText: ".pfx_\\:disabled\\.border-width\\:4px_1px:disabled{border-width: 4px 1px}" },
+      { cssText: ".pfx_dark\\.font-weight\\:bold:is(.dark *){font-weight: bold}" },
     ]);
   });
 
@@ -186,10 +186,10 @@ describe("tag", () => {
     const { classes, rule } = run($`deco:underline m:1 mb:3 :hover/mx:2px`)
     expect(classes).toEqual(["deco:underline", "m:1", "mb:3", ":hover.mx:2px"]);
     expect(rule).toMatchObject([
-      { ruleTextSpy: ".deco\\:underline{text-decoration: underline}" },
-      { ruleTextSpy: ".m\\:1{margin: 0.25rem}" },
-      { ruleTextSpy: ".mb\\:3{margin-bottom: 0.75rem}" },
-      { ruleTextSpy: ".\\:hover\\.mx\\:2px:hover{margin-left: 2px;margin-right: 2px}" },
+      { cssText: ".deco\\:underline{text-decoration: underline}" },
+      { cssText: ".m\\:1{margin: 0.25rem}" },
+      { cssText: ".mb\\:3{margin-bottom: 0.75rem}" },
+      { cssText: ".\\:hover\\.mx\\:2px:hover{margin-left: 2px;margin-right: 2px}" },
     ]);
   });
 
@@ -200,8 +200,8 @@ describe("tag", () => {
     const { classes, rule } = run($`margin:1 padding-bottom:3`)
     expect(classes).toEqual(["margin:1", "padding-bottom:3"]);
     expect(rule).toMatchObject([
-      { ruleTextSpy: ".margin\\:1{margin: 10px}" },
-      { ruleTextSpy: ".padding-bottom\\:3{padding-bottom: 30px}" },
+      { cssText: ".margin\\:1{margin: 10px}" },
+      { cssText: ".padding-bottom\\:3{padding-bottom: 30px}" },
     ]);
   });
 
@@ -217,8 +217,8 @@ describe("tag", () => {
     const { classes, rule } = run($`color:myGray-100 background:myGray-200/50`)
     expect(classes).toEqual(["color:myGray-100", "background:myGray-200/50"]);
     expect(rule).toMatchObject([
-      { ruleTextSpy: ".color\\:myGray-100{color: #fefefe}" },
-      { ruleTextSpy: ".background\\:myGray-200\\/50{background: #cdcdcd80}" },
+      { cssText: ".color\\:myGray-100{color: #fefefe}" },
+      { cssText: ".background\\:myGray-200\\/50{background: #cdcdcd80}" },
     ]);
   });
 
@@ -237,8 +237,8 @@ describe("tag", () => {
     expect(rule).toMatchObject([
       // order follows to `aliases` definition but not the usage ($`...`),
       // because aliases are parsed and registered in `extend()`.
-      { ruleTextSpy: ".text-decoration\\:underline{text-decoration: underline}" },
-      { ruleTextSpy: ".d\\:flex{display: flex}" },
+      { cssText: ".text-decoration\\:underline{text-decoration: underline}" },
+      { cssText: ".d\\:flex{display: flex}" },
     ]);
   });
 
@@ -257,9 +257,9 @@ describe("tag", () => {
     const { classes, rule } = run($`animation:flash_0.8s_ease-in-out_infinite`)
     expect(classes).toEqual(["animation:flash_0.8s_ease-in-out_infinite"]);
     expect(rule).toMatchObject([
-      { ruleTextSpy: ".opacity\\:90\\%{opacity: 90%}" },
-      { ruleTextSpy: "@keyframes flash {0%{opacity: 10%}to{opacity:90%}}" },
-      { ruleTextSpy: ".animation\\:flash_0\\.8s_ease-in-out_infinite{animation: flash 0.8s ease-in-out infinite}" },
+      { cssText: ".opacity\\:90\\%{opacity: 90%}" },
+      { cssText: "@keyframes flash {0%{opacity: 10%}to{opacity:90%}}" },
+      { cssText: ".animation\\:flash_0\\.8s_ease-in-out_infinite{animation: flash 0.8s ease-in-out infinite}" },
     ]);
   });
 });
