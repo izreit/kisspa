@@ -50,10 +50,10 @@ export namespace Portal {
 export function PortalImpl(actx: AssembleContext, props: Portal.Props): Backing {
   const { to, children } = props;
 
-  let childBackings: Backing[] | null | undefined;
-  let showing = false;
   const virtualLoc = createLocation();
   const physicalLoc = createLocation();
+  let childBackings: Backing[] | null | undefined;
+  let showing = false;
 
   function updateShow(): void {
     const toShow = !!(virtualLoc.parent && physicalLoc.parent);

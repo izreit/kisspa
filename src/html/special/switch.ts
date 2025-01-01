@@ -74,12 +74,10 @@ export const Match = createSpecial(<T>(actx: AssembleContext, props: Match.Props
   const [isActive, guardedValue] = useSwitchContext().register_(when || (() => true), guarded);
   const base = createSimpleBacking("Match");
 
-  let showing = false;
   base.addDisposer_(
     watchProbe(isActive, toShow => {
-      showing = toShow;
       let bs: Backing[] | null | undefined;
-      if (showing && children) {
+      if (toShow && children) {
         const cs = guarded ?
           children(guardedValue as (() => Exclude<T, boolean>)) : // 'as' is inevitable since it's provided by switchCtx...
           children;

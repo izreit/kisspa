@@ -18,12 +18,11 @@ export const For = createSpecial(function For<E>(actx: AssembleContext, props: F
   const { each, key, children } = props;
   const fun = arrayify(children)[0];
 
-  let backings: Backing[] = [];
-  let backingTable: Map<any, Backing> = new Map();
   const ixTable: WeakMap<Backing, [() => number, (v: number) => void]> = new WeakMap();
-
   const base = createBackingCommon("For", () => backings);
   const loc = base.location_;
+  let backings: Backing[] = [];
+  let backingTable: Map<any, Backing> = new Map();
 
   base.addDisposer_(autorun(() => {
     const nextTable: Map<any, Backing> = new Map();

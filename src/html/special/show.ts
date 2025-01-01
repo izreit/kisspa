@@ -13,13 +13,14 @@ export namespace Show {
 
 export const Show = createSpecial(function ShowImpl(actx: AssembleContext, props: Show.Props): Backing {
   const { when, fallback, children } = props;
-  let showing = false;
 
   const base = createSimpleBacking("Show");
   base.addDisposer_(watchProbe(when, toShow => {
-    showing = toShow;
-    const bs = showing ? mapCoerce(children, c => assemble(actx, c)) : (fallback ? [assemble(actx, fallback)] : null);
-    base.setBackings_(bs);
+    base.setBackings_(
+      toShow ?
+        mapCoerce(children, c => assemble(actx, c)) :
+        (fallback ? [assemble(actx, fallback)] : null)
+    );
   }));
 
   return base;
