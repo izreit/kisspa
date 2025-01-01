@@ -194,20 +194,35 @@ describe("tag", () => {
     ]);
   });
 
-  it("can custom properties", () => {
+  it("can custom properties using <trbl>", () => {
     $.extend({
       properties: {
         deco: "text-decoration",
         "m<trbl>": "margin<trbl>",
       }
     });
-    const { classes, rule } = run($`deco:underline m:1 mb:3 :hover/mx:2px`)
+    const { classes, rule } = run($`deco:underline m:1 mb:3 :hover/mx:2px`);
     expect(classes).toEqual(["deco:underline", "m:1", "mb:3", ":hover.mx:2px"]);
     expect(rule).toMatchObject([
       { cssText: ".deco\\:underline{text-decoration: underline}" },
       { cssText: ".m\\:1{margin: 0.25rem}" },
       { cssText: ".mb\\:3{margin-bottom: 0.75rem}" },
       { cssText: ".\\:hover\\.mx\\:2px:hover{margin-left: 2px;margin-right: 2px}" },
+    ]);
+  });
+
+  it("can custom properties using abbrevation", () => {
+    $.extend({
+      properties: {
+        "<min-|max-|>w": "<>width",
+      }
+    });
+    const { classes, rule } = run($`w:10px min-w:5px max-w:20px`);
+    expect(classes).toEqual(["w:10px", "min-w:5px", "max-w:20px"]);
+    expect(rule).toMatchObject([
+      { cssText: ".w\\:10px{width: 10px}" },
+      { cssText: ".min-w\\:5px{min-width: 5px}" },
+      { cssText: ".max-w\\:20px{max-width: 20px}" },
     ]);
   });
 

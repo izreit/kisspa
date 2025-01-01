@@ -14,10 +14,10 @@ export const defaultProperties = {
   "m<trbl>": "margin<trbl>",
   "p<trbl>": "padding<trbl>",
   "b<trbl>": "border<trbl>",
-  "w": "width",
-  "h": "height",
-  "bg": "background",
-  "d": "display",
+  "<max-|min-|>w": "<>width",
+  "<max-|min-|>h": "<>height",
+  bg: "background",
+  d: "display",
 };
 
 export const $ = createTag();

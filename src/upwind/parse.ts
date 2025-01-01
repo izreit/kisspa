@@ -8,7 +8,7 @@ export type Mod = {
 
 export type Decl = {
   mods: Mod[];
-  name: string[];
+  name: string;
   value: string[] | null | undefined;
   begin: number;
   end: number;
@@ -132,34 +132,12 @@ function parseMod(src: string, ix: number): ParseResult<Mod> | null {
 
 // NAME := '-'* head=FRAG tail={'-' f=FRAG}*
 // FRAG := '[^-\s:\.]+'
-function parseName(src: string, ix: number): ParseResult<string[]> | null {
-  const reFrag = /[^-\s:\.\(\)]+/y;
+function parseName(src: string, ix: number): ParseResult<string> | null {
+  const re = /(?:[^\s:\.\(\)])+/y;
   const begin = ix;
-  const val: string[] = [];
-
-  const mPrefix = matchRe(src, ix, /-+/y);
-  if (mPrefix) {
-    val.push(mPrefix.val_[0].slice(-1)); // strip the last "-" (since joined by "-" later)
-    ix = mPrefix.end_;
-  }
-
-  const mCar = matchRe(src, ix, reFrag);
-  if (!mCar) return mCar;
-  val.push(mCar.val_[0]);
-  ix = mCar.end_;
-
-  for (;;) {
-    if (src[ix] !== "-") break;
-    ix += 1;
-    const mCdr = matchRe(src, ix, reFrag);
-    if (!mCdr) {
-      val.push(""); // rescure the names ended with "-" (although seems invalid)
-      break;
-    }
-    val.push(mCdr.val_[0]);
-    ix = mCdr.end_;
-  }
-  return { val_: val, begin_: begin, end_: ix };
+  const m = matchRe(src, ix, re);
+  if (!m) return m;
+  return { val_: m.val_[0], begin_: begin, end_: m.end_ };
 }
 
 // VAL := '_*' head={NONUS | QUOTED} tail={'_+' v={NONUS | QUOTED}}* '_*'

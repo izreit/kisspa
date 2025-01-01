@@ -1,4 +1,4 @@
-import { arrayify, isString, mapCoerce } from "../html/core/util";
+import { isString, mapCoerce } from "../html/core/util";
 import { createEmptyObj, objForEach, objKeys } from "./objutil";
 import { parse } from "./parse";
 import { type CSSGroupingRuleLike, type Sheet, createRootSheet } from "./sheet";
@@ -28,7 +28,7 @@ export namespace Tag {
       /**
        * Define modifiers for CSSConditionRule (e.g. @media).
        *
-       * The keys of the properties will be modifier names. The values are their @-rule definition.
+       * The keys of the object will be modifier names. The values are their @-rule definition.
        * For example, the following declares a modifier `print`:
        *
        * ```
@@ -40,7 +40,8 @@ export namespace Tag {
        * });
        * ```
        *
-       * then you can use it (e.g. ``` $`print/background:white` ```).
+       * then you can write ``` $`print/background:white` ``` which is expanded to
+       * `@media printer { ... { background: white; } }`.
        *
        * Another example:
        *
@@ -64,7 +65,7 @@ export namespace Tag {
       /**
        * Define modifiers for selectors (e.g. :is()).
        *
-       * The keys of the properties will be modifier names.
+       * The keys of the object will be modifier names.
        * The values must be `string` or `[string, string]`.
        * When the value is a string, it is appended to the selector.
        * When the value is an array, the first element is prependend,
@@ -85,7 +86,54 @@ export namespace Tag {
       selectors?: { [key: string]: string | [string, string] };
     },
 
+    /**
+     * Define property abbrevation.
+     *
+     * The keys of the object will be abbrevation names. The values are their expansion.
+     * For example, the following declares a modifier `deco`:
+     *
+     * ```
+     * $.extend({
+     *   properties: {
+     *     deco: "text-decoration",
+     *   }
+     * });
+     * ```
+     *
+     * then you can write ``` $`deco:underline` ``` which is expanded to
+     * `{ text-decoration: underline; }`.
+     *
+     * A special keyword `"<trbl>"` can be used in abbrevation names and their expansion.
+     * In abbrevation names, it's treated as one of `["t", "r", "b", "l", "x", "y", "s", "e"]`.
+     * In the corresponding expansion, it's treated as one of `["-top", "-right", ...]`.
+     *
+     * Other words separated by `"|"` and surrounded by angle brackets (<>) in abbrevation
+     * names are expanded for each word. `"<>"` in the corresponding expansion will be replaced
+     * by one of the words.
+     *
+     * Examples:
+     *
+     * ```
+     * $.extend({
+     *   properties: {
+     *     // treated as:
+     *     //  - "m": "margin",
+     *     //  - "mt": "margin-top",
+     *     //  - "mr": "margin-right",
+     *     //  - ...
+     *     "m<trbl>": "margin<trbl>",
+     *
+     *     // treated as:
+     *     //  - "min-w": "min-width",
+     *     //  - "max-w": "max-width",
+     *     //  - "w": "width",
+     *     "<min-|max-|>w": "<>width",
+     *   }
+     * });
+     * ```
+     */
     properties?: { [key: string]: string };
+
     colors?: { [colorName: string]: { [colorVal: string]: ColorStr } };
     num?: (v: number) => string;
     aliases?: { [key: string]: string };
@@ -113,14 +161,6 @@ const trbl: [string, string | string[]][] = [
 
 function copyProps<T extends object>(lhs: T, rhs: T): void {
   objForEach(rhs, (v, k) => { lhs[k] = v; });
-}
-
-function product(...args: (string | string[])[]): string[][] {
-  if (args.length === 0) return [];
-  let ret = arrayify(args[0]).map(v => [v]);
-  for (let i = 1; i < args.length; ++i)
-    ret = ret.flatMap(x => mapCoerce(args[i], y => x.concat(y)));
-  return ret;
 }
 
 const reNum = /^\d+(?:\.5)?$/;
@@ -160,11 +200,11 @@ export function createTag(target?: Tag.StyleSheetLike): Tag {
     num: n => `${n / 4}rem`,
   };
 
-  const makeCSSDeclarations = (name: string[], value: string[]): string => {
+  const makeCSSDeclarations = (name: string, value: string[]): string => {
     const { properties: propTable } = config;
-    const propNames = product(...name.map(n => propTable[n] ?? n));
+    const propNames = propTable[name] ?? [name];
     replaceValue(value, config);
-    return `${propNames.map(propName => `${propName.join("-")}: ${value.join(" ")}`).join(";")}`;
+    return `${propNames.map(propName => `${propName}: ${value.join(" ")}`).join(";")}`;
   }
 
   const cacheTable = new Map<string, string>();
@@ -189,8 +229,7 @@ export function createTag(target?: Tag.StyleSheetLike): Tag {
 
       // no value (classname without ':') is treated as-is.
       if (!value) {
-        const n = name.join("-");
-        return aliasTable[n] ?? n;
+        return aliasTable[name] ?? name;
       }
 
       const declSrc = s.slice(begin, end);
@@ -247,12 +286,19 @@ export function createTag(target?: Tag.StyleSheetLike): Tag {
     }
 
     if (properties) {
+      const dest = config.properties;
       objForEach(properties, (v, k) => {
-        if (k.includes("<trbl>")) {
-          for (const [abbrev, expanded] of trbl)
-            config.properties[k.replace("<trbl>", abbrev)] = mapCoerce(expanded, e => v.replace("<trbl>", e));
+        const m = k.match(/<([^>]*)>/);
+        if (m) {
+          if (m[1] === "trbl") {
+            for (const [abbrev, expanded] of trbl)
+              dest[k.replace(m[0], abbrev)] = mapCoerce(expanded, e => v.replace(m[0], e));
+          } else {
+            for (const part of m[1].split("|"))
+              dest[k.replace(m[0], part)] = [v.replace("<>", part)];
+          }
         } else {
-          config.properties[k] = [v];
+          dest[k] = [v];
         }
       });
     }
@@ -277,7 +323,7 @@ export function createTag(target?: Tag.StyleSheetLike): Tag {
         const rules = parse(v).val_.map(decl => {
           const { mods, name, value } = decl;
           const timings = mods.map(m => m.modKey).join(","); // modifiers for keyframes are expected as the timing (e.g. from, to, 30%)
-          const cssdecl = value ? makeCSSDeclarations(name, value) : (aliasTable[name.join("-")] ?? "");
+          const cssdecl = value ? makeCSSDeclarations(name, value) : (aliasTable[name] ?? "");
           return `${timings}{${cssdecl}}`;
         }).join("");
         addRule(`@keyframes ${k} {${rules}}`);

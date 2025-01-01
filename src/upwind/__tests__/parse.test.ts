@@ -15,7 +15,7 @@ describe("parse", () => {
       begin_: 0,
       end_: 10,
       val_: [
-        { begin: 0, end: 10, mods: [], name: ["margin"], value: ["3px"] },
+        { begin: 0, end: 10, mods: [], name: "margin", value: ["3px"] },
       ],
     });
   });
@@ -26,7 +26,7 @@ describe("parse", () => {
       begin_: 0,
       end_: src.length,
       val_: [
-        { begin: 0, end: src.length, mods: [], name: ["-", "margin"], value: ["3px"] },
+        { begin: 0, end: src.length, mods: [], name: "--margin", value: ["3px"] },
       ],
     });
   });
@@ -37,8 +37,8 @@ describe("parse", () => {
       begin_: 2,
       end_: src.length,
       val_: [
-        { begin: 2, end: 12, mods: [], name: ["margin"], value: ["3px"] },
-        { begin: 17, end: 31, mods: [], name: ["background"], value: ["red"] },
+        { begin: 2, end: 12, mods: [], name: "margin", value: ["3px"] },
+        { begin: 17, end: 31, mods: [], name: "background", value: ["red"] },
       ],
     });
   });
@@ -49,7 +49,7 @@ describe("parse", () => {
       begin_: 0,
       end_: src.length,
       val_: [
-        { begin: 0, end: src.length, mods: [], name: ["margin"], value: ["3px", "2px", "0", "1_0"] },
+        { begin: 0, end: src.length, mods: [], name: "margin", value: ["3px", "2px", "0", "1_0"] },
       ],
     });
   });
@@ -60,7 +60,7 @@ describe("parse", () => {
       begin_: 0,
       end_: src.length,
       val_: [
-        { begin: 0, end: src.length, mods: [], name: ["margin"], value: ["3px 2px 0 '0'"] },
+        { begin: 0, end: src.length, mods: [], name: "margin", value: ["3px 2px 0 '0'"] },
       ],
     });
   });
@@ -71,7 +71,7 @@ describe("parse", () => {
       begin_: 0,
       end_: src.length,
       val_: [
-        { begin: 0, end: src.length, mods: [], name: ["font", "family"], value: ["Verdana", `"MS Gothic"`] },
+        { begin: 0, end: src.length, mods: [], name: "font-family", value: ["Verdana", `"MS Gothic"`] },
       ],
     });
   });
@@ -89,7 +89,7 @@ describe("parse", () => {
             { begin: 3, end: 9, modKey: ":hover", target: undefined },
             { begin: 0, end: 2, modKey: "sm", target: undefined },
           ],
-          name: ["border", "top"],
+          name: "border-top",
           value: ["10%"]
         },
       ],
@@ -108,7 +108,7 @@ describe("parse", () => {
           mods: [
             { begin: 0, end: 13, modKey: ":hover", target: { name: "group", rel: "~" } },
           ],
-          name: ["border", "top"],
+          name: "border-top",
           value: ["10%"]
         },
       ],
@@ -127,7 +127,7 @@ describe("parse", () => {
           mods: [
             { begin: 0, end: 12, modKey: ":hover", target: { name: "group", rel: null } },
           ],
-          name: ["bg"],
+          name: "bg",
           value: ["red"]
         },
       ],
@@ -147,7 +147,7 @@ describe("parse", () => {
             { begin: 3, end: 9, modKey: ":hover", target: undefined },
             { begin: 0, end: 2, modKey: "sm", target: undefined },
           ],
-          name: ["border", "top"],
+          name: "border-top",
           value: ["10%"]
         },
         {
@@ -157,14 +157,14 @@ describe("parse", () => {
             { begin: 3, end: 9, modKey: ":hover", target: undefined },
             { begin: 0, end: 2, modKey: "sm", target: undefined },
           ],
-          name: ["color"],
+          name: "color",
           value: ["red"]
         },
         {
           begin: 37,
           end: 48,
           mods: [],
-          name: ["padding"],
+          name: "padding",
           value: ["1px"]
         },
       ],
@@ -177,8 +177,8 @@ describe("parse", () => {
       begin_: 0,
       end_: src.length,
       val_: [
-        { begin: 0, end: 3, mods: [], name: ["m"], value: ["1"] },
-        { begin: 4, end: src.length, mods: [], name: ["ordinally", "classname"], value: undefined },
+        { begin: 0, end: 3, mods: [], name: "m", value: ["1"] },
+        { begin: 4, end: src.length, mods: [], name: "ordinally-classname", value: undefined },
       ],
     });
   });
@@ -189,7 +189,7 @@ describe("parse", () => {
       begin_: 0,
       end_: src.length,
       val_: [
-        { begin: 3, end: 6, mods: [], name: ["p"], value: ["2"] },
+        { begin: 3, end: 6, mods: [], name: "p", value: ["2"] },
       ],
     });
   });
@@ -204,10 +204,10 @@ describe("parse", () => {
           begin: 3,
           end: 23,
           mods: [{ begin: 0, end: 2, modKey: "sm", target: undefined }],
-          name: ["text", "decoration"],
+          name: "text-decoration",
           value: ["auto"]
         },
-        { begin: 36, end: src.length, mods: [], name: ["p"], value: ["1"] },
+        { begin: 36, end: src.length, mods: [], name: "p", value: ["1"] },
       ],
     });
   });
@@ -218,7 +218,7 @@ describe("parse", () => {
       begin_: 0,
       end_: src.length,
       val_: [
-        { begin: 0, end: src.length, mods: [], name: ["text", ""], value: ["auto"] },
+        { begin: 0, end: src.length, mods: [], name: "text-", value: ["auto"] },
       ],
     });
   });
@@ -229,7 +229,7 @@ describe("parse", () => {
       begin_: 0,
       end_: src.length,
       val_: [
-        { begin: 0, end: 3, mods: [], name: ["p"], value: ["3"] },
+        { begin: 0, end: 3, mods: [], name: "p", value: ["3"] },
       ],
     });
   });
