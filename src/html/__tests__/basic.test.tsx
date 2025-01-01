@@ -260,14 +260,21 @@ describe("basic", () => {
         return <p>{ props.x }</p>;
       }
 
+      function Root() {
+        const { onMount, onCleanup } = useComponentMethods();
+        onMount(() => log("onmount-out"));
+        onCleanup(() => log("oncleanup-out"));
+        return (
+          <div>
+            <Suspense fallback={<i />}>
+              <Comp x={() => store.value} />
+            </Suspense>
+          </div>
+        );
+      }
+
       const [store, _setStore] = observe({ value: 10 });
-      const promiseAttach = root.attach(
-        <div>
-          <Suspense fallback={<i />}>
-            <Comp x={() => store.value} />
-          </Suspense>
-        </div>
-      );
+      const promiseAttach = root.attach(<Root />);
 
       expect(elem.innerHTML).toBe("<div><i></i></div>");
       await promiseAttach;
@@ -275,11 +282,13 @@ describe("basic", () => {
       expect(elem.innerHTML).toBe("<div><p>10</p></div>");
       expect(reap()).toEqual([
         "onmount",
+        "onmount-out",
       ]);
 
       root.detach();
       expect(reap()).toEqual([
         "oncleanup",
+        "oncleanup-out",
       ]);
     });
   });
