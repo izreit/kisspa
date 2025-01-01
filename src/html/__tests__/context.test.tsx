@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { observe } from "../../reactive";
-import { JSX, type JSXNode, type JSXNodeAsync, type Root, createContext, createRoot, h, withContext } from "../index";
+import { type JSX, type JSXNode, type JSXNodeAsync, type Root, createContext, createRoot, h, withContext } from "../index";
 
 describe("createContext()", () => {
   let elem: HTMLElement;
