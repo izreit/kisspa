@@ -100,7 +100,7 @@ export const Suspense = createSpecial(function Suspense(actx: AssembleContext, p
       disposeBackings(backings);
 
       const promises: Promise<any>[] = [];
-      const childActx: AssembleContext = { suspenseContext_: promises };
+      const childActx: AssembleContext = { ...actx, suspenseContext_: promises };
       backings = mapCoerce(children, c => assemble(childActx, c));
       push(promises);
 

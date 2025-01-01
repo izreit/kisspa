@@ -1,8 +1,7 @@
 import { autorun, signal, watchProbe } from "../../reactive";
 import { type AssembleContext, type Backing, assemble, callAll, createSimpleBacking, createSpecial } from "../core/backing";
 import type { PropChildren } from "../core/types";
-import { arrayify, mapCoerce } from "../core/util";
-import { createContextFun } from "./context";
+import { mapCoerce } from "../core/util";
 
 interface SwitchContextValue {
   register_(cond: () => unknown, strict: boolean | null | undefined): [() => boolean, () => unknown];
@@ -35,24 +34,17 @@ function createSwitchContextValue(): SwitchContextValue {
   };
 }
 
-const { ProviderFun: switchContextProviderFun, use: useSwitchContext } = createContextFun(createSwitchContextValue());
-
 export namespace Switch {
   export interface Props {
     children?: PropChildren;
   }
 }
 
+const switchContextKey = Symbol();
+
 export const Switch = createSpecial((actx: AssembleContext, props: Switch.Props): Backing => {
-  const { children: rawChildren } = props;
-  const children = arrayify(rawChildren);
-  const switchCtx = createSwitchContextValue();
-
-  // Equivalent to <SwitchContextProvider value={ctx}> {children} </SwitchContextProvider>
-  const b = switchContextProviderFun(actx, { value: switchCtx, children });
-
-  b.addDisposer_(switchCtx.dispose_);
-  return b;
+  const childActx = { ...actx, [switchContextKey]: createSwitchContextValue() };
+  return createSimpleBacking("Sw", null, mapCoerce(props.children, c => assemble(childActx, c)));
 });
 
 export namespace Match {
@@ -71,7 +63,7 @@ export namespace Match {
 
 export const Match = createSpecial(<T>(actx: AssembleContext, props: Match.Props<T>): Backing => {
   const { when, guarded, children } = props;
-  const [isActive, guardedValue] = useSwitchContext().register_(when || (() => true), guarded);
+  const [isActive, guardedValue] = (actx[switchContextKey] as SwitchContextValue).register_(when || (() => true), guarded);
   const base = createSimpleBacking("Match");
 
   base.addDisposer_(

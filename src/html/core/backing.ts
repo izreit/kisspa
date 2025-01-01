@@ -47,6 +47,7 @@ function insertAfter(node: Node, parent: Node, prev: Backing | Node | null | und
 
 export interface AssembleContext {
   suspenseContext_: Promise<void>[] | { push: (p: Promise<void>) => void };
+  [key: symbol]: unknown;
   // TODO? Not yet considered but may be efficent to gather disposers
   // disposeContext_: (() => void)[];
 }
@@ -85,7 +86,11 @@ export interface SimpleBacking extends BackingCommon {
   setBackings_: (bs: Backing[] | null | undefined) => void;
 }
 
-export function createSimpleBacking(name: string, l?: BackingLocation | null): SimpleBacking {
+export function createSimpleBacking(
+  name: string,
+  l?: BackingLocation | null,
+  bs?: Backing[] | null,
+): SimpleBacking {
   let backings: Backing[] | null | undefined;
   const base = createBackingCommon(name, () => backings, l) as SimpleBacking;
   base.setBackings_ = (bs) => {
@@ -95,6 +100,7 @@ export function createSimpleBacking(name: string, l?: BackingLocation | null): S
       insertBackings(bs, base.location_);
     }
   };
+  base.setBackings_(bs);
   return base;
 }
 

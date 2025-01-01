@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { observe } from "../../reactive";
-import { type JSXNode, type JSXNodeAsync, type Root, createContext, createRoot, h } from "../index";
+import { JSX, type JSXNode, type JSXNodeAsync, type Root, createContext, createRoot, h, withContext } from "../index";
 
 describe("createContext()", () => {
   let elem: HTMLElement;
@@ -19,10 +19,9 @@ describe("createContext()", () => {
     const TestContext = createContext<TestContextValue>({ x: () => 0 });
     const [store, setStore] = observe({ x: 10 });
 
-    function Comp0(_props: {}): JSXNode {
-      const ctx = TestContext.use();
+    const Comp0 = withContext(TestContext, ctx => (_props: {}): JSXNode => {
       return <div>{ctx.x}</div>;
-    }
+    })
 
     root.attach(
       <TestContext.Provider value={{ x: () => store.x }}>
@@ -42,10 +41,9 @@ describe("createContext()", () => {
     const TestContext = createContext<TestContextValue>({ x: () => 0 });
     const [store, setStore] = observe({ x: 10 });
 
-    function Comp0(_props: {}): JSXNode {
-      const ctx = TestContext.use();
+    const Comp0 = withContext(TestContext, ctx => (_props: {}): JSXNode => {
       return <div>{ctx.x}</div>;
-    }
+    });
 
     root.attach(
       <main>
@@ -67,11 +65,10 @@ describe("createContext()", () => {
     const TestContext = createContext<TestContextValue>({ x: () => 0 });
     const [store, setStore] = observe({ x: 10 });
 
-    async function Comp0(_props: {}): JSXNodeAsync {
-      const ctx = TestContext.use();
+    const Comp0 = withContext(TestContext, ctx => async (_props: {}): JSXNodeAsync => {
       await new Promise(res => setTimeout(res, 1));
       return <div>{ctx.x}</div>;
-    }
+    });
 
     const promiseAttach = root.attach(
       <main>
@@ -88,5 +85,36 @@ describe("createContext()", () => {
     expect(elem.innerHTML).toBe("<main><p><div>0</div></p><div>10</div></main>");
     setStore(s => s.x++);
     expect(elem.innerHTML).toBe("<main><p><div>0</div></p><div>11</div></main>");
+  });
+
+  it("can be used even in asyncrounously rendered", async () => {
+    type TestContextValue = { x: () => number; };
+    const TestContext = createContext<TestContextValue>({ x: () => 0 });
+    const [store, setStore] = observe({ x: 10 });
+
+    const Comp = withContext(TestContext, ctx => function Comp(_props: {}): JSX.Element {
+      return <div>{ctx.x}</div>;
+    });
+
+    async function AsyncComp(_props: {}): JSXNodeAsync {
+      await new Promise(res => setTimeout(res, 1));
+      return <nav><Comp /></nav>;
+    }
+
+    const promiseAttach = root.attach(
+      <main>
+        <p>
+          <AsyncComp />
+        </p>
+        <TestContext.Provider value={{ x: () => store.x }}>
+          <AsyncComp />
+        </TestContext.Provider>
+      </main>
+    );
+    expect(elem.innerHTML).toBe("<main><p></p></main>");
+    await promiseAttach;
+    expect(elem.innerHTML).toBe("<main><p><nav><div>0</div></nav></p><nav><div>10</div></nav></main>");
+    setStore(s => s.x++);
+    expect(elem.innerHTML).toBe("<main><p><nav><div>0</div></nav></p><nav><div>11</div></nav></main>");
   });
 });
