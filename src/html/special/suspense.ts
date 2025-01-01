@@ -12,7 +12,7 @@ export namespace Suspense {
 
 interface AllWaiter {
   push_(p: Promise<void>): void;
-  then_(onfulfilled: () => void, onrejected: (e: unknown) => void): this;
+  then_(onfulfilled: () => void, onrejected?: (e: unknown) => void): this;
   currentPromise_(): Promise<void>;
 }
 
@@ -109,7 +109,8 @@ export const Suspense = createSpecial(function Suspense(actx: AssembleContext, p
 
       // NOTE It's important to overwrite suspenseContext_ to make it accessible from `children` through `childActx` later.
       // (e.g. A <Show> inside children may be shown later, assemble() the descendants and obtains Promises)
-      childActx.suspenseContext_ = { push };
+      // biome-ignore lint/suspicious/noThenProperty: Intentionally duck-typing with Promsie.
+      childActx.suspenseContext_ = { push, then: waiter.then_ };
     } catch (e) {
       handleError(e);
     }

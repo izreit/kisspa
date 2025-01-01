@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { observe, signal } from "../../reactive";
-import { type JSX, type JSXNode, type JSXNodeAsyncValue, type Root, createRef, createRoot, h, useComponentMethods } from "../index";
+import { type JSX, type JSXNode, type JSXNodeAsync, type JSXNodeAsyncValue, type Root, Suspense, createRef, createRoot, h, useComponentMethods } from "../index";
 import { createLogBuffer, createSeparatedPromise } from "./testutil";
 
 describe("basic", () => {
@@ -205,6 +205,75 @@ describe("basic", () => {
         "onMount identical: true",
         "onCleanup identical: true",
         "reaction identical: true",
+        "onmount",
+      ]);
+
+      root.detach();
+      expect(reap()).toEqual([
+        "oncleanup",
+      ]);
+    });
+
+    it("can be called after async context", async () => {
+      const { log, reap } = createLogBuffer();
+
+      async function Comp(props: { x: () => number }): JSXNodeAsync {
+        const { onMount, onCleanup } = useComponentMethods();
+
+        onMount(() => log("onmount1"));
+        onCleanup(() => log("oncleanup1"));
+        await Promise.resolve();
+        onMount(() => log("onmount2"));
+        onCleanup(() => log("oncleanup2"));
+        return <p>{ props.x }</p>;
+      }
+
+      const [store, _setStore] = observe({ value: 10 });
+      const promiseAttach = root.attach(
+        <div><Comp x={() => store.value} /></div>
+      );
+
+      expect(elem.innerHTML).toBe("<div></div>");
+      await promiseAttach;
+
+      expect(elem.innerHTML).toBe("<div><p>10</p></div>");
+      expect(reap()).toEqual([
+        "onmount1",
+        "onmount2",
+      ]);
+
+      root.detach();
+      expect(reap()).toEqual([
+        "oncleanup2",
+        "oncleanup1",
+      ]);
+    });
+
+    it("can be called inside Suspense", async () => {
+      const { log, reap } = createLogBuffer();
+
+      async function Comp(props: { x: () => number }): JSXNodeAsync {
+        const { onMount, onCleanup } = useComponentMethods();
+        await Promise.resolve();
+        onMount(() => log("onmount"));
+        onCleanup(() => log("oncleanup"));
+        return <p>{ props.x }</p>;
+      }
+
+      const [store, _setStore] = observe({ value: 10 });
+      const promiseAttach = root.attach(
+        <div>
+          <Suspense fallback={<i />}>
+            <Comp x={() => store.value} />
+          </Suspense>
+        </div>
+      );
+
+      expect(elem.innerHTML).toBe("<div><i></i></div>");
+      await promiseAttach;
+
+      expect(elem.innerHTML).toBe("<div><p>10</p></div>");
+      expect(reap()).toEqual([
         "onmount",
       ]);
 

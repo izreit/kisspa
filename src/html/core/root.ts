@@ -9,7 +9,7 @@ export interface Root {
 export function createRoot(parent: Element | null | undefined, prev?: Node | null): Root {
   let b: Backing | null | undefined;
   const attach = (jnode: JSXNode) => {
-    const suspenseContext: Promise<unknown>[] = [];
+    const suspenseContext: Promise<void>[] = [];
     b && b.dispose();
     b = assemble({ suspenseContext_: suspenseContext }, jnode);
     b.insert(createLocation(parent || prev!.parentElement, prev));

@@ -46,7 +46,10 @@ function insertAfter(node: Node, parent: Node, prev: Backing | Node | null | und
 }
 
 export interface AssembleContext {
-  suspenseContext_: Promise<void>[] | { push: (p: Promise<void>) => void };
+  suspenseContext_: Promise<void>[] | {
+    push: (p: Promise<void>) => void,
+    then: (onfulfilled: () => void, onrejected?: (e: unknown) => void) => void;
+  };
   [key: symbol]: unknown;
   // TODO? Not yet considered but may be efficent to gather disposers
   // disposeContext_: (() => void)[];
@@ -283,15 +286,18 @@ export function assemble(actx: AssembleContext, jnode: JSXNode): Backing {
       return b;
 
     // wrap insert() and dispose() to call lifecycle methods if onMount()/onCleanup() is called.
-    const { onMounts, onCleanups } = cctx[0];
     let mounted = false;
+    const { onMounts, onCleanups } = cctx[0];
+    const sctx = actx.suspenseContext_;
     const insert = (l: BackingLocation | null | undefined): void => {
       b.insert(l);
       if (!mounted && l && l.parent) {
         mounted = true;
-        // Check the length each time for onMount() called inside onMount()
-        for (let i = 0; i < onMounts.length; ++i)
-          onMounts[i]();
+        (Array.isArray(sctx) ? Promise.all(sctx) : sctx).then(() => {
+          // Check the length each time for onMount() called inside onMount()
+          for (let i = 0; i < onMounts.length; ++i)
+            onMounts[i]();
+        });
       }
     };
     const dispose = (): void => {
