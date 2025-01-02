@@ -1,6 +1,6 @@
 import { type AssembleContext, type Backing, assemble, createBackingCommon, createSpecial, disposeBackings, insertBackings } from "../core/backing";
 import type { JSXNode, PropChildren } from "../core/types";
-import { arrayify, isFunction, mapCoerce } from "../core/util";
+import { arrayify, doNothing, isFunction, mapCoerce } from "../core/util";
 
 export namespace Suspense {
   export interface Props {
@@ -105,7 +105,7 @@ export const Suspense = createSpecial(function Suspense(actx: AssembleContext, p
       push(promises);
 
       // As <Suspense />, we need .catch() to stop propagation of rejection.
-      actx.suspenseContext_.push(waiter.currentPromise_().catch(_ => {}));
+      actx.suspenseContext_.push(waiter.currentPromise_().catch(doNothing));
 
       // NOTE It's important to overwrite suspenseContext_ to make it accessible from `children` through `childActx` later.
       // (e.g. A <Show> inside children may be shown later, assemble() the descendants and obtains Promises)

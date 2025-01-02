@@ -1,7 +1,7 @@
 import { autorun, withoutObserver } from "../../reactive";
 import { allocateSkeletons } from "./skeleton";
 import { $noel, type Component, type JSXNode, type Ref, isJSXElement } from "./types";
-import { arrayify, isFunction, isNode, isPromise, isString, objEntries } from "./util";
+import { arrayify, doNothing, isFunction, isNode, isPromise, isString, objEntries } from "./util";
 
 export interface Backing {
   insert(loc?: BackingLocation | null | undefined): void;
@@ -54,8 +54,6 @@ export interface AssembleContext {
   // TODO? Not yet considered but may be efficent to gather disposers
   // disposeContext_: (() => void)[];
 }
-
-const doNothing = () => {};
 
 export interface BackingCommon extends Backing {
   location_: BackingLocation;
