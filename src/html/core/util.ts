@@ -1,4 +1,3 @@
-export type MemberType<P, Key> = Key extends keyof P ? P[Key] : never;
 export type Arrayify<T> = T extends undefined | null ? [] : T;
 
 // Shorthands for minifiable code.

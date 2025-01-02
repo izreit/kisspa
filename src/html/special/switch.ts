@@ -8,7 +8,7 @@ interface SwitchContextValue {
   dispose_():void;
 }
 
-function createSwitchContextValue(): SwitchContextValue {
+export function createSwitchContextValue(): SwitchContextValue {
   const notFalse = (v: unknown) => v !== false;
   const [activeIndex, setActiveIndex] = signal<number>(-1);
   const stats: unknown[] = [];
@@ -40,7 +40,7 @@ export namespace Switch {
   }
 }
 
-const switchContextKey = Symbol();
+export const switchContextKey = Symbol();
 
 export const Switch = createSpecial((actx: AssembleContext, props: Switch.Props): Backing => {
   const childActx = { ...actx, [switchContextKey]: createSwitchContextValue() };

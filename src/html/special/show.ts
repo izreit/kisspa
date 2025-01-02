@@ -1,27 +1,29 @@
-import { watchProbe } from "../../reactive";
-import { type AssembleContext, type Backing, assemble, createSimpleBacking, createSpecial } from "../core/backing";
+import { type AssembleContext, type Backing, type SpecialComponent, createSimpleBacking, createSpecial } from "../core/backing";
 import type { JSXNode, PropChildren } from "../core/types";
-import { mapCoerce } from "../core/util";
+import { Match, createSwitchContextValue, switchContextKey } from "./switch";
 
 export namespace Show {
-  export interface Props {
+  export interface WhenProps {
     when: () => boolean;
+    guarded?: false;
     fallback?: JSXNode;
     children?: PropChildren;
   }
+  export interface GuardProps<T> {
+    when: () => Exclude<T, boolean> | false;
+    guarded: true;
+    fallback?: JSXNode;
+    children?: (v: () => Exclude<T, boolean>) => PropChildren;
+  }
+  export type Props<T> = WhenProps | GuardProps<T>;
 }
 
-export const Show = createSpecial(function ShowImpl(actx: AssembleContext, props: Show.Props): Backing {
-  const { when, fallback, children } = props;
-
-  const base = createSimpleBacking("Show");
-  base.addDisposer_(watchProbe(when, toShow => {
-    base.setBackings_(
-      toShow ?
-        mapCoerce(children, c => assemble(actx, c)) :
-        (fallback ? [assemble(actx, fallback)] : null)
-    );
-  }));
-
-  return base;
+export const Show = createSpecial(<P>(actx: AssembleContext, props: Show.Props<P>): Backing => {
+  const { fallback } = props;
+  const childActx = { ...actx, [switchContextKey]: createSwitchContextValue() };
+  const matchFun = (Match as SpecialComponent<Match.Props<P>>).fun;
+  return fallback ? createSimpleBacking("Show", null, [
+    matchFun(childActx, props),
+    matchFun(childActx, { children: fallback }),
+  ]) : matchFun(childActx, props);
 });

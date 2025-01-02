@@ -53,6 +53,29 @@ describe("Show", () => {
     expect(elem.innerHTML).toBe("<div><p>Foo 2</p></div>");
   });
 
+  it("propagates type guard when guareded", () => {
+    const [store, setStore] = observe({ foo: 0 as number | string });
+    root.attach(
+      <div>
+        <Show
+          when={() => typeof store.foo === "number" && store.foo}
+          guarded
+          fallback={<span>Bar</span>}
+        >{val =>
+          <p>Foo {() => val() * 3}</p>
+        }
+        </Show>
+      </div>
+    );
+    expect(elem.innerHTML).toBe("<div><p>Foo 0</p></div>");
+
+    setStore(s => s.foo = "pee");
+    expect(elem.innerHTML).toBe("<div><span>Bar</span></div>");
+
+    setStore(s => s.foo = 2);
+    expect(elem.innerHTML).toBe("<div><p>Foo 6</p></div>");
+  });
+
   describe("regression", () => {
     it("diposes function backing when hidden", async () => {
       const [store, setStore] = observe({ x: 0 });
