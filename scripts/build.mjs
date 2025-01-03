@@ -38,8 +38,10 @@ function printStat(path) {
 }
 
 if (modeBuildUnbundle) {
-  run("npx vite build -- -ct upwind-preset");
+  run("npx vite build -- --clean -t extra-preset");
   minifyByTerser("dist/full/upwind/preset/colors.raw.mjs");
+  run("npx vite build -- -t extra-cloneutil");
+  minifyByTerser("dist/full/reactive/cloneutil.raw.mjs");
 }
 
 if (modeBuildFull) {

@@ -106,7 +106,12 @@
       "import": "./dist/full/reactive/index.mjs",
       "require": "./dist/full/reactive/index.cjs"
     },
-    "./preset/colors": {
+    "./extra/cloneutil": {
+      "types": "./dist/full/reactive/cloneutil.d.ts",
+      "import": "./dist/full/reactive/cloneutil.mjs",
+      "require": "./dist/full/reactive/cloneutil.cjs"
+    },
+    "./extra/preset/colors": {
       "types": "./dist/full/upwind/preset/colors.d.ts",
       "import": "./dist/full/upwind/preset/colors.mjs",
       "require": "./dist/full/upwind/preset/colors.cjs"

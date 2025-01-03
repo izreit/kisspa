@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cloneutil } from "../cloneutil";
+import * as cloneutil from "../cloneutil";
 import { autorun, bindObserver, cancelAutorun, debugGetInternal, observe, unwatch, watchDeep, watchShallow, withoutObserver } from "../core";
 import type { Key } from "../internal/reftable";
 import { createLogBuffer } from "./testutil";
