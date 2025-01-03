@@ -2,5 +2,5 @@ export { autorun, bindObserver, cancelAutorun, observe, requestFlush, unwatch, u
 export type { PropWatcherId, StoreSetter, StoreSetterOptions, WatchDeepOptions, WatchShallowOptions } from "./core";
 export { decimated } from "./decimated";
 export type { DecimatedFun } from "./decimated";
-export { autorunDecimated, signal, watchProbe } from "./util";
+export { autorunDecimated, memoize, signal, watchProbe } from "./util";
 export type { AutorunDecimatedResult } from "./util";

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { observe } from "../core";
-import { autorunDecimated, watchProbe } from "../util";
+import { autorun, observe } from "../core";
+import { autorunDecimated, memoize, signal, watchProbe } from "../util";
+import { createLogBuffer } from "./testutil";
 
 describe("util", () => {
   describe("autorunDecimated", () => {
@@ -129,6 +130,51 @@ describe("util", () => {
       setStore(s => s.values[1] = "ab");
       expect(count).toBe(3);
       expect(history).toEqual(["ab", "a"]); // the previous value is "a" because it's detected even not reported.
+    });
+  });
+
+  describe("memoize", () => {
+    it("caches the value", () => {
+      const { log, reap } = createLogBuffer();
+      const [sigA, setSigA] = signal(1);
+      const [sigB, setSigB] = signal(1);
+
+      const memoizedSigAx3 = memoize(() => {
+        log(`A:${sigA()}`);
+        return sigA() * 3;
+      });
+      const unmemoizedSigAx5 = () => {
+        log(`B:${sigB()}`);
+        return sigB() * 5;
+      };
+
+      expect(reap()).toEqual([
+        "A:1",
+      ]);
+
+      autorun(() => log(`r1:${memoizedSigAx3()}`));
+      autorun(() => log(`r2:${memoizedSigAx3()} ${unmemoizedSigAx5()}`));
+      expect(reap()).toEqual([
+        "r1:3",
+        "B:1",
+        "r2:3 5",
+      ]);
+
+      // memoized signal re-evaluated since its depending value `sigA` is updated.
+      setSigA(2);
+      expect(reap()).toEqual([
+        "A:2", // so we see this log
+        "r1:6",
+        "B:1",
+        "r2:6 5",
+      ]);
+
+       // memoized signal is not evaluated since its depending value is not changed.
+      setSigB(2);
+      expect(reap()).toEqual([
+        "B:2",
+        "r2:6 10",
+      ]);
     });
   });
 });

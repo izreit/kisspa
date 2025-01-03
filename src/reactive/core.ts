@@ -238,8 +238,11 @@ function autorunImpl<T>(fun: () => T, observer: (() => void) | null | undefined)
   return activeObserverStack.callWith_(fun, observer);
 }
 
-export function autorun(fun: () => void): () => void {
+const releaser = new FinalizationRegistry(cancelAutorun);
+
+export function autorun(fun: () => void, owner?: object): () => void {
   autorunImpl(fun, fun);
+  owner && releaser.register(owner, fun);
   return () => cancelAutorun(fun);
 }
 

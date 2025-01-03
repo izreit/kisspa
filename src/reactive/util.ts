@@ -44,6 +44,12 @@ export function signal<T>(val: T): [() => T, (v: T) => void] {
   return [() => store.v, v => set(s => { s.v = v; })];
 }
 
+export function memoize<T>(f: () => T): () => T {
+  const [sig, set] = signal<T>(null!);
+  autorun(() => set(f()), sig);
+  return sig;
+}
+
 function shallowNotEqual<T>(xs: T | T[], ys: T | T[]): boolean {
   if (!Array.isArray(xs) || !Array.isArray(ys))
     return xs !== ys;
