@@ -11,7 +11,9 @@
     "build": "node ./scripts/build.mjs",
     "lint": "biome check",
     "test": "vitest run",
-    "cov": "vitest run --coverage"
+    "cov": "vitest run --coverage",
+    "changeset-version": "changeset version",
+    "changeset-publish": "changeset publish"
   },
   "files": [
     "dist/",
@@ -27,6 +29,7 @@
   "license": "MIT",
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
+    "@changesets/cli": "^2.27.11",
     "@types/node": "^22.10.1",
     "@vitest/coverage-istanbul": "^2.1.8",
     "happy-dom": "^15.11.0",
