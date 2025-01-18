@@ -12,6 +12,7 @@
     "lint": "biome check",
     "test": "vitest run",
     "cov": "vitest run --coverage",
+    "changeset": "changeset",
     "changeset-version": "changeset version",
     "changeset-publish": "changeset publish"
   },
