@@ -21,7 +21,7 @@ export namespace Show {
 export const Show = createSpecial(<P>(actx: AssembleContext, props: Show.Props<P>): Backing => {
   const { fallback } = props;
   const childActx = { ...actx, [switchContextKey]: createSwitchContextValue() };
-  const matchFun = (Match as SpecialComponent<Match.Props<P>>).fun;
+  const matchFun = (Match as SpecialComponent<Match.Props<P>>).special;
   return fallback ? createSimpleBacking("Show", null, [
     matchFun(childActx, props),
     matchFun(childActx, { children: fallback }),

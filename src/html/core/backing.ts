@@ -225,7 +225,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
     return createNodeBackingIfNeeded(el!, staticParent, disposers);
   }
 
-  const special = specials.get(name);
+  const special = (name as SpecialComponent<unknown>).special;
   if (special) {
     const b = special(actx, { ...attrs, children: rawChildren });
     b.insert(loc);
@@ -308,20 +308,17 @@ export function assemble(actx: AssembleContext, jnode: JSXNode): Backing {
   });
 }
 
-const specials: WeakMap<Component<any>, (actx: AssembleContext, props: any) => Backing> = new WeakMap();
-
 // export type MemberType<P, Key> = Key extends keyof P ? P[Key] : never;
 
 export interface SpecialComponent<P> extends Component<P> {
-  fun: (actx: AssembleContext, props: P) => Backing;
+  special: (actx: AssembleContext, props: P) => Backing;
 }
 
 // Ugh! I don't know why but making the return value SpecialComponent<P> breaks type inference
 // around generics (e.g. Match.Props<P>, For.Props<P>). Down cast if you need a SpecialComponent.
 export function createSpecial<P>(impl: (actx: AssembleContext, props: P) => Backing): Component<P> {
   const ret = (() => 0) as unknown as SpecialComponent<P>; // Dummy. Never called but must be unique for each call.
-  ret.fun = impl;
-  specials.set(ret, impl);
+  ret.special = impl;
   return ret;
 }
 
