@@ -1,6 +1,6 @@
-import { type AssembleContext, type Backing, type SpecialComponent, createSimpleBacking, createSpecial } from "../core/backing";
-import type { JSXNode, PropChildren } from "../core/types";
-import { Match, createSwitchContextValue, switchContextKey } from "./switch";
+import { type AssembleContext, type Backing, type SpecialComponent, createSimpleBacking, createSpecial } from "../core/backing.js";
+import type { JSXNode, PropChildren } from "../core/types.js";
+import { Match, createSwitchContextValue, switchContextKey } from "./switch.js";
 
 export namespace Show {
   export interface WhenProps {

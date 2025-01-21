@@ -1,7 +1,7 @@
-import { isString, mapCoerce } from "../html/core/util";
-import { createEmptyObj, objForEach, objKeys } from "./objutil";
-import { parse } from "./parse";
-import { type CSSGroupingRuleLike, type Sheet, createRootSheet } from "./sheet";
+import { isString, mapCoerce } from "../html/core/util.js";
+import { createEmptyObj, objForEach, objKeys } from "./objutil.js";
+import { parse } from "./parse.js";
+import { type CSSGroupingRuleLike, type Sheet, createRootSheet } from "./sheet.js";
 
 export namespace Tag {
   export type ColorStr = string;

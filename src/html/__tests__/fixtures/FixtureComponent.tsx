@@ -1,4 +1,4 @@
-import { type JSX, h } from "../../index";
+import { type JSX, h } from "../../index.js";
 
 export function FixtureComponent(props: { value: () => number }): JSX.Element {
   return <div>{ props.value }</div>;

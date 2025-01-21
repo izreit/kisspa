@@ -1,4 +1,4 @@
-import type { CSSGroupingRuleLike } from "../../sheet";
+import type { CSSGroupingRuleLike } from "../../sheet.js";
 
 export interface MockCSSGroupingRuleLike extends CSSGroupingRuleLike {
   // Set only for mock of CSSConditionRule (e.g. @media)

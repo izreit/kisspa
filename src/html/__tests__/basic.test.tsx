@@ -1,7 +1,7 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { observe, signal } from "../../reactive";
-import { type JSX, type JSXNode, type JSXNodeAsync, type JSXNodeAsyncValue, type Root, Suspense, createRef, createRoot, h, useComponentMethods } from "../index";
-import { createLogBuffer, createSeparatedPromise } from "./testutil";
+import { observe, signal } from "../../reactive/index.js";
+import { type JSX, type JSXNode, type JSXNodeAsync, type JSXNodeAsyncValue, type Root, Suspense, createRef, createRoot, h, useComponentMethods } from "../index.js";
+import { createLogBuffer, createSeparatedPromise } from "./testutil.js";
 
 describe("basic", () => {
   let elem: HTMLElement;

@@ -1,4 +1,4 @@
-import { createEmptyObj, objForEach } from "../objutil";
+import { createEmptyObj, objForEach } from "../objutil.js";
 
 export const presetColors = (() => {
   const def = {

@@ -1,4 +1,4 @@
-import type { JSXInternal } from "./core/jsx";
+import type { JSXInternal } from "./core/jsx.js";
 
 export {
   assemble,
@@ -7,14 +7,14 @@ export {
   createSpecial,
   tailOf,
   useComponentMethods,
-} from "./core/backing";
-export type { Backing, BackingLocation, ComponentMethods } from "./core/backing";
-export { h, jsx, jsxDEV, jsxs } from "./core/h";
-export { deprop } from "./core/helpers";
-export type { Prop } from "./core/helpers";
-export { attach, createRoot } from "./core/root";
-export type { Root } from "./core/root";
-export { $h, createRef } from "./core/types";
+} from "./core/backing.js";
+export type { Backing, BackingLocation, ComponentMethods } from "./core/backing.js";
+export { h, jsx, jsxDEV, jsxs } from "./core/h.js";
+export { deprop } from "./core/helpers.js";
+export type { Prop } from "./core/helpers.js";
+export { attach, createRoot } from "./core/root.js";
+export type { Root } from "./core/root.js";
+export { $h, createRef } from "./core/types.js";
 export type {
   Accessor,
   Attributes,
@@ -27,14 +27,14 @@ export type {
   PropChildren,
   PropRef,
   Ref,
-} from "./core/types";
-export { createContext, withContext } from "./special/context";
-export type { Context, ContextProviderProps } from "./special/context";
-export { Dynamic } from "./special/dynamic";
-export { For } from "./special/for";
-export { Fragment } from "./special/fragment";
-export { Portal, PortalDest } from "./special/portal";
-export { Show } from "./special/show";
-export { Suspense } from "./special/suspense";
-export { Match, Switch } from "./special/switch";
+} from "./core/types.js";
+export { createContext, withContext } from "./special/context.js";
+export type { Context, ContextProviderProps } from "./special/context.js";
+export { Dynamic } from "./special/dynamic.js";
+export { For } from "./special/for.js";
+export { Fragment } from "./special/fragment.js";
+export { Portal, PortalDest } from "./special/portal.js";
+export { Show } from "./special/show.js";
+export { Suspense } from "./special/suspense.js";
+export { Match, Switch } from "./special/switch.js";
 export type { JSXInternal as JSX };

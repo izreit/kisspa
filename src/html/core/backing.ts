@@ -1,7 +1,7 @@
-import { autorun, withoutObserver } from "../../reactive";
-import { allocateSkeletons } from "./skeleton";
-import { $noel, type Component, type JSXNode, type Ref, isJSXElement } from "./types";
-import { arrayify, doNothing, isFunction, isNode, isPromise, isString, objEntries } from "./util";
+import { autorun, withoutObserver } from "../../reactive/index.js";
+import { allocateSkeletons } from "./skeleton.js";
+import { $noel, type Component, type JSXNode, type Ref, isJSXElement } from "./types.js";
+import { arrayify, doNothing, isFunction, isNode, isPromise, isString, objEntries } from "./util.js";
 
 export interface Backing {
   insert(loc?: BackingLocation | null | undefined): void;

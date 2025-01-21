@@ -1,6 +1,6 @@
-import { type AssembleContext, type SimpleBacking, assemble, createSimpleBacking, createSpecial } from "../core/backing";
-import type { Component, PropChildren } from "../core/types";
-import { mapCoerce } from "../core/util";
+import { type AssembleContext, type SimpleBacking, assemble, createSimpleBacking, createSpecial } from "../core/backing.js";
+import type { Component, PropChildren } from "../core/types.js";
+import { mapCoerce } from "../core/util.js";
 
 export interface ContextProviderProps<T> {
   value: T;

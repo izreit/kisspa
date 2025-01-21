@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { defaultConditions, defaultProperties } from "../default";
-import type { CSSRuleListLike } from "../sheet";
-import { type Tag, createTag } from "../tag";
-import { createMockCSSGroupRuleLike } from "./mock/MockCSSGroupingRuleLike";
+import { defaultConditions, defaultProperties } from "../default.js";
+import type { CSSRuleListLike } from "../sheet.js";
+import { type Tag, createTag } from "../tag.js";
+import { createMockCSSGroupRuleLike } from "./mock/MockCSSGroupingRuleLike.js";
 
 describe("default", () => {
   const el = document.createElement("div");

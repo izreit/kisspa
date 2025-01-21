@@ -1,5 +1,5 @@
-import { autorun, bindObserver, cancelAutorun, observe } from "./core";
-import { decimated } from "./decimated";
+import { autorun, bindObserver, cancelAutorun, observe } from "./core.js";
+import { decimated } from "./decimated.js";
 
 export interface AutorunDecimatedResult {
   fun: () => Promise<void>;

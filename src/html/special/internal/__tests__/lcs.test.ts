@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { lcs } from "../lcs";
+import { lcs } from "../lcs.js";
 
 function charLcs(a: string, b: string): string {
   return lcs(a.split(""), b.split("")).join("");

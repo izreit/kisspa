@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decimated } from "../decimated";
+import { decimated } from "../decimated.js";
 
 describe("decimated", () => {
   it("delays the wrapped function", async () => {

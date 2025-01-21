@@ -1,9 +1,9 @@
-import { dceNeverReach, throwError } from "./assert";
-import { decimated } from "./decimated";
-import { type Mapset, createMapset } from "./internal/mapset";
-import { type Key, type Observer, type Target, type Wrapped, createRefTable } from "./internal/reftable";
-import { type ScopedStack, createScopedStack } from "./internal/stack";
-import { type Trie, createTrie } from "./internal/trie";
+import { dceNeverReach, throwError } from "./assert.js";
+import { decimated } from "./decimated.js";
+import { type Mapset, createMapset } from "./internal/mapset.js";
+import { type Key, type Observer, type Target, type Wrapped, createRefTable } from "./internal/reftable.js";
+import { type ScopedStack, createScopedStack } from "./internal/stack.js";
+import { type Trie, createTrie } from "./internal/trie.js";
 
 export interface StoreSetterOptions {
   lazyFlush?: boolean;

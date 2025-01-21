@@ -1,4 +1,4 @@
-import { createTag } from "./tag";
+import { createTag } from "./tag.js";
 
 const minWidthStr = (n: number) => `@media (min-width: ${n}px)`;
 

@@ -1,7 +1,7 @@
-import { type AssembleContext, type Backing, assemble, assignLocation, createBackingCommon, createLocation, createSpecial, disposeBackings, insertBackings, tailOf, tailOfBackings } from "../core/backing";
-import type { PropChildren } from "../core/types";
-import { isNode } from "../core/util";
-import { lastOf, mapCoerce } from "../core/util";
+import { type AssembleContext, type Backing, assemble, assignLocation, createBackingCommon, createLocation, createSpecial, disposeBackings, insertBackings, tailOf, tailOfBackings } from "../core/backing.js";
+import type { PropChildren } from "../core/types.js";
+import { isNode } from "../core/util.js";
+import { lastOf, mapCoerce } from "../core/util.js";
 
 export namespace PortalDest {
   export type Props = {

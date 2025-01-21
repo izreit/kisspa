@@ -1,5 +1,5 @@
-import { type Backing, assemble, createLocation } from "./backing";
-import type { JSXNode } from "./types";
+import { type Backing, assemble, createLocation } from "./backing.js";
+import type { JSXNode } from "./types.js";
 
 export interface Root {
   attach(jnode: JSXNode): Promise<unknown>;

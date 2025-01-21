@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import * as cloneutil from "../cloneutil";
-import { autorun, bindObserver, cancelAutorun, debugGetInternal, observe, unwatch, watchDeep, watchShallow, withoutObserver } from "../core";
-import type { Key } from "../internal/reftable";
-import { createLogBuffer } from "./testutil";
+import * as cloneutil from "../cloneutil.js";
+import { autorun, bindObserver, cancelAutorun, debugGetInternal, observe, unwatch, watchDeep, watchShallow, withoutObserver } from "../core.js";
+import type { Key } from "../internal/reftable.js";
+import { createLogBuffer } from "./testutil.js";
 
 describe("microstore", () => {
   it("can be read/modified", () => {

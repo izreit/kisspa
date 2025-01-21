@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { autorun, observe } from "../core";
-import { autorunDecimated, memoize, signal, watchProbe } from "../util";
-import { createLogBuffer } from "./testutil";
+import { autorun, observe } from "../core.js";
+import { autorunDecimated, memoize, signal, watchProbe } from "../util.js";
+import { createLogBuffer } from "./testutil.js";
 
 describe("util", () => {
   describe("autorunDecimated", () => {

@@ -1,8 +1,8 @@
-import { autorun, signal, withoutObserver } from "../../reactive";
-import { type AssembleContext, type Backing, assemble, createBackingCommon, createSpecial, tailOf } from "../core/backing";
-import type { JSXNode } from "../core/types";
-import { arrayify } from "../core/util";
-import { lcs } from "./internal/lcs";
+import { autorun, signal, withoutObserver } from "../../reactive/index.js";
+import { type AssembleContext, type Backing, assemble, createBackingCommon, createSpecial, tailOf } from "../core/backing.js";
+import type { JSXNode } from "../core/types.js";
+import { arrayify } from "../core/util.js";
+import { lcs } from "./internal/lcs.js";
 
 export namespace For {
   export type ForCallback<E> = (el: E, i: () => number) => JSXNode;

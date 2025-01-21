@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { observe } from "../../reactive";
-import { Dynamic, type Root, createRoot, h } from "../index";
+import { observe } from "../../reactive/index.js";
+import { Dynamic, type Root, createRoot, h } from "../index.js";
 
 describe("Dynamic", () => {
   let elem: HTMLElement;

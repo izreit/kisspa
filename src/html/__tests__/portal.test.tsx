@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { observe, signal } from "../../reactive";
-import { type JSXNode, Portal, PortalDest, type Root, Show, createRoot, h } from "../index";
+import { observe, signal } from "../../reactive/index.js";
+import { type JSXNode, Portal, PortalDest, type Root, Show, createRoot, h } from "../index.js";
 
 describe("Portal", () => {
   let elem: HTMLElement;
