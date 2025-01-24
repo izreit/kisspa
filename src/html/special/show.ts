@@ -5,17 +5,17 @@ import { Match, createSwitchContextValue, switchContextKey } from "./switch.js";
 export namespace Show {
   export interface WhenProps {
     when: () => boolean;
-    guarded?: false;
+    capture?: false;
     fallback?: JSXNode;
     children?: PropChildren;
   }
-  export interface GuardProps<T> {
-    when: () => Exclude<T, boolean> | false;
-    guarded: true;
+  export interface CaptureProps<T> {
+    when: () => Exclude<T, boolean | null | undefined> | false | null | undefined;
+    capture: true;
     fallback?: JSXNode;
     children?: (v: () => Exclude<T, boolean>) => PropChildren;
   }
-  export type Props<T> = WhenProps | GuardProps<T>;
+  export type Props<T> = WhenProps | CaptureProps<T>;
 }
 
 export const Show = createSpecial(<P>(actx: AssembleContext, props: Show.Props<P>): Backing => {

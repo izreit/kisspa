@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { observe } from "../../reactive/index.js";
-import { type JSXNode, type JSXNodeAsync, Match, type Root, Switch, createRoot, h } from "../index.js";
+import { Match, type Root, Switch, createRoot, h } from "../index.js";
 
 describe("Switch", () => {
   let elem: HTMLElement;
@@ -59,11 +59,11 @@ describe("Switch", () => {
     const [store, setStore] = observe({ x: 4 as number | string});
     root.attach(
       <Switch>
-        <Match when={() => (typeof store.x === "number" && 0 <= store.x && store.x < 10) && store.x} guarded>{x => (
+        <Match when={() => (typeof store.x === "number" && 0 <= store.x && store.x < 10) && store.x} capture>{x => (
           <div>smallnum:{() => x() * 3}</div>
         )}
         </Match>
-        <Match when={() => (typeof store.x === "string") && store.x} guarded>{(val) => (
+        <Match when={() => (typeof store.x === "string") && store.x} capture>{(val) => (
           <div>str:{() => val().charCodeAt(0)}</div>
         )}
         </Match>
@@ -82,11 +82,11 @@ describe("Switch", () => {
     const [store, setStore] = observe({ x: 4 as number | string});
     root.attach(
       <Switch>
-        <Match when={() => (typeof store.x === "number" && 0 <= store.x && store.x < 10) && store.x} guarded>{x => (
+        <Match when={() => (typeof store.x === "number" && 0 <= store.x && store.x < 10) && store.x} capture>{x => (
           <div>smallnum:{() => x() * 3}</div>
         )}
         </Match>
-        <Match when={() => (typeof store.x === "string") && store.x} guarded>{(val) => (
+        <Match when={() => (typeof store.x === "string") && store.x} capture>{(val) => (
           <div>str:{() => val().charCodeAt(0)}</div>
         )}
         </Match>

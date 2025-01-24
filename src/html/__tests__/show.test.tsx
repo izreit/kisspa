@@ -53,13 +53,13 @@ describe("Show", () => {
     expect(elem.innerHTML).toBe("<div><p>Foo 2</p></div>");
   });
 
-  it("propagates type guard when guareded", () => {
+  it("propagates type guard when capture", () => {
     const [store, setStore] = observe({ foo: 0 as number | string });
     root.attach(
       <div>
         <Show
           when={() => typeof store.foo === "number" && store.foo}
-          guarded
+          capture
           fallback={<span>Bar</span>}
         >{val =>
           <p>Foo {() => val() * 3}</p>

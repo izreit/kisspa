@@ -9,7 +9,7 @@ interface SwitchContextValue {
 }
 
 export function createSwitchContextValue(): SwitchContextValue {
-  const notFalse = (v: unknown) => v !== false;
+  const stricterIsTruthy = (v: unknown) => v != null && v !== false;
   const [activeIndex, setActiveIndex] = signal<number>(-1);
   const stats: unknown[] = [];
   const judges: ((v: unknown) => unknown)[] = [];
@@ -18,17 +18,17 @@ export function createSwitchContextValue(): SwitchContextValue {
   return {
     register_(cond, strict) {
       const idx = stats.push(false) - 1;
-      const [guardedValue, setGuardedValue] = signal<unknown>(null);
-      const judge = strict ? notFalse : Boolean;
+      const [capturedValue, setCapturedValue] = signal<unknown>(null);
+      const judge = strict ? stricterIsTruthy : Boolean;
       judges[idx] = judge;
       disposers.push(
-        watchProbe(cond, setGuardedValue, judge),
+        watchProbe(cond, setCapturedValue, judge),
         autorun(() => {
           stats[idx] = cond();
           setActiveIndex(stats.findIndex((v, i) => judges[i](v)));
         })
       );
-      return [() => activeIndex() === idx, guardedValue];
+      return [() => activeIndex() === idx, capturedValue];
     },
     dispose_() { callAll(disposers); }
   };
@@ -50,28 +50,28 @@ export const Switch = createSpecial((actx: AssembleContext, props: Switch.Props)
 export namespace Match {
   export interface WhenProps {
     when?: () => boolean;
-    guarded?: false;
+    capture?: false;
     children?: PropChildren;
   }
-  export interface GuardProps<T> {
-    when: () => Exclude<T, boolean> | false;
-    guarded: true;
+  export interface CaptureProps<T> {
+    when: () => Exclude<T, boolean | null | undefined> | false | null | undefined;
+    capture: true;
     children?: (v: () => Exclude<T, boolean>) => PropChildren;
   }
-  export type Props<T> = WhenProps | GuardProps<T>;
+  export type Props<T> = WhenProps | CaptureProps<T>;
 }
 
 export const Match = createSpecial(<T>(actx: AssembleContext, props: Match.Props<T>): Backing => {
-  const { when, guarded, children } = props;
-  const [isActive, guardedValue] = (actx[switchContextKey] as SwitchContextValue).register_(when || (() => true), guarded);
+  const { when, capture, children } = props;
+  const [isActive, capturedValue] = (actx[switchContextKey] as SwitchContextValue).register_(when || (() => true), capture);
   const base = createSimpleBacking("Match");
 
   base.addDisposer_(
     watchProbe(isActive, toShow => {
       let bs: Backing[] | null | undefined;
       if (toShow && children) {
-        const cs = guarded ?
-          children(guardedValue as (() => Exclude<T, boolean>)) : // 'as' is inevitable since it's provided by switchCtx...
+        const cs = capture ?
+          children(capturedValue as (() => Exclude<T, boolean>)) : // 'as' is inevitable since it's provided by switchCtx...
           children;
         bs = mapCoerce(cs, c => assemble(actx, c));
       }
