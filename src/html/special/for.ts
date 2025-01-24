@@ -1,5 +1,6 @@
 import { autorun, signal, withoutObserver } from "../../reactive/index.js";
 import { type AssembleContext, type Backing, assemble, createBackingCommon, createSpecial, tailOf } from "../core/backing.js";
+import { deprop } from "../core/helpers.js";
 import type { JSXNode } from "../core/types.js";
 import { arrayify } from "../core/util.js";
 import { lcs } from "./internal/lcs.js";
@@ -8,7 +9,7 @@ export namespace For {
   export type ForCallback<E> = (el: E, i: () => number) => JSXNode;
 
   export interface Props<E> {
-    each: () => E[];
+    each: E[] | (() => E[]);
     key?: (el: E, ix: number) => any;
     children: ForCallback<E> | ForCallback<E>[];
   }
@@ -27,7 +28,7 @@ export const For = createSpecial(function For<E>(actx: AssembleContext, props: F
   base.addDisposer_(autorun(() => {
     const nextTable: Map<any, Backing> = new Map();
     const nextBackings: Backing[] = [];
-    const es = each();
+    const es = deprop(each);
     for (let i = 0; i < es.length; ++i) { // not map() but for-loop, to skip deleted elements.
       const e = es[i];
       if (e != null) {

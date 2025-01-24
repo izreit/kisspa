@@ -165,4 +165,38 @@ describe("For", () => {
     // But callbacks of <For> correspondings them are not called again: only indices are updated
     expect(reapLog()).toEqual(["1judy"]);
   });
+
+  it("accepts static array", () => {
+    const [store, setStore] = observe({
+      peoples: [
+        { name: "john", age: 50 },
+        { name: "jay", age: 30 },
+        { name: "jack", age: 60 },
+      ]
+    });
+
+    root.attach(
+      <For each={store.peoples}>{(people) => {
+        return <div>{() => people.name} <span>({() => people.age})</span></div>
+      }}</For>
+    );
+    expect(elem.innerHTML).toBe([
+      "<div>john <span>(50)</span></div>",
+      "<div>jay <span>(30)</span></div>",
+      "<div>jack <span>(60)</span></div>",
+    ].join(""));
+
+    setStore(store => {
+      store.peoples.push({ name: "bob", age: 3 });
+      store.peoples[1].age++;
+    });
+    // Although `each` is not function, <For/> is still reactive because `each` is always array but not primitive.
+    // We may not need to accept functions for `each`?
+    expect(elem.innerHTML).toBe([
+      "<div>john <span>(50)</span></div>",
+      "<div>jay <span>(31)</span></div>",
+      "<div>jack <span>(60)</span></div>",
+      "<div>bob <span>(3)</span></div>",
+    ].join(""));
+  });
 });
