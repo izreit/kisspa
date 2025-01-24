@@ -163,7 +163,7 @@ function copyProps<T extends object>(lhs: T, rhs: T): void {
   objForEach(rhs, (v, k) => { lhs[k] = v; });
 }
 
-const reNum = /^\d+(?:\.5)?$/;
+const reNum = /^-?\d+(?:\.5)?$/;
 
 function replaceValue(val: string[], config: Tag.Config): void {
   const { colors: color, colorRe, num } = config;

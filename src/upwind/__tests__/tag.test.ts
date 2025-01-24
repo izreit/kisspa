@@ -226,6 +226,18 @@ describe("tag", () => {
     ]);
   });
 
+  it("complete number units", () => {
+    $.extend({
+      num: n => `${n * 10}px`
+    });
+    const { classes, rule } = run($`margin:2.5 padding-bottom:-0.5`)
+    expect(classes).toEqual(["margin:2.5", "padding-bottom:-0.5"]);
+    expect(rule).toMatchObject([
+      { cssText: ".margin\\:2\\.5{margin: 25px}" },
+      { cssText: ".padding-bottom\\:-0\\.5{padding-bottom: -5px}" },
+    ]);
+  });
+
   it("can custom number units", () => {
     $.extend({
       num: n => `${n * 10}px`
