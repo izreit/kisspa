@@ -1,5 +1,16 @@
 # kisspa
 
+## 0.3.0
+
+### Minor Changes
+
+- d985640: accept non-function for `each` prop of <For/>
+- 21dda91: Introduce `capture` prop for Show/Match, which reject not only false but also nullish, instead of `guareded`
+
+### Patch Changes
+
+- 7152d64: [upwind] fix ignored unit-less negative number
+
 ## 0.2.1
 
 ### Patch Changes
