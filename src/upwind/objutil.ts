@@ -1,4 +1,3 @@
-
 export const createEmptyObj = () => Object.create(null);
 
 export const objKeys = <T extends { [key: string]: any }>(o: T): (string & keyof T)[] => (Object.keys(o) as (string & keyof T)[]);

@@ -86,8 +86,8 @@ describe("parse", () => {
           begin: 10,
           end: 24,
           mods: [
-            { begin: 3, end: 9, modKey: ":hover", target: undefined },
-            { begin: 0, end: 2, modKey: "sm", target: undefined },
+            { modKey: ":hover", target: undefined, raw: ":hover" },
+            { modKey: "sm", target: undefined, raw: "sm" },
           ],
           name: "border-top",
           value: ["10%"]
@@ -106,7 +106,7 @@ describe("parse", () => {
           begin: 14,
           end: src.length,
           mods: [
-            { begin: 0, end: 13, modKey: ":hover", target: { name: "group", rel: "~" } },
+            { modKey: ":hover", target: { name: "group", rel: "~" }, raw: ":hover_group~" },
           ],
           name: "border-top",
           value: ["10%"]
@@ -125,7 +125,7 @@ describe("parse", () => {
           begin: 13,
           end: src.length,
           mods: [
-            { begin: 0, end: 12, modKey: ":hover", target: { name: "group", rel: null } },
+            { modKey: ":hover", target: { name: "group", rel: null }, raw: ":hover_group" },
           ],
           name: "bg",
           value: ["red"]
@@ -144,8 +144,8 @@ describe("parse", () => {
           begin: 11,
           end: 25,
           mods: [
-            { begin: 3, end: 9, modKey: ":hover", target: undefined },
-            { begin: 0, end: 2, modKey: "sm", target: undefined },
+            { modKey: ":hover", target: undefined, raw: ":hover" },
+            { modKey: "sm", target: undefined, raw: "sm" },
           ],
           name: "border-top",
           value: ["10%"]
@@ -154,8 +154,8 @@ describe("parse", () => {
           begin: 26,
           end: 35,
           mods: [
-            { begin: 3, end: 9, modKey: ":hover", target: undefined },
-            { begin: 0, end: 2, modKey: "sm", target: undefined },
+            { modKey: ":hover", target: undefined, raw: ":hover" },
+            { modKey: "sm", target: undefined, raw: "sm" },
           ],
           name: "color",
           value: ["red"]
@@ -203,7 +203,7 @@ describe("parse", () => {
         {
           begin: 3,
           end: 23,
-          mods: [{ begin: 0, end: 2, modKey: "sm", target: undefined }],
+          mods: [{ modKey: "sm", target: undefined, raw: "sm" }],
           name: "text-decoration",
           value: ["auto"]
         },

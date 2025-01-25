@@ -50,7 +50,7 @@ export namespace JSXInternal {
 			| 'removeProperty'
 			| 'getPropertyValue'
 			| 'getPropertyPriority'
-		>]?: AccessorOr<string | number | null | undefined>;
+		>]?: string | number | null | undefined | Accessor<string | number | null | undefined>;
 	};
 	export type AllCSSProperties = {
 		[key: string]: AccessorOr<string | number | null | undefined>;

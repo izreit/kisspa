@@ -1,28 +1,35 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { CSSRuleListLike } from "../sheet.js";
-import { type Tag, createTag } from "../tag.js";
+import { type Upwind, createUpwind } from "../tag.js";
 import { createMockCSSGroupRuleLike } from "./mock/MockCSSGroupingRuleLike.js";
 
 describe("tag", () => {
   const el = document.createElement("div");
-  let sheet: Tag.StyleSheetLike;
-  let $: Tag;
+  let sheet: Upwind.StyleSheetLike;
+  let $: Upwind;
 
   beforeEach(() => {
     sheet = createMockCSSGroupRuleLike("<root>");
-    $ = createTag(sheet);
+    $ = createUpwind(sheet);
   });
 
-  function run(src: () => string): { classes: string[], rule: CSSRuleListLike } {
-    el.className = src();
-    const classes: string[] = [];
-    // biome-ignore lint/complexity/noForEach: classList cannot be iterated?
-    el.classList.forEach(c => classes.push(c));
-    return { classes, rule: sheet.cssRules };
+  function makeTestFun(...args: (string | Upwind.ExtendedDOMCSSProperties)[]): () => { classes: string[], rule: CSSRuleListLike } {
+    const fun = $(...args);
+    return () => {
+      el.className = fun();
+      const classes: string[] = [];
+      // biome-ignore lint/complexity/noForEach: classList cannot be iterated?
+      el.classList.forEach(c => classes.push(c));
+      return { classes, rule: sheet.cssRules };
+    };
+  }
+
+  function run(...args: (string | Upwind.ExtendedDOMCSSProperties)[]): { classes: string[], rule: CSSRuleListLike } {
+    return makeTestFun(...args)();
   }
 
   it("handles simple declarations", () => {
-    const { classes, rule } = run($`margin:3px text-decoration:underline`)
+    const { classes, rule } = run("margin:3px text-decoration:underline");
     expect(classes).toEqual(["margin:3px", "text-decoration:underline"]);
     expect(rule).toMatchObject([
       { cssText: ".margin\\:3px{margin: 3px}" },
@@ -36,35 +43,25 @@ describe("tag", () => {
       { cssText: ".text-decoration\\:underline{text-decoration: underline}" },
     ] as const;
 
-    const { classes, rule } = run($`margin:3px text-decoration:underline`);
+    const { classes, rule } = run("margin:3px text-decoration:underline");
     expect(classes).toEqual(["margin:3px", "text-decoration:underline"]);
     expect(rule).toMatchObject(expectingRule);
 
-    const { classes: c2, rule: r2 } = run($`margin:3px`)
+    const { classes: c2, rule: r2 } = run("margin:3px")
     expect(c2).toEqual(["margin:3px"]);
     expect(r2).toMatchObject(expectingRule);
 
-    const { classes: c3, rule: r3 } = run($`margin:3px text-decoration:underline`)
+    const { classes: c3, rule: r3 } = run("margin:3px text-decoration:underline")
     expect(c3).toEqual(["margin:3px", "text-decoration:underline"]);
     expect(r3).toMatchObject(expectingRule);
 
-    const { classes: c4, rule: r4 } = run($`  `)
+    const { classes: c4, rule: r4 } = run("  ")
     expect(c4).toEqual([]);
     expect(r4).toMatchObject(expectingRule);
   });
 
-  it("can have interpolated string", () => {
-    const { classes, rule } = run($`margin-bottom:1rem ${"color:" + "black"} padding:1`);
-    expect(classes).toEqual(["margin-bottom:1rem", "color:black", "padding:1"]);
-    expect(rule).toMatchObject([
-      { cssText: ".margin-bottom\\:1rem{margin-bottom: 1rem}" },
-      { cssText: ".color\\:black{color: black}" },
-      { cssText: ".padding\\:1{padding: 0.25rem}" },
-    ]);
-  });
-
   it("can have function", () => {
-    const { classes, rule } = run($`margin-bottom:1rem ${() => "color:black"}`)
+    const { classes, rule } = run("margin-bottom:1rem", { color: () => "black" });
     expect(classes).toEqual(["margin-bottom:1rem", "color:black"]);
     expect(rule).toMatchObject([
       { cssText: ".margin-bottom\\:1rem{margin-bottom: 1rem}" },
@@ -73,7 +70,7 @@ describe("tag", () => {
   });
 
   it("ignores normal CSS class name", () => {
-    const { classes, rule } = run($`margin-bottom:1rem foo color:black should-be-ignored`)
+    const { classes, rule } = run("margin-bottom:1rem foo color:black should-be-ignored")
     expect(classes).toEqual(["margin-bottom:1rem", "foo", "color:black", "should-be-ignored"]);
     expect(rule).toMatchObject([
       { cssText: ".margin-bottom\\:1rem{margin-bottom: 1rem}" },
@@ -82,7 +79,7 @@ describe("tag", () => {
   });
 
   it("supports whitespace and udnerscore-separated values", () => {
-    const { classes, rule } = run($`font-family:Verdana,_'"MS Gothic"'`)
+    const { classes, rule } = run(`font-family:Verdana,_'"MS Gothic"'`);
     expect(classes).toEqual(["font-family:Verdana,_'\"MS_Gothic\"'"]);
     expect(rule).toMatchObject([
       { cssText: ".font-family\\:Verdana\\,_\\'\\\"MS_Gothic\\\"\\'{font-family: Verdana, \"MS Gothic\"}" },
@@ -90,7 +87,7 @@ describe("tag", () => {
   });
 
   it("can specify pseudo class / :hover, :active", () => {
-    const { classes, rule } = run($`:hover/background:red :active/padding:1px`)
+    const { classes, rule } = run(":hover/background:red :active/padding:1px")
     expect(classes).toEqual([":hover.background:red", ":active.padding:1px"]);
     expect(rule).toMatchObject([
       { cssText: ".\\:hover\\.background\\:red:hover{background: red}" },
@@ -99,7 +96,7 @@ describe("tag", () => {
   });
 
   it("can specify pseudo class of following sibling ~", () => {
-    const { classes, rule } = run($`:hover_group1~/background:red`)
+    const { classes, rule } = run(":hover_group1~/background:red")
     expect(classes).toEqual([":hover_group1~.background:red"]);
     expect(rule).toMatchObject([
       { cssText: ".group1:hover ~ .\\:hover_group1\\~\\.background\\:red{background: red}" },
@@ -107,7 +104,7 @@ describe("tag", () => {
   });
 
   it("can specify pseudo class of parnt >", () => {
-    const { classes, rule } = run($`:hover_group1>/background:red`)
+    const { classes, rule } = run(":hover_group1>/background:red")
     expect(classes).toEqual([":hover_group1>.background:red"]);
     expect(rule).toMatchObject([
       { cssText: ".group1:hover > .\\:hover_group1\\>\\.background\\:red{background: red}" },
@@ -115,7 +112,7 @@ describe("tag", () => {
   });
 
   it("can specify pseudo class of ancestor", () => {
-    const { classes, rule } = run($`:hover_group1/background:red`)
+    const { classes, rule } = run(":hover_group1/background:red")
     expect(classes).toEqual([":hover_group1.background:red"]);
     expect(rule).toMatchObject([
       { cssText: ".group1:hover  .\\:hover_group1\\.background\\:red{background: red}" },
@@ -123,7 +120,7 @@ describe("tag", () => {
   });
 
   it("ignores unknown (whole) modifier", () => {
-    const { classes, rule } = run($`foo/background:red`)
+    const { classes, rule } = run("foo/background:red")
     expect(classes).toEqual(["foo.background:red"]);
     expect(rule).toMatchObject([
       { cssText: ".foo\\.background\\:red{background: red}" },
@@ -134,7 +131,7 @@ describe("tag", () => {
     $.extend({
       prefix: "pfx_",
     });
-    const { classes, rule } = run($`background:red :disabled/border-width:4px_1px font-weight:bold`)
+    const { classes, rule } = run("background:red :disabled/border-width:4px_1px font-weight:bold")
     expect(classes).toEqual(["pfx_background:red", "pfx_:disabled.border-width:4px_1px", "pfx_font-weight:bold"]);
     expect(rule).toMatchObject([
       { cssText: ".pfx_background\\:red{background: red}" },
@@ -154,7 +151,7 @@ describe("tag", () => {
         },
       },
     });
-    const { classes, rule } = run($`sm/background:red :disabled/border-width:4px_1px dark/font-weight:bold`)
+    const { classes, rule } = run("sm/background:red :disabled/border-width:4px_1px dark/font-weight:bold")
     expect(classes).toEqual(["sm.background:red", ":disabled.border-width:4px_1px", "dark.font-weight:bold"]);
     expect(rule).toMatchObject([
       { cssText: ".\\:disabled\\.border-width\\:4px_1px:disabled{border-width: 4px 1px}" },
@@ -180,7 +177,7 @@ describe("tag", () => {
         },
       },
     });
-    const { classes, rule } = run($`sm/background:red :disabled/border-width:4px_1px dark/font-weight:bold`)
+    const { classes, rule } = run("sm/background:red :disabled/border-width:4px_1px dark/font-weight:bold")
     expect(classes).toEqual(["pfx_sm.background:red", "pfx_:disabled.border-width:4px_1px", "pfx_dark.font-weight:bold"]);
     expect(rule).toMatchObject([
       { cssText: ".pfx_\\:disabled\\.border-width\\:4px_1px:disabled{border-width: 4px 1px}" },
@@ -201,7 +198,7 @@ describe("tag", () => {
         "m<trbl>": "margin<trbl>",
       }
     });
-    const { classes, rule } = run($`deco:underline m:1 mb:3 :hover/mx:2px`);
+    const { classes, rule } = run("deco:underline m:1 mb:3 :hover/mx:2px");
     expect(classes).toEqual(["deco:underline", "m:1", "mb:3", ":hover.mx:2px"]);
     expect(rule).toMatchObject([
       { cssText: ".deco\\:underline{text-decoration: underline}" },
@@ -217,7 +214,7 @@ describe("tag", () => {
         "<min-|max-|>w": "<>width",
       }
     });
-    const { classes, rule } = run($`w:10px min-w:5px max-w:20px`);
+    const { classes, rule } = run("w:10px min-w:5px max-w:20px");
     expect(classes).toEqual(["w:10px", "min-w:5px", "max-w:20px"]);
     expect(rule).toMatchObject([
       { cssText: ".w\\:10px{width: 10px}" },
@@ -230,7 +227,7 @@ describe("tag", () => {
     $.extend({
       num: n => `${n * 10}px`
     });
-    const { classes, rule } = run($`margin:2.5 padding-bottom:-0.5`)
+    const { classes, rule } = run("margin:2.5 padding-bottom:-0.5")
     expect(classes).toEqual(["margin:2.5", "padding-bottom:-0.5"]);
     expect(rule).toMatchObject([
       { cssText: ".margin\\:2\\.5{margin: 25px}" },
@@ -242,7 +239,7 @@ describe("tag", () => {
     $.extend({
       num: n => `${n * 10}px`
     });
-    const { classes, rule } = run($`margin:1 padding-bottom:3`)
+    const { classes, rule } = run("margin:1 padding-bottom:3")
     expect(classes).toEqual(["margin:1", "padding-bottom:3"]);
     expect(rule).toMatchObject([
       { cssText: ".margin\\:1{margin: 10px}" },
@@ -259,7 +256,7 @@ describe("tag", () => {
         }
       }
     });
-    const { classes, rule } = run($`color:myGray-100 background:myGray-200/50`)
+    const { classes, rule } = run("color:myGray-100 background:myGray-200/50")
     expect(classes).toEqual(["color:myGray-100", "background:myGray-200/50"]);
     expect(rule).toMatchObject([
       { cssText: ".color\\:myGray-100{color: #fefefe}" },
@@ -277,7 +274,7 @@ describe("tag", () => {
         dflex: "d:flex",
       }
     });
-    const { classes, rule } = run($`dflex uline`)
+    const { classes, rule } = run("dflex uline")
     expect(classes).toEqual(["d:flex", "text-decoration:underline"]);
     expect(rule).toMatchObject([
       // order follows to `aliases` definition but not the usage ($`...`),
@@ -299,12 +296,123 @@ describe("tag", () => {
         flash: "0%/op:10% to/opa90",
       },
     });
-    const { classes, rule } = run($`animation:flash_0.8s_ease-in-out_infinite`)
+    const { classes, rule } = run("animation:flash_0.8s_ease-in-out_infinite")
     expect(classes).toEqual(["animation:flash_0.8s_ease-in-out_infinite"]);
     expect(rule).toMatchObject([
       { cssText: ".opacity\\:90\\%{opacity: 90%}" },
       { cssText: "@keyframes flash {0%{opacity: 10%}to{opacity:90%}}" },
       { cssText: ".animation\\:flash_0\\.8s_ease-in-out_infinite{animation: flash 0.8s ease-in-out infinite}" },
+    ]);
+  });
+
+  it("can use custom modifiers", () => {
+    $.extend({
+      modifiers: {
+        conditions: {
+          sm: "@media (min-width: 640px)",
+        },
+        selectors: {
+          dark: ":is(.dark *)",
+        },
+      },
+    });
+    const { classes, rule } = run("sm/background:red :disabled/border-width:4px_1px dark/font-weight:bold")
+    expect(classes).toEqual(["sm.background:red", ":disabled.border-width:4px_1px", "dark.font-weight:bold"]);
+    expect(rule).toMatchObject([
+      { cssText: ".\\:disabled\\.border-width\\:4px_1px:disabled{border-width: 4px 1px}" },
+      { cssText: ".dark\\.font-weight\\:bold:is(.dark *){font-weight: bold}" },
+      {
+        conditionText: "(min-width: 640px)",
+        cssRules: [
+           { cssText: ".sm\\.background\\:red{background: red}" },
+        ],
+      },
+    ]);
+  });
+
+  it("parses modifiers in object-style", () => {
+    $.extend({
+      modifiers: {
+        conditions: {
+          sm: "@media (min-width: 640px)",
+        },
+        selectors: {
+          dark: ":is(.dark *)",
+        },
+      },
+    });
+    const { classes, rule } = run("sm/color:blue", {
+      "sm": {
+        background: "red",
+      },
+      ":disabled": {
+        "border-width": "4px 1px",
+      },
+      "": { // ignored since invalid
+        color: "black",
+      },
+      "dark": {
+        "animation": null,
+        "font-weight": "bold",
+      },
+    });
+    expect(classes).toEqual(["sm.color:blue", "sm.background:red", ":disabled.border-width:4px_1px", "dark.font-weight:bold"]);
+    expect(rule).toMatchObject([
+      { cssText: ".\\:disabled\\.border-width\\:4px_1px:disabled{border-width: 4px 1px}" },
+      { cssText: ".dark\\.font-weight\\:bold:is(.dark *){font-weight: bold}" },
+      {
+        conditionText: "(min-width: 640px)",
+        cssRules: [
+           { cssText: ".sm\\.color\\:blue{color: blue}" },
+           { cssText: ".sm\\.background\\:red{background: red}" },
+        ],
+      },
+    ]);
+  });
+
+  it("accepts function in object-style", () => {
+    $.extend({
+      modifiers: {
+        conditions: {
+          sm: "@media (min-width: 640px)",
+        },
+        selectors: {
+          dark: ":is(.dark *)",
+        },
+      },
+    });
+
+    const stateLike = { bg: "silver" };
+    const runTest = makeTestFun("sm/color:blue", {
+      "sm": {
+        background: () => stateLike.bg,
+      },
+    });
+
+    const { classes, rule } = runTest();
+    expect(classes).toEqual(["sm.color:blue", "sm.background:silver"]);
+    expect(rule).toMatchObject([
+      {
+        conditionText: "(min-width: 640px)",
+        cssRules: [
+           { cssText: ".sm\\.color\\:blue{color: blue}" },
+           { cssText: ".sm\\.background\\:silver{background: silver}" },
+        ],
+      },
+    ]);
+
+    stateLike.bg = "#333";
+    const { classes: classes2, rule: rule2 } = runTest();
+    expect(classes2).toEqual(["sm.color:blue", "sm.background:#333"]);
+    expect(rule2).toMatchObject([
+      {
+        conditionText: "(min-width: 640px)",
+        cssRules: [
+           { cssText: ".sm\\.color\\:blue{color: blue}" },
+           { cssText: ".sm\\.background\\:silver{background: silver}" },
+           { cssText: ".sm\\.background\\:\\#333{background: #333}" },
+        ],
+      },
     ]);
   });
 });

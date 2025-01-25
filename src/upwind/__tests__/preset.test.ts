@@ -1,21 +1,21 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { presetColors } from "../preset/colors.js";
 import type { CSSRuleListLike } from "../sheet.js";
-import { type Tag, createTag } from "../tag.js";
+import { type Upwind, createUpwind } from "../tag.js";
 import { createMockCSSGroupRuleLike } from "./mock/MockCSSGroupingRuleLike.js";
 
 describe("tag", () => {
   const el = document.createElement("div");
-  let sheet: Tag.StyleSheetLike;
-  let $: Tag;
+  let sheet: Upwind.StyleSheetLike;
+  let $: Upwind;
 
   beforeEach(() => {
     sheet = createMockCSSGroupRuleLike("<root>");
-    $ = createTag(sheet);
+    $ = createUpwind(sheet);
   });
 
-  function run(src: () => string): { classes: string[], rule: CSSRuleListLike } {
-    el.className = src();
+  function run(...args: (string | Upwind.ExtendedDOMCSSProperties)[]): { classes: string[], rule: CSSRuleListLike } {
+    el.className = $(...args)();
     const classes: string[] = [];
     // biome-ignore lint/complexity/noForEach: classList cannot be iterated?
     el.classList.forEach(c => classes.push(c));
@@ -24,7 +24,7 @@ describe("tag", () => {
 
   it("provides tailwind-compatible color names", () => {
     $.extend({ colors: presetColors });
-    const { classes, rule } = run($`background:sky-500 color:neutral-50`);
+    const { classes, rule } = run("background:sky-500 color:neutral-50");
     expect(classes).toEqual(["background:sky-500", "color:neutral-50"]);
     expect(rule).toMatchObject([
       { cssText: ".background\\:sky-500{background: #0ea5e9}" },
