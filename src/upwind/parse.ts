@@ -183,7 +183,17 @@ function matchRe(src: string, ix: number, re: RegExp): ParseResult<RegExpMatchAr
   return m && { val_: m, begin_: ix, end_: re.sticky ? re.lastIndex : m.index + m[0].length };
 }
 
-export function parseValRaw(src: string | number | null | undefined): string[] {
+export function rawParseModAndName(src: string, mods: Mod[]): [Mod[], string | undefined] {
+  let ix = 0;
+  let mMod: ParseResult<Mod> | null | undefined;
+  while ((mMod = parseMod(src, ix)) && (src[mMod.end_] === "/")) {
+    mods.push(mMod.val_);
+    ix = mMod.end_ + 1;
+  }
+  return [mods, parseName(src, ix)?.val_];
+}
+
+export function rawParseVal(src: string | number | null | undefined): string[] {
   if (src == null) return [];
   src = "" + src;
   const reSearchSpecial = / +|['"]|url\(/g;

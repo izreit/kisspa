@@ -1,7 +1,8 @@
+import type { Prop } from "../html/core/helpers.js";
 import type { JSXInternal } from "../html/core/jsx.js";
 import { isFunction, isString, mapCoerce } from "../html/core/util.js";
 import { createEmptyObj, objForEach, objKeys } from "./objutil.js";
-import { type Mod, parse, parseMod, parseValRaw } from "./parse.js";
+import { type Mod, parse, parseMod, rawParseModAndName, rawParseVal } from "./parse.js";
 import { type CSSGroupingRuleLike, type Sheet, createRootSheet } from "./sheet.js";
 
 export namespace Upwind {
@@ -9,7 +10,7 @@ export namespace Upwind {
 	export type ExtendedDOMCSSProperties = {
 		[key in keyof DOMCSSProperties]?: DOMCSSProperties[key];
   } | {
-		[key in string]?: key extends "$when" ? (() => boolean) : ExtendedDOMCSSProperties;
+		[key: string]: ExtendedDOMCSSProperties | Prop<string | number | null | undefined>;
   };
 
   export type ColorStr = string;
@@ -269,7 +270,6 @@ export function createUpwind(target?: Upwind.StyleSheetLike): Upwind {
   }
 
   function parseDOMCSSProperties(obj: Upwind.ExtendedDOMCSSProperties, modifiers: Mod[] = []): (string | (() => string))[] {
-    let cond: (() => boolean) | undefined;
     const ret: (string | (() => string))[] = [];
     objForEach(obj, (v, k) => {
       if (v && typeof v === "object") {
@@ -277,14 +277,15 @@ export function createUpwind(target?: Upwind.StyleSheetLike): Upwind {
         if (mod)
           ret.push(...parseDOMCSSProperties(v, modifiers.concat(mod)));
       } else if (v != null) {
-        // if (k === "$when")
-        //   cond = v as unknown as (() => boolean);
-        const vv = v as unknown as (string | number | (() => string | number | null | undefined));
-        ret.push(
-          isFunction(vv) ?
-            (() => register(k, parseValRaw(vv()), modifiers)) :
-            register(k, parseValRaw(vv), modifiers)
-        );
+        const [mods, name] = rawParseModAndName(k, modifiers.slice());
+        if (name) {
+          const vv = v as unknown as (string | number | (() => string | number | null | undefined));
+          ret.push(
+            isFunction(vv) ?
+              (() => register(name, rawParseVal(vv()), mods)) :
+              register(name, rawParseVal(vv), mods)
+          );
+        }
       }
     });
     return ret;
