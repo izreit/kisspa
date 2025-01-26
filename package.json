@@ -1,6 +1,6 @@
 {
   "name": "kisspa",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "lightweight JSX-based library with utility-first CSS to make SPA development simple",
   "type": "module",
   "types": "dist/full/upwind/bundle.d.js",
