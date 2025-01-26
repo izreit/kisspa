@@ -1,9 +1,27 @@
-import { isString, mapCoerce } from "../html/core/util.js";
+import type { Prop } from "../html/core/helpers.js";
+import type { JSXInternal } from "../html/core/jsx.js";
+import { isFunction, isString, mapCoerce } from "../html/core/util.js";
 import { createEmptyObj, objForEach, objKeys } from "./objutil.js";
-import { parse } from "./parse.js";
+import { type Mod, parse, parseMod, rawParseModAndName, rawParseVal } from "./parse.js";
 import { type CSSGroupingRuleLike, type Sheet, createRootSheet } from "./sheet.js";
 
-export namespace Tag {
+// Utility convert to kebab-case from lowerCamelCase (e.g. "background-image" from "backgroundImage")
+type Kebab<S extends string> =
+  S extends `webkit${infer Rest}`
+    ? `-webkit${Kebab<Rest>}`
+    : S extends `${infer Car}${infer Cdr}`
+      ? Car extends Uppercase<Car>
+        ? `-${Lowercase<Car>}${Kebab<Cdr>}`
+        : `${Car}${Kebab<Cdr>}`
+      : S;
+
+export namespace Upwind {
+	export type ExtendedDOMCSSProperties = {
+		[key in Kebab<keyof Omit<JSXInternal.DOMCSSProperties, number>>]?: Prop<string | null | undefined>;
+  } | {
+		[key: string]: ExtendedDOMCSSProperties | Prop<string | null | undefined>;
+  };
+
   export type ColorStr = string;
 
   export type StyleSheetLike = CSSGroupingRuleLike;
@@ -141,9 +159,9 @@ export namespace Tag {
   }
 }
 
-export interface Tag {
-  (strs: TemplateStringsArray, ...exprs: (string | (() => string))[]): () => string;
-  extend(opts: Tag.ExtendOptions): void;
+export interface Upwind {
+  (...args: (string | Upwind.ExtendedDOMCSSProperties)[]): () => string;
+  extend(opts: Upwind.ExtendOptions): void;
   add(rule: string): void;
 }
 
@@ -165,7 +183,7 @@ function copyProps<T extends object>(lhs: T, rhs: T): void {
 
 const reNum = /^-?\d+(?:\.5)?$/;
 
-function replaceValue(val: string[], config: Tag.Config): void {
+function replaceValue(val: string[], config: Upwind.Config): void {
   const { colors: color, colorRe, num } = config;
   for (let i = 0; i < val.length; ++i) {
     const v = val[i];
@@ -180,7 +198,7 @@ function replaceValue(val: string[], config: Tag.Config): void {
   }
 }
 
-export function createTag(target?: Tag.StyleSheetLike): Tag {
+export function createUpwind(target?: Upwind.StyleSheetLike): Upwind {
   if (!target) {
     const el = document.createElement("style");
     document.head.appendChild(el);
@@ -189,7 +207,7 @@ export function createTag(target?: Tag.StyleSheetLike): Tag {
   const sheet = createRootSheet(target);
   const addRule = (s: string) => sheet.addRule_(s);
 
-  const config: Tag.Config = {
+  const config: Upwind.Config = {
     prefix: "",
     conditionNames: new Set(),
     selectorModifiers: createEmptyObj(),
@@ -210,7 +228,36 @@ export function createTag(target?: Tag.StyleSheetLike): Tag {
   const cacheTable = new Map<string, string>();
   const registered = new Set<string>();
 
-  function parseAndRegister(s: string, checkFirst?: boolean, checkLast?: boolean): string {
+  function register(name: string, value: string[], modifiers: Mod[], declRaw?: string): string {
+    const { prefix, conditionNames: conditionNameTable, selectorModifiers: selmodsTable, } = config;
+    const modPrefix = modifiers.map(m => m.raw).join(".");
+    // escape " " to equivalent "_" because HTMLElement's `class` attribute uses " " as the delimiter.
+    const className = (`${prefix}${modPrefix ? (modPrefix + ".") : ""}${declRaw || `${name}:${value.join("_")}`}`).replace(/ /g, "_");
+    if (registered.has(className))
+      return className;
+
+    // wrap selector by selector modifiers (e.g. :active, :hover_peer~)
+    let selector = "." + CSS.escape(className);
+    let targetSheet: Sheet = sheet;
+    for (let i = 0; i < modifiers.length; ++i) {
+      const { modKey, target } = modifiers[i];
+      if (modKey[0] === ":") {
+        selector = target ? `.${target.name}${modKey} ${target.rel ?? ""} ${selector}` : `${selector}${modKey}`;
+      } else if (conditionNameTable.has(modKey)) {
+        targetSheet = targetSheet.sheetFor_(modKey);
+      } else {
+        const selmod = selmodsTable[modKey];
+        if (selmod)
+          selector = `${selmod[0]}${selector}${selmod[1]}`;
+      }
+    }
+
+    targetSheet.addRule_(`${selector}{${makeCSSDeclarations(name, value)}}`);
+    registered.add(className);
+    return className;
+  }
+
+  function parseAndRegister(s: string): string {
     const cache = cacheTable.get(s);
     if (cache) return cache;
 
@@ -218,46 +265,12 @@ export function createTag(target?: Tag.StyleSheetLike): Tag {
     if (parsed.val_.length === 0)
       return "";
 
-    if (checkFirst && !/^\s/.test(s))
-      console.warn(`upwind: ${JSON.stringify(s)} should begin with " " to be treated as such.`);
-    if (checkLast && !/\s$/.test(s))
-      console.warn(`upwind: ${JSON.stringify(s)} should end with " " to be treated as such.`);
-
-    const { prefix, conditionNames: conditionNameTable, selectorModifiers: selmodsTable, aliases: aliasTable } = config;
+    const { aliases: aliasTable } = config;
     const klasses = parsed.val_.map(decl => {
-      const { mods: modifiers, name, value, begin, end } = decl;
-
-      // no value (classname without ':') is treated as-is.
-      if (!value) {
-        return aliasTable[name] ?? name;
-      }
-
-      const declSrc = s.slice(begin, end);
-      const modPrefix = modifiers.map(m => s.slice(m.begin, m.end)).join(".");
-      // escape " " to equivalent "_" because HTMLElement's `class` attribute uses " " as the delimiter.
-      const className = (`${prefix}${modPrefix ? (modPrefix + ".") : ""}${declSrc}`).replace(/ /g, "_");
-      if (registered.has(className))
-        return className;
-
-      // wrap selector by selector modifiers (e.g. :active, :hover_peer~)
-      let selector = "." + CSS.escape(className);
-      let targetSheet: Sheet = sheet;
-      for (let i = 0; i < modifiers.length; ++i) {
-        const { modKey, target } = modifiers[i];
-        if (modKey[0] === ":") {
-          selector = target ? `.${target.name}${modKey} ${target.rel ?? ""} ${selector}` : `${selector}${modKey}`;
-        } else if (conditionNameTable.has(modKey)) {
-          targetSheet = targetSheet.sheetFor_(modKey);
-        } else {
-          const selmod = selmodsTable[modKey];
-          if (selmod)
-            selector = `${selmod[0]}${selector}${selmod[1]}`;
-        }
-      }
-
-      targetSheet.addRule_(`${selector}{${makeCSSDeclarations(name, value)}}`);
-      registered.add(className);
-      return className;
+      const { mods, name, value, begin, end } = decl;
+      return value ?
+        register(name, value, mods, s.slice(begin, end)) :
+        (aliasTable[name] ?? name); // no value (classname without ':') is treated as-is.
     });
 
     const ret = klasses.join(" ");
@@ -265,7 +278,29 @@ export function createTag(target?: Tag.StyleSheetLike): Tag {
     return ret;
   }
 
-  function extend(opts: Tag.ExtendOptions): void {
+  function parseDOMCSSProperties(obj: Upwind.ExtendedDOMCSSProperties, modifiers: Mod[] = []): (string | (() => string))[] {
+    const ret: (string | (() => string))[] = [];
+    objForEach(obj, (v, k) => {
+      if (v && typeof v === "object") {
+        const mod = parseMod(k, 0)?.val_;
+        if (mod)
+          ret.push(...parseDOMCSSProperties(v, modifiers.concat(mod)));
+      } else if (v != null) {
+        const [mods, name] = rawParseModAndName(k, modifiers.slice());
+        if (name) {
+          const vv = v as unknown as (string | number | (() => string | number | null | undefined));
+          ret.push(
+            isFunction(vv) ?
+              (() => register(name, rawParseVal(vv()), mods)) :
+              register(name, rawParseVal(vv), mods)
+          );
+        }
+      }
+    });
+    return ret;
+  }
+
+  function extend(opts: Upwind.ExtendOptions): void {
     const { prefix, modifiers, properties, aliases, colors, keyframes, num } = opts;
     const { conditions, selectors } = modifiers || {};
 
@@ -331,28 +366,22 @@ export function createTag(target?: Tag.StyleSheetLike): Tag {
     }
   }
 
-  const ret = ((strs: TemplateStringsArray, ...exprs: (string | (() => string))[]): () => string => {
-    // assert(strs.length > 0 && strs.length === exprs.length + 1); // always true as long as used as a tagged template literal.
-    const base: (string | number)[] = [];
-    const funs: [number, () => string][] = [];
-    let i = 0;
-    for (; i < exprs.length; ++i) {
-      const e = exprs[i]!;
-      base.push(
-        parseAndRegister(strs[i], i > 0, true),
-        typeof e === "string" ?
-          parseAndRegister(e) :
-          funs.push([2 * i + 1, e]) // never referred: just used as placeholder
-      );
+  const ret = (...args: (string | Upwind.ExtendedDOMCSSProperties)[]): () => string => {
+    const cs: (string | (() => string))[] = [];
+    for (const arg of args) {
+      if (isString(arg))
+        cs.push(parseAndRegister(arg));
+      else
+        cs.push(...parseDOMCSSProperties(arg));
     }
-    base.push(parseAndRegister(strs[i], i > 0, false));
-
+    const dyns = cs.map((v, i) => isString(v) ? null : [i, v] as const).filter(x => x != null);
+    const base = cs.slice();
     return () => {
-      for (const [i, e] of funs)
-        base[i] = parseAndRegister(e());
+      for (const [i, v] of dyns)
+        base[i] = v();
       return base.join(" ");
-    };
-  }) as Tag;
+    }
+  };
 
   ret.extend = extend;
   ret.add = addRule;

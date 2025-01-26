@@ -1,4 +1,4 @@
-import { createTag } from "./tag.js";
+import { createUpwind } from "./tag.js";
 
 const minWidthStr = (n: number) => `@media (min-width: ${n}px)`;
 
@@ -20,7 +20,7 @@ export const defaultProperties = {
   d: "display",
 };
 
-export const $ = createTag();
+export const $ = createUpwind();
 $.extend({
   modifiers: {
     conditions: defaultConditions,

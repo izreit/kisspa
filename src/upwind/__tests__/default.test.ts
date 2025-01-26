@@ -1,21 +1,21 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { defaultConditions, defaultProperties } from "../default.js";
 import type { CSSRuleListLike } from "../sheet.js";
-import { type Tag, createTag } from "../tag.js";
+import { type Upwind, createUpwind } from "../tag.js";
 import { createMockCSSGroupRuleLike } from "./mock/MockCSSGroupingRuleLike.js";
 
 describe("default", () => {
   const el = document.createElement("div");
-  let sheet: Tag.StyleSheetLike;
-  let $: Tag;
+  let sheet: Upwind.StyleSheetLike;
+  let $: Upwind;
 
   beforeEach(() => {
     sheet = createMockCSSGroupRuleLike("<root>");
-    $ = createTag(sheet);
+    $ = createUpwind(sheet);
   });
 
-  function run(src: () => string): { classes: string[], rule: CSSRuleListLike } {
-    el.className = src();
+  function run(...args: (string | Upwind.ExtendedDOMCSSProperties)[]): { classes: string[], rule: CSSRuleListLike } {
+    el.className = $(...args)();
     const classes: string[] = [];
     // biome-ignore lint/complexity/noForEach: classList cannot be iterated?
     el.classList.forEach(c => classes.push(c));
@@ -24,7 +24,7 @@ describe("default", () => {
 
   it("provides default properties", () => {
     $.extend({ properties: defaultProperties });
-    const { classes, rule } = run($`d:flex m:3 :hover/py:1px max-w:10`);
+    const { classes, rule } = run("d:flex m:3 :hover/py:1px max-w:10");
     expect(classes).toEqual(["d:flex", "m:3", ":hover.py:1px", "max-w:10"]);
     expect(rule).toMatchObject([
       { cssText: ".d\\:flex{display: flex}" },
@@ -36,7 +36,7 @@ describe("default", () => {
 
   it("provides default conditions", () => {
     $.extend({ modifiers: { conditions: defaultConditions } });
-    const { classes, rule } = run($`sm/margin:10px 2xl/margin:auto`);
+    const { classes, rule } = run("sm/margin:10px 2xl/margin:auto");
     expect(classes).toEqual(["sm.margin:10px", "2xl.margin:auto"]);
     expect(rule).toMatchObject([
       {

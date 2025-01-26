@@ -1,9 +1,8 @@
 
 export type Mod = {
+  raw: string;
   modKey: string;
   target: { name: string, rel: string | null | undefined } | null | undefined;
-  begin: number;
-  end: number;
 };
 
 export type Decl = {
@@ -109,7 +108,7 @@ function skipToDelim(src: string, ix: number): ParseFailure {
 }
 
 // MOD := v=':*[^/_:\s]+' target={'_' name='[^/:\s~\+]+' rel='[~\+]'?}?
-function parseMod(src: string, ix: number): ParseResult<Mod> | null {
+export function parseMod(src: string, ix: number): ParseResult<Mod> | null {
   const begin = ix;
   let target: Mod["target"];
 
@@ -127,7 +126,7 @@ function parseMod(src: string, ix: number): ParseResult<Mod> | null {
     }
   }
 
-  return { val_: { modKey, target, begin, end: ix }, begin_: begin, end_: ix };
+  return { val_: { modKey, target, raw: src.slice(begin, ix) }, begin_: begin, end_: ix };
 }
 
 // NAME := '-'* head=FRAG tail={'-' f=FRAG}*
@@ -181,5 +180,47 @@ function parseValSegment(src: string, ix: number): ParseResult<string> | null {
 function matchRe(src: string, ix: number, re: RegExp): ParseResult<RegExpMatchArray> | null {
   re.lastIndex = ix;
   const m = re.exec(src);
-  return m && { val_: m, begin_: ix, end_: ix + m[0].length };
+  return m && { val_: m, begin_: ix, end_: re.sticky ? re.lastIndex : m.index + m[0].length };
+}
+
+export function rawParseModAndName(src: string, mods: Mod[]): [Mod[], string | undefined] {
+  let ix = 0;
+  let mMod: ParseResult<Mod> | null | undefined;
+  while ((mMod = parseMod(src, ix)) && (src[mMod.end_] === "/")) {
+    mods.push(mMod.val_);
+    ix = mMod.end_ + 1;
+  }
+  return [mods, parseName(src, ix)?.val_];
+}
+
+export function rawParseVal(src: string | number | null | undefined): string[] {
+  if (src == null) return [];
+  src = "" + src;
+  const reSearchSpecial = / +|['"]|url\(/g;
+  const ret: string[] = [];
+  let segHead = 0;
+  let ix = 0;
+  for (;;) {
+    const m = matchRe(src, ix, reSearchSpecial);
+    if (!m)
+      break;
+    const head = m.val_[0][0];
+    if (head === " ") {
+      ret.push(src.slice(segHead, m.end_ - m.val_.length));
+      segHead = ix = m.end_;
+    } else {
+      const reSearchEnd =
+        head === "'" ?
+          /((?:\\'|[^'])*)'/y :
+        head === "\"" ?
+          /((?:\\"|[^"])*)"/y :
+          /((?:\\\)|[^)])*)\)/y
+      const mq = matchRe(src, m.end_, reSearchEnd);
+      if (!mq)
+        break;
+      ix = m.end_;
+    }
+  }
+  ret.push(src.slice(segHead));
+  return ret;
 }
