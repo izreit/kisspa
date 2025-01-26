@@ -330,6 +330,48 @@ describe("tag", () => {
     ]);
   });
 
+  it("parses quotes in values of object-style", () => {
+    $.extend({
+      modifiers: {
+        conditions: {
+          sm: "@media (min-width: 640px)",
+        },
+        selectors: {
+          dark: ":is(.dark *)",
+        },
+      },
+    });
+    const { classes, rule } = run({
+      "font": "4 'M+ Gothinc'",
+      "sm": {
+        background: "center / contain no-repeat url(\"../media/logo.svg\"), #eee 35% url('../media/quux.png')",
+      },
+      "dark": {
+        "font-weight": "bold",
+      },
+    });
+    expect(classes).toEqual([
+      "font:4_'M+_Gothinc'",
+      "sm.background:center_/_contain_no-repeat_url(\"../media/logo.svg\"),_#eee_35%_url('../media/quux.png')",
+      "dark.font-weight:bold",
+    ]);
+    expect(rule).toMatchObject([
+      { cssText: ".font\\:4_\\'M\\+_Gothinc\\'{font: 1rem 'M+ Gothinc'}" },
+      { cssText: ".dark\\.font-weight\\:bold:is(.dark *){font-weight: bold}" },
+      {
+        conditionText: "(min-width: 640px)",
+        cssRules: [
+          {
+            cssText:
+              ".sm\\.background\\:center_\\/_contain_no-repeat_url\\(\\\"\\.\\.\\/media\\/logo\\.svg\\\"\\)\\,_\\#eee_35\\%_url\\(\\'\\.\\.\\/media\\/quux\\.png\\'\\){"
+               + "background: center / contain no-repeat url(\"../media/logo.svg\"), #eee 35% url('../media/quux.png')"
+               + "}"
+          }
+        ],
+      },
+    ]);
+  });
+
   it("parses modifiers in object-style", () => {
     $.extend({
       modifiers: {
