@@ -1,5 +1,11 @@
 # kisspa
 
+## 0.4.0
+
+### Minor Changes
+
+- 0d5b62c: BREAKING [upwind] rename createTag() to createUpwind(). make $ a function but not a tagged template literal.
+
 ## 0.3.0
 
 ### Minor Changes
