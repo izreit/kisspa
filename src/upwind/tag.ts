@@ -5,10 +5,19 @@ import { createEmptyObj, objForEach, objKeys } from "./objutil.js";
 import { type Mod, parse, parseMod, rawParseModAndName, rawParseVal } from "./parse.js";
 import { type CSSGroupingRuleLike, type Sheet, createRootSheet } from "./sheet.js";
 
+// Utility convert to kebab-case from lowerCamelCase (e.g. "background-image" from "backgroundImage")
+type Kebab<S extends string> =
+  S extends `webkit${infer Rest}`
+    ? `-webkit${Kebab<Rest>}`
+    : S extends `${infer Car}${infer Cdr}`
+      ? Car extends Uppercase<Car>
+        ? `-${Lowercase<Car>}${Kebab<Cdr>}`
+        : `${Car}${Kebab<Cdr>}`
+      : S;
+
 export namespace Upwind {
-  type DOMCSSProperties = JSXInternal.DOMCSSProperties;
 	export type ExtendedDOMCSSProperties = {
-		[key in keyof DOMCSSProperties]?: DOMCSSProperties[key];
+		[key in Kebab<keyof Omit<JSXInternal.DOMCSSProperties, number>>]?: Prop<string | number | null | undefined>;
   } | {
 		[key: string]: ExtendedDOMCSSProperties | Prop<string | number | null | undefined>;
   };
