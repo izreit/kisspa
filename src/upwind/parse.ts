@@ -108,7 +108,7 @@ function skipToDelim(src: string, ix: number): ParseFailure {
 }
 
 // MOD := v=':*[^/_:\s]+' target={'_' name='[^/:\s~\+]+' rel='[~\+]'?}?
-export function parseMod(src: string, ix: number): ParseResult<Mod> | null {
+function parseMod(src: string, ix: number): ParseResult<Mod> | null {
   const begin = ix;
   let target: Mod["target"];
 
@@ -183,10 +183,10 @@ function matchRe(src: string, ix: number, re: RegExp): ParseResult<RegExpMatchAr
   return m && { val_: m, begin_: ix, end_: re.sticky ? re.lastIndex : m.index + m[0].length };
 }
 
-export function rawParseModAndName(src: string, mods: Mod[]): [Mod[], string | undefined] {
+export function rawParseMods(src: string, mods: Mod[], withName = false): [Mod[], string | undefined] {
   let ix = 0;
   let mMod: ParseResult<Mod> | null | undefined;
-  while ((mMod = parseMod(src, ix)) && (src[mMod.end_] === "/")) {
+  while ((mMod = parseMod(src, ix)) && (!withName || src[mMod.end_] === "/")) {
     mods.push(mMod.val_);
     ix = mMod.end_ + 1;
   }

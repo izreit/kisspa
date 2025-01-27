@@ -2,7 +2,7 @@ import type { Prop } from "../html/core/helpers.js";
 import type { JSXInternal } from "../html/core/jsx.js";
 import { isFunction, isString, mapCoerce } from "../html/core/util.js";
 import { createEmptyObj, objForEach, objKeys } from "./objutil.js";
-import { type Mod, parse, parseMod, rawParseModAndName, rawParseVal } from "./parse.js";
+import { type Mod, parse, rawParseMods, rawParseVal } from "./parse.js";
 import { type CSSGroupingRuleLike, type Sheet, createRootSheet } from "./sheet.js";
 
 // Utility convert to kebab-case from lowerCamelCase (e.g. "background-image" from "backgroundImage")
@@ -282,11 +282,10 @@ export function createUpwind(target?: Upwind.StyleSheetLike): Upwind {
     const ret: (string | (() => string))[] = [];
     objForEach(obj, (v, k) => {
       if (v && typeof v === "object") {
-        const mod = parseMod(k, 0)?.val_;
-        if (mod)
-          ret.push(...parseDOMCSSProperties(v, modifiers.concat(mod)));
-      } else if (v != null) {
-        const [mods, name] = rawParseModAndName(k, modifiers.slice());
+        ret.push(...parseDOMCSSProperties(v, rawParseMods(k, modifiers.slice())[0]));
+
+      } else if (v) { // NOTE intentionally `v` but not `v != null` to rule out `""` along with `null` and `undefined`.
+        const [mods, name] = rawParseMods(k, modifiers.slice(), true);
         if (name) {
           const vv = v as unknown as (string | number | (() => string | number | null | undefined));
           ret.push(
