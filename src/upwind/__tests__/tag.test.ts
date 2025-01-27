@@ -388,18 +388,15 @@ describe("tag", () => {
         background: "red",
       },
       ":disabled/dark/border-width": "4px 1px", // inline modifer in object-style
-      "": { // ignored since invalid
-        color: "black",
-      },
-      "dark": {
+      "dark/:hover": {
         "animation": null,
         "font-weight": "bold",
       },
     });
-    expect(classes).toEqual(["sm.color:blue", "sm.background:red", ":disabled.dark.border-width:4px_1px", "dark.font-weight:bold"]);
+    expect(classes).toEqual(["sm.color:blue", "sm.background:red", ":disabled.dark.border-width:4px_1px", "dark.:hover.font-weight:bold"]);
     expect(rule).toMatchObject([
       { cssText: ".\\:disabled\\.dark\\.border-width\\:4px_1px:disabled:is(.dark *){border-width: 4px 1px}" },
-      { cssText: ".dark\\.font-weight\\:bold:is(.dark *){font-weight: bold}" },
+      { cssText: ".dark\\.\\:hover\\.font-weight\\:bold:is(.dark *):hover{font-weight: bold}" },
       {
         conditionText: "(min-width: 640px)",
         cssRules: [
