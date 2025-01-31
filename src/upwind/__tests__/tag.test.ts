@@ -198,12 +198,12 @@ describe("tag", () => {
         "m<trbl>": "margin<trbl>",
       }
     });
-    const { classes, rule } = run("deco:underline m:1 mb:3 :hover/mx:2px");
-    expect(classes).toEqual(["deco:underline", "m:1", "mb:3", ":hover.mx:2px"]);
+    const { classes, rule } = run("deco:underline m:1n mb:3n :hover/mx:2px");
+    expect(classes).toEqual(["deco:underline", "m:1n", "mb:3n", ":hover.mx:2px"]);
     expect(rule).toMatchObject([
       { cssText: ".deco\\:underline{text-decoration: underline}" },
-      { cssText: ".m\\:1{margin: 0.25rem}" },
-      { cssText: ".mb\\:3{margin-bottom: 0.75rem}" },
+      { cssText: ".m\\:1n{margin: 0.25rem}" },
+      { cssText: ".mb\\:3n{margin-bottom: 0.75rem}" },
       { cssText: ".\\:hover\\.mx\\:2px:hover{margin-left: 2px;margin-right: 2px}" },
     ]);
   });
@@ -227,11 +227,11 @@ describe("tag", () => {
     $.extend({
       num: n => `${n * 10}px`
     });
-    const { classes, rule } = run("margin:2.5 padding-bottom:-0.5")
-    expect(classes).toEqual(["margin:2.5", "padding-bottom:-0.5"]);
+    const { classes, rule } = run("margin:2.5n padding-bottom:-0.5n")
+    expect(classes).toEqual(["margin:2.5n", "padding-bottom:-0.5n"]);
     expect(rule).toMatchObject([
-      { cssText: ".margin\\:2\\.5{margin: 25px}" },
-      { cssText: ".padding-bottom\\:-0\\.5{padding-bottom: -5px}" },
+      { cssText: ".margin\\:2\\.5n{margin: 25px}" },
+      { cssText: ".padding-bottom\\:-0\\.5n{padding-bottom: -5px}" },
     ]);
   });
 
@@ -239,11 +239,11 @@ describe("tag", () => {
     $.extend({
       num: n => `${n * 10}px`
     });
-    const { classes, rule } = run("margin:1 padding-bottom:3")
-    expect(classes).toEqual(["margin:1", "padding-bottom:3"]);
+    const { classes, rule } = run("margin:1n padding-bottom:3n")
+    expect(classes).toEqual(["margin:1n", "padding-bottom:3n"]);
     expect(rule).toMatchObject([
-      { cssText: ".margin\\:1{margin: 10px}" },
-      { cssText: ".padding-bottom\\:3{padding-bottom: 30px}" },
+      { cssText: ".margin\\:1n{margin: 10px}" },
+      { cssText: ".padding-bottom\\:3n{padding-bottom: 30px}" },
     ]);
   });
 
@@ -342,7 +342,7 @@ describe("tag", () => {
       },
     });
     const { classes, rule } = run({
-      "font": "4 'M+ Gothinc'",
+      "font": "4n 'M+ Gothinc'",
       "sm": {
         background: "center / contain no-repeat url(\"../media/logo.svg\"), #eee 35% url('../media/quux.png')",
       },
@@ -351,12 +351,12 @@ describe("tag", () => {
       },
     });
     expect(classes).toEqual([
-      "font:4_'M+_Gothinc'",
+      "font:4n_'M+_Gothinc'",
       "sm.background:center_/_contain_no-repeat_url(\"../media/logo.svg\"),_#eee_35%_url('../media/quux.png')",
       "dark.font-weight:bold",
     ]);
     expect(rule).toMatchObject([
-      { cssText: ".font\\:4_\\'M\\+_Gothinc\\'{font: 1rem 'M+ Gothinc'}" },
+      { cssText: ".font\\:4n_\\'M\\+_Gothinc\\'{font: 1rem 'M+ Gothinc'}" },
       { cssText: ".dark\\.font-weight\\:bold:is(.dark *){font-weight: bold}" },
       {
         conditionText: "(min-width: 640px)",

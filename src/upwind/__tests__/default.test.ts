@@ -24,13 +24,13 @@ describe("default", () => {
 
   it("provides default properties", () => {
     $.extend({ properties: defaultProperties });
-    const { classes, rule } = run("d:flex m:3 :hover/py:1px max-w:10");
-    expect(classes).toEqual(["d:flex", "m:3", ":hover.py:1px", "max-w:10"]);
+    const { classes, rule } = run("d:flex m:3n :hover/py:1px max-w:10n");
+    expect(classes).toEqual(["d:flex", "m:3n", ":hover.py:1px", "max-w:10n"]);
     expect(rule).toMatchObject([
       { cssText: ".d\\:flex{display: flex}" },
-      { cssText: ".m\\:3{margin: 0.75rem}" },
+      { cssText: ".m\\:3n{margin: 0.75rem}" },
       { cssText: ".\\:hover\\.py\\:1px:hover{padding-top: 1px;padding-bottom: 1px}" },
-      { cssText: ".max-w\\:10{max-width: 2.5rem}" },
+      { cssText: ".max-w\\:10n{max-width: 2.5rem}" },
     ]);
   });
 
