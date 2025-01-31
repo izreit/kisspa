@@ -1,5 +1,15 @@
 # kisspa
 
+## 0.5.0
+
+### Minor Changes
+
+- b54646c: BREAKING [upwind] add unit `n` instead of unit-less number.
+
+### Patch Changes
+
+- 3ab0eb9: [upwind] fix ignored multiple modifiers in key of object-style
+
 ## 0.4.0
 
 ### Minor Changes
