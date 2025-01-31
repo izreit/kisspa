@@ -181,7 +181,7 @@ function copyProps<T extends object>(lhs: T, rhs: T): void {
   objForEach(rhs, (v, k) => { lhs[k] = v; });
 }
 
-const reNum = /^-?\d+(?:\.5)?$/;
+const reNum = /^-?\d+(?:\.5)?n$/;
 
 function replaceValue(val: string[], config: Upwind.Config): void {
   const { colors: color, colorRe, num } = config;
@@ -189,7 +189,7 @@ function replaceValue(val: string[], config: Upwind.Config): void {
     const v = val[i];
     let m: RegExpMatchArray | null | undefined;
     if (reNum.test(v)) {
-      val[i] = num(Number(v));
+      val[i] = num(parseFloat(v));
     } else if (colorRe && (m = v.match(colorRe))) {
       const alpha = m[3] ? Math.ceil(255 * parseInt(m[3]) / 100).toString(16) : "";
       const colorTable = color[m[1]];
