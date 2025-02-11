@@ -10,9 +10,13 @@ export default defineConfig({
       reporter: "html-spa",
       include: ["src/**/*"],
     },
-    environmentMatchGlobs: [
-      ["src/html/**", "happy-dom"],
-      ["src/upwind/**", "happy-dom"],
+    workspace: [
+      {
+        extends: true,
+        test: {
+          environment: "happy-dom",
+        }
+      }
     ],
   },
 });
