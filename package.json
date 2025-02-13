@@ -1,6 +1,6 @@
 {
   "name": "kisspa",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "lightweight JSX-based library with utility-first CSS to make SPA development simple",
   "type": "module",
   "scripts": {
