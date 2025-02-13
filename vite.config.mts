@@ -46,8 +46,8 @@ export default defineConfig({
     outDir: "dist",
     lib: {
       entry: entryTable[target],
-      formats: ["es", "cjs"],
-      fileName: (format, name) => name + (format === "es" ? ".raw.mjs" : ".cjs"),
+      formats: ["es"],
+      fileName: (_format, name) => `${name}.raw.mjs`,
     },
 
     rollupOptions: {

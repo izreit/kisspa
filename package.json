@@ -3,8 +3,6 @@
   "version": "0.5.0",
   "description": "lightweight JSX-based library with utility-first CSS to make SPA development simple",
   "type": "module",
-  "types": "dist/full/upwind/bundle.d.js",
-  "main": "dist/full/upwind/bundle.cjs",
   "scripts": {
     "prepare": "npm run build",
     "dev": "vitest",
@@ -42,93 +40,78 @@
   "exports": {
     ".": {
       "types": "./dist/normal/upwind/bundle.d.ts",
-      "import": "./dist/normal/upwind/bundle.mjs",
-      "require": "./dist/normal/upwind/bundle.cjs"
+      "import": "./dist/normal/upwind/bundle.mjs"
     },
     "./jsx-runtime": {
       "types": "./dist/normal/upwind/bundle.d.ts",
-      "import": "./dist/normal/upwind/bundle.mjs",
-      "require": "./dist/normal/upwind/bundle.cjs"
+      "import": "./dist/normal/upwind/bundle.mjs"
     },
     "./jsx-dev-runtime": {
       "types": "./dist/normal/upwind/bundle.d.ts",
-      "import": "./dist/normal/upwind/bundle.mjs",
-      "require": "./dist/normal/upwind/bundle.cjs"
+      "import": "./dist/normal/upwind/bundle.mjs"
     },
     "./html": {
       "types": "./dist/normal/html/bundle.d.ts",
-      "import": "./dist/normal/html/bundle.mjs",
-      "require": "./dist/normal/html/bundle.cjs"
+      "import": "./dist/normal/html/bundle.mjs"
     },
     "./html/jsx-runtime": {
       "types": "./dist/normal/html/bundle.d.ts",
-      "import": "./dist/normal/html/bundle.mjs",
-      "require": "./dist/normal/html/bundle.cjs"
+      "import": "./dist/normal/html/bundle.mjs"
     },
     "./html/jsx-dev-runtime": {
       "types": "./dist/normal/html/bundle.d.ts",
-      "import": "./dist/normal/html/bundle.mjs",
-      "require": "./dist/normal/html/bundle.cjs"
+      "import": "./dist/normal/html/bundle.mjs"
     },
     "./reactive": {
       "types": "./dist/normal/reactive/index.d.ts",
-      "import": "./dist/normal/reactive/index.mjs",
-      "require": "./dist/normal/reactive/index.cjs"
+      "import": "./dist/normal/reactive/index.mjs"
     },
     "./full": {
       "types": "./dist/full/upwind/bundle.d.ts",
-      "import": "./dist/full/upwind/bundle.mjs",
-      "require": "./dist/full/upwind/bundle.cjs"
+      "import": "./dist/full/upwind/bundle.mjs"
     },
     "./full/jsx-runtime": {
       "types": "./dist/full/upwind/bundle.d.ts",
-      "import": "./dist/full/upwind/bundle.mjs",
-      "require": "./dist/full/upwind/bundle.cjs"
+      "import": "./dist/full/upwind/bundle.mjs"
     },
     "./full/jsx-dev-runtime": {
       "types": "./dist/full/upwind/bundle.d.ts",
-      "import": "./dist/full/upwind/bundle.mjs",
-      "require": "./dist/full/upwind/bundle.cjs"
+      "import": "./dist/full/upwind/bundle.mjs"
     },
     "./html/full": {
       "types": "./dist/full/html/bundle.d.ts",
-      "import": "./dist/full/html/bundle.mjs",
-      "require": "./dist/full/html/bundle.cjs"
+      "import": "./dist/full/html/bundle.mjs"
     },
     "./html/full/jsx-runtime": {
       "types": "./dist/full/html/bundle.d.ts",
-      "import": "./dist/full/html/bundle.mjs",
-      "require": "./dist/full/html/bundle.cjs"
+      "import": "./dist/full/html/bundle.mjs"
     },
     "./html/full/jsx-dev-runtime": {
       "types": "./dist/full/html/bundle.d.ts",
-      "import": "./dist/full/html/bundle.mjs",
-      "require": "./dist/full/html/bundle.cjs"
+      "import": "./dist/full/html/bundle.mjs"
     },
     "./reactive/full": {
       "types": "./dist/full/reactive/index.d.ts",
-      "import": "./dist/full/reactive/index.mjs",
-      "require": "./dist/full/reactive/index.cjs"
+      "import": "./dist/full/reactive/index.mjs"
     },
     "./extra/cloneutil": {
       "types": "./dist/full/reactive/cloneutil.d.ts",
-      "import": "./dist/full/reactive/cloneutil.mjs",
-      "require": "./dist/full/reactive/cloneutil.cjs"
+      "import": "./dist/full/reactive/cloneutil.mjs"
     },
     "./extra/preset/colors": {
       "types": "./dist/full/upwind/preset/colors.d.ts",
-      "import": "./dist/full/upwind/preset/colors.mjs",
-      "require": "./dist/full/upwind/preset/colors.cjs"
+      "import": "./dist/full/upwind/preset/colors.mjs"
     },
     "./raw": {
       "types": "./dist/full/upwind/bundle.d.ts",
-      "import": "./dist/full/upwind/bundle.raw.mjs",
-      "require": "./dist/full/upwind/bundle.cjs"
+      "import": "./dist/full/upwind/bundle.raw.mjs"
     },
     "./raw/jsx-dev-runtime": {
       "types": "./dist/full/upwind/bundle.d.ts",
-      "import": "./dist/full/upwind/bundle.raw.mjs",
-      "require": "./dist/full/upwind/bundle.cjs"
+      "import": "./dist/full/upwind/bundle.raw.mjs"
     }
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
