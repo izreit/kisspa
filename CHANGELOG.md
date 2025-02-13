@@ -1,5 +1,11 @@
 # kisspa
 
+## 0.6.0
+
+### Minor Changes
+
+- f0c5de6: [BREAKING] drop CommonJS support
+
 ## 0.5.0
 
 ### Minor Changes
