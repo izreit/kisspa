@@ -5,11 +5,11 @@ export interface Attributes {
   [key: string]: any;
 }
 
-// Symbol to distinguish JSXElement (objects created by h() or jsx()) from any other objects.
-export const $h = Symbol("h");
+// Marker to distinguish JSXElement (objects created by h() or jsx()) from any other objects.
+export const $h = "ksp$h" as const;
 
-// Symbol to mark root nodes which is skeleton-assigned but has no Node.
-export const $noel = Symbol("noel");
+// Marker for root nodes which is skeleton-assigned but has no Node.
+export const $noel = "ksp$noel" as const;
 
 export interface JSXElement {
   /**
@@ -29,12 +29,12 @@ export interface JSXElement {
   /**
    * Normalized (flattened) children.
    */
-  children: JSXNode[];
+  chs: JSXNode[];
 
   /**
    * Raw children as it given. Used to pass to the component as props.
    */
-  rawChildren: any;
+  rchs: any;
 }
 
 export type JSXNodeSync =

@@ -43,24 +43,24 @@
       "import": "./dist/normal/upwind/bundle.mjs"
     },
     "./jsx-runtime": {
-      "types": "./dist/normal/upwind/bundle.d.ts",
-      "import": "./dist/normal/upwind/bundle.mjs"
+      "types": "./dist/normal/html/jsx-runtime.d.ts",
+      "import": "./dist/normal/html/jsx-runtime.mjs"
     },
     "./jsx-dev-runtime": {
-      "types": "./dist/normal/upwind/bundle.d.ts",
-      "import": "./dist/normal/upwind/bundle.mjs"
+      "types": "./dist/normal/html/jsx-runtime.d.ts",
+      "import": "./dist/normal/html/jsx-runtime.mjs"
     },
     "./html": {
       "types": "./dist/normal/html/bundle.d.ts",
       "import": "./dist/normal/html/bundle.mjs"
     },
     "./html/jsx-runtime": {
-      "types": "./dist/normal/html/bundle.d.ts",
-      "import": "./dist/normal/html/bundle.mjs"
+      "types": "./dist/normal/html/jsx-runtime.d.ts",
+      "import": "./dist/normal/html/jsx-runtime.mjs"
     },
     "./html/jsx-dev-runtime": {
-      "types": "./dist/normal/html/bundle.d.ts",
-      "import": "./dist/normal/html/bundle.mjs"
+      "types": "./dist/normal/html/jsx-runtime.d.ts",
+      "import": "./dist/normal/html/jsx-runtime.mjs"
     },
     "./reactive": {
       "types": "./dist/normal/reactive/index.d.ts",
@@ -71,24 +71,24 @@
       "import": "./dist/full/upwind/bundle.mjs"
     },
     "./full/jsx-runtime": {
-      "types": "./dist/full/upwind/bundle.d.ts",
-      "import": "./dist/full/upwind/bundle.mjs"
+      "types": "./dist/normal/html/jsx-runtime.d.ts",
+      "import": "./dist/normal/html/jsx-runtime.mjs"
     },
     "./full/jsx-dev-runtime": {
-      "types": "./dist/full/upwind/bundle.d.ts",
-      "import": "./dist/full/upwind/bundle.mjs"
+      "types": "./dist/normal/html/jsx-runtime.d.ts",
+      "import": "./dist/normal/html/jsx-runtime.mjs"
     },
     "./html/full": {
       "types": "./dist/full/html/bundle.d.ts",
       "import": "./dist/full/html/bundle.mjs"
     },
     "./html/full/jsx-runtime": {
-      "types": "./dist/full/html/bundle.d.ts",
-      "import": "./dist/full/html/bundle.mjs"
+      "types": "./dist/normal/html/jsx-runtime.d.ts",
+      "import": "./dist/normal/html/jsx-runtime.mjs"
     },
     "./html/full/jsx-dev-runtime": {
-      "types": "./dist/full/html/bundle.d.ts",
-      "import": "./dist/full/html/bundle.mjs"
+      "types": "./dist/normal/html/jsx-runtime.d.ts",
+      "import": "./dist/normal/html/jsx-runtime.mjs"
     },
     "./reactive/full": {
       "types": "./dist/full/reactive/index.d.ts",
@@ -107,8 +107,8 @@
       "import": "./dist/full/upwind/bundle.raw.mjs"
     },
     "./raw/jsx-dev-runtime": {
-      "types": "./dist/full/upwind/bundle.d.ts",
-      "import": "./dist/full/upwind/bundle.raw.mjs"
+      "types": "./dist/normal/html/jsx-runtime.d.ts",
+      "import": "./dist/normal/html/jsx-runtime.mjs"
     }
   },
   "engines": {

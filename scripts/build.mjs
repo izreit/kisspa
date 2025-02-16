@@ -30,11 +30,19 @@ function minifyByTerser(path) {
   run(`npx terser ${path} -c -m --mangle-props regex=/_$/ -o ${out} --toplevel`);
 }
 
-function printStat(path) {
-  const stringifySize = n => `${(n / 1024).toFixed(2)} kB`;
+function measureSize(path) {
   const input = readFileSync(path);
-  const gzipLen = gzipSync(input, { level: 9 }).length;
-  console.log(`${path}\t${stringifySize(input.byteLength)} | gzip: ${stringifySize(gzipLen)}`);
+  const gzipSize = gzipSync(input, { level: 9 }).length;
+  return { size: input.byteLength, gzipSize };
+}
+
+function printStat(paths) {
+  const stringifySize = n => `${(n / 1024).toFixed(2)} kB`;
+  const len = Math.max(...paths.map(path => path.length));
+  for (const path of paths) {
+    const { size, gzipSize } = measureSize(path);
+    console.log(`${path + " ".repeat(len - path.length)}\t${stringifySize(size)} | gzip: ${stringifySize(gzipSize)}`);
+  }
 }
 
 if (modeBuildUnbundle) {
@@ -57,23 +65,30 @@ if (modeBuildFull) {
 if (modeBuildNormal) {
   run("npx vite build -- -t reactive");
   run("npx vite build -- -t html");
+  run("npx vite build -- -t jsx");
   run("npx vite build -- -t whole");
   run(`npx tsc -p ${path("tsconfig.build.json ")} --emitDeclarationOnly --outDir ${path("dist/normal")}`);
   minifyByTerser("dist/normal/reactive/index.raw.mjs");
   minifyByTerser("dist/normal/html/bundle.raw.mjs");
+  minifyByTerser("dist/normal/html/jsx-runtime.raw.mjs");
   minifyByTerser("dist/normal/upwind/bundle.raw.mjs");
 }
 
 if (modeStatFull) {
   console.log("=== stats full ===");
-  printStat("dist/full/reactive/index.mjs");
-  printStat("dist/full/html/bundle.mjs");
-  printStat("dist/full/upwind/bundle.mjs");
+  printStat([
+    "dist/full/reactive/index.mjs",
+    "dist/full/html/bundle.mjs",
+    "dist/full/upwind/bundle.mjs",
+  ]);
 }
 
 if (modeStatNormal) {
   console.log("=== stats normal ===");
-  printStat("dist/normal/reactive/index.mjs");
-  printStat("dist/normal/html/bundle.mjs");
-  printStat("dist/normal/upwind/bundle.mjs");
+  printStat([
+    "dist/normal/reactive/index.mjs",
+    "dist/normal/html/jsx-runtime.mjs",
+    "dist/normal/html/bundle.mjs",
+    "dist/normal/upwind/bundle.mjs",
+  ]);
 }

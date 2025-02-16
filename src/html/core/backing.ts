@@ -172,7 +172,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
     return createNodeBackingIfNeeded(el!, staticParent);
   }
 
-  const { name, attrs, children, rawChildren } = jnode;
+  const { name, attrs, chs: children, rchs: rawChildren } = jnode;
   if (isString(name)) {
     let refVal: (Ref<HTMLElement> | ((v: HTMLElement) => void))[] | null | undefined;
     const disposers: (() => void)[] = [];
