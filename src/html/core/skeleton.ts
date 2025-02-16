@@ -26,7 +26,7 @@ function collectSkeletonsImpl(acc: Skeleton[], target: JSXNode | { [key: string]
 
   if (target.el)
     return;
-  const { name, attrs, children } = target;
+  const { name, attrs, chs: children } = target;
   if (!isString(name)) {
     if (!parent)
       acc.push({ el: $noel, path });
@@ -55,7 +55,7 @@ function assignSkeletons(skels: Skeleton[], jnode: JSXNode): void {
     let node = jnode as JSXElement;
     for (let j = 0; j < path.length; ++j) {
       const p = path[j];
-      node = (typeof p === "number") ? node.children[p] : node.attrs[p];
+      node = (typeof p === "number") ? node.chs[p] : node.attrs[p];
     }
     node.el = el;
   }
@@ -85,7 +85,7 @@ function codeOf(target: JSXNode | { [key: string]: any }, prefix = "", hasParent
   if (target.el)
     return "";
 
-  const { name, attrs, children } = target;
+  const { name, attrs, chs: children } = target;
   if (!isString(name)) {
     const a = codeOfEntries(objEntries(attrs));
     const c = codeOfChildren(children, "|");

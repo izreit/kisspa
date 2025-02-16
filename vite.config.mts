@@ -27,6 +27,7 @@ const target = opts.target ?? "whole";
 const entryTable = {
   reactive: { "normal/reactive/index": resolve(__dirname, "src", "reactive", "index.ts") },
   html: { "normal/html/bundle": resolve(__dirname, "src", "html", "bundle.ts") },
+  jsx: { "normal/html/jsx-runtime": resolve(__dirname, "src", "html", "jsx-runtime.ts") },
   whole: { "normal/upwind/bundle": resolve(__dirname, "src", "upwind", "bundle.ts") },
   "reactive-full": { "full/reactive/index": resolve(__dirname, "src", "reactive", "index.ts") },
   "html-full": { "full/html/bundle": resolve(__dirname, "src", "html", "bundle.ts") },
