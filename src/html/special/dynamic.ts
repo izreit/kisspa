@@ -1,7 +1,7 @@
 import { autorun } from "../../reactive/index.js";
 import { type AssembleContext, type Backing, assemble, createSimpleBacking, createSpecial } from "../core/backing.js";
-import { jsx } from "../jsx-runtime.js";
 import type { Component } from "../core/types.js";
+import { jsx } from "../jsx-runtime.js";
 
 export namespace Dynamic {
   export type Props<T> = {
