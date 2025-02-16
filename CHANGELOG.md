@@ -1,5 +1,11 @@
 # kisspa
 
+## 0.6.1
+
+### Patch Changes
+
+- dad940c: [html] make `kisspa/jsx-runtime` and `kisspa/jsx-dev-runtime` independent entry points
+
 ## 0.6.0
 
 ### Minor Changes
