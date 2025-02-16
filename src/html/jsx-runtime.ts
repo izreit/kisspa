@@ -12,7 +12,7 @@ export function jsx<P>(
   const a = { ...(attrs ?? {}), children: null } as (Exclude<typeof attrs, null | undefined> & { children?: any });
   const rchs = attrs && (attrs as any).children;
   const chs = Array.isArray(rchs) ? rchs.flat() : (rchs != null ? [rchs] : []);
-  return { "ksp$h": 1, el: null, name, attrs: a, chs, rchs };
+  return { ksp$h: 1, el: null, name, attrs: a, chs, rchs };
 }
 
 export type { JSXInternal as JSX };

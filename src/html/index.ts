@@ -14,7 +14,7 @@ export { deprop } from "./core/helpers.js";
 export type { Prop } from "./core/helpers.js";
 export { attach, createRoot } from "./core/root.js";
 export type { Root } from "./core/root.js";
-export { $h, createRef } from "./core/types.js";
+export { createRef } from "./core/types.js";
 export type {
   Accessor,
   Attributes,

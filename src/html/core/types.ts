@@ -5,9 +5,6 @@ export interface Attributes {
   [key: string]: any;
 }
 
-// Marker to distinguish JSXElement (objects created by h() or jsx()) from any other objects.
-export const $h = "ksp$h" as const;
-
 // Marker for root nodes which is skeleton-assigned but has no Node.
 export const $noel = "ksp$noel" as const;
 
@@ -15,7 +12,7 @@ export interface JSXElement {
   /**
    * (internal) Marker to distinguish JSXElement from any other objects.
    */
-  [$h]: 1;
+  ksp$h: 1;
 
   /**
    * (internal) Assigned skeleton node.
@@ -51,7 +48,7 @@ export type JSXNode =
 export type Component<P> = (props: P) => JSXNode;
 
 export function isJSXElement(v: any): v is JSXElement {
-  return v && v[$h];
+  return v && v.ksp$h;
 }
 
 export type Ref<T> = { value: T | null };
