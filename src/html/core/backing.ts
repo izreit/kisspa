@@ -314,12 +314,11 @@ export function assemble(actx: AssembleContext, jnode: JSXNode): Backing {
 // export type MemberType<P, Key> = Key extends keyof P ? P[Key] : never;
 
 export interface SpecialComponent<P> extends Component<P> {
-  special: ((actx: AssembleContext, props: P) => Backing);
+  special: (actx: AssembleContext, props: P) => Backing;
 }
 
 export interface FragmentComponent extends Component<{ children?: PropChildren }> {
-  // "" is special marker for Fragment. See assembleImpl().
-  special: "";
+  special: ""; // "" is marker for Fragment. See assembleImpl().
 }
 
 // Ugh! I don't know why but making the return value SpecialComponent<P> breaks type inference
