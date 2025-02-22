@@ -3,6 +3,8 @@
 import type { JSXInternal } from "./core/jsx.js";
 import type { Component, JSXElement, JSXNode } from "./core/types.js";
 
+export { Fragment } from "./core/fragment.js";
+
 export function jsx(name: string, attrs?: ((JSXInternal.HTMLAttributes & { children?: JSXNode | JSXNode[]; }) | null)): JSXElement;
 export function jsx<P>(name: Component<P>, attrs?: P): JSXElement;
 export function jsx<P>(

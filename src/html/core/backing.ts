@@ -1,6 +1,6 @@
 import { autorun, withoutObserver } from "../../reactive/index.js";
 import { allocateSkeletons } from "./skeleton.js";
-import { $noel, type Component, type JSXNode, type Ref, isJSXElement } from "./types.js";
+import { $noel, type Component, type JSXNode, type PropChildren, type Ref, isJSXElement } from "./types.js";
 import { arrayify, doNothing, isFunction, isNode, isPromise, isString, objEntries } from "./util.js";
 
 export interface Backing {
@@ -225,7 +225,10 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
     return createNodeBackingIfNeeded(el!, staticParent, disposers);
   }
 
-  const special = (name as SpecialComponent<unknown>).special;
+  const special = (name as SpecialComponent<unknown> | FragmentComponent).special;
+  if (special === "") // Fragment. (cf. fragment.ts)
+    return createSimpleBacking("Frag", loc, children.map(c => assemble(actx, c)));
+
   if (special) {
     const b = special(actx, { ...attrs, children: rawChildren });
     b.insert(loc);
@@ -312,6 +315,10 @@ export function assemble(actx: AssembleContext, jnode: JSXNode): Backing {
 
 export interface SpecialComponent<P> extends Component<P> {
   special: (actx: AssembleContext, props: P) => Backing;
+}
+
+export interface FragmentComponent extends Component<{ children?: PropChildren }> {
+  special: ""; // "" is marker for Fragment. See assembleImpl().
 }
 
 // Ugh! I don't know why but making the return value SpecialComponent<P> breaks type inference
