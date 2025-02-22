@@ -1,6 +1,7 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { observe } from "../../reactive/index.js";
-import { Match, type Root, Switch, createRoot, h } from "../index.js";
+import { Match, type Root, Switch, createRoot } from "../index.js";
+import { h } from "../h.js";
 
 describe("Switch", () => {
   let elem: HTMLElement;

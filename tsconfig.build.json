@@ -9,6 +9,7 @@
     "./src/index.ts",
     "./src/upwind/bundle.ts",
     "./src/html/bundle.ts",
+    "./src/html/h.ts",
     "./src/html/jsx-runtime.ts",
     "./src/reactive/cloneutil.ts",
     "./src/upwind/preset/colors.ts"

@@ -1,11 +1,11 @@
 import type { FragmentComponent } from "./backing";
-import type { JSXElement, JSXNode, PropChildren } from "./types";
+import type { JSXElement, JSXNode } from "./types";
 
 /**
  * Fragment (`<></>`).
  *
  * A special component defined directy (but not through createSpecial() like other specials)
- * because this file is imported separately through jsx-runtime.
+ * because this file is included in separated entrypoints `kisspa/jsx-runtime` and `kisspa/h`.
  *
  * As a special component, this function itself is just a marker, never called.
  * Just return 0 to be minimal. (cf. createSpecial())
@@ -13,6 +13,6 @@ import type { JSXElement, JSXNode, PropChildren } from "./types";
 export const Fragment = (_props: { children?: JSXNode | JSXNode[]; }): JSXElement => (0 as any)!;
 
 // Make it special.
-// The empty string "" for .special is also just a marker to avoid duplication (in the library root and jsx-runtime).
+// The empty string "" for .special is also just a marker to avoid duplication (in jsx-runtime and h).
 // Unlike other special componenets, the actual implementation for `<></>` is integrated in assembleImpl().
 (Fragment as FragmentComponent).special = "";

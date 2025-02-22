@@ -1,6 +1,7 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { signal } from "../../reactive/index.js";
-import { type JSXNode, type PropRef, type Root, attach, createRef, createRoot, h } from "../index.js";
+import { type JSXNode, type PropRef, type Root, attach, createRef, createRoot } from "../index.js";
+import { h } from "../h.js";
 
 describe("root", () => {
   describe("createRoot()", () => {

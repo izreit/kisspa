@@ -1,6 +1,7 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { observe } from "../../reactive/index.js";
-import { Fragment, type Root, createRoot, h } from "../index.js";
+import { type Root, createRoot } from "../index.js";
+import { Fragment, h } from "../h.js";
 
 describe("Fragment", () => {
   let elem: HTMLElement;

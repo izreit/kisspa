@@ -65,11 +65,13 @@ if (modeBuildFull) {
 if (modeBuildNormal) {
   run("npx vite build -- -t reactive");
   run("npx vite build -- -t html");
+  run("npx vite build -- -t h");
   run("npx vite build -- -t jsx");
   run("npx vite build -- -t whole");
   run(`npx tsc -p ${path("tsconfig.build.json ")} --emitDeclarationOnly --outDir ${path("dist/normal")}`);
   minifyByTerser("dist/normal/reactive/index.raw.mjs");
   minifyByTerser("dist/normal/html/bundle.raw.mjs");
+  minifyByTerser("dist/normal/html/h.raw.mjs");
   minifyByTerser("dist/normal/html/jsx-runtime.raw.mjs");
   minifyByTerser("dist/normal/upwind/bundle.raw.mjs");
 }
@@ -87,6 +89,7 @@ if (modeStatNormal) {
   console.log("=== stats normal ===");
   printStat([
     "dist/normal/reactive/index.mjs",
+    "dist/normal/html/h.mjs",
     "dist/normal/html/jsx-runtime.mjs",
     "dist/normal/html/bundle.mjs",
     "dist/normal/upwind/bundle.mjs",

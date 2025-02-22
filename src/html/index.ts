@@ -9,8 +9,6 @@ export {
   useComponentMethods,
 } from "./core/backing.js";
 export type { Backing, BackingLocation, ComponentMethods } from "./core/backing.js";
-export { Fragment } from "./core/fragment.js";
-export { h } from "./core/h.js";
 export { deprop } from "./core/helpers.js";
 export type { Prop } from "./core/helpers.js";
 export { attach, createRoot } from "./core/root.js";
