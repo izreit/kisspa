@@ -1,5 +1,11 @@
 # kisspa
 
+## 0.6.2
+
+### Patch Changes
+
+- 5b9d8b5: [html] fix no `Fragment` in kisspa/jsx-runtime
+
 ## 0.6.1
 
 ### Patch Changes
