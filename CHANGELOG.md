@@ -1,5 +1,11 @@
 # kisspa
 
+## 0.7.0
+
+### Minor Changes
+
+- 2614ee1: BREAKING [html] move `h` and `Fragment` to the independent entry point `kisspa/h`
+
 ## 0.6.2
 
 ### Patch Changes
