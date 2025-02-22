@@ -1,6 +1,10 @@
-import { JSXInternal } from "./jsx.js";
-import type { Component, JSXElement, JSXNode } from "./types.js";
-import type { Arrayify } from "./util.js";
+// This file is the entry point for "kisspa/h".
+// Not bundled in the root, so IMPORT ONLY NECESSARY FILES except types to aovid duplication.
+import { JSXInternal } from "./core/jsx.js";
+import type { Component, JSXElement, JSXNode } from "./core/types.js";
+import type { Arrayify } from "./core/util.js";
+
+export { Fragment } from "./core/fragment.js";
 
 export function h(name: string, attrs?: JSXInternal.HTMLAttributes | null, ...children: (JSXNode | JSXNode[])[]): JSXElement;
 export function h<P extends { children?: any[] }>(name: Component<P>, attrs?: P, ...children: Arrayify<P["children"]>): JSXElement;

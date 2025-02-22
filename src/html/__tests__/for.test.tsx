@@ -1,6 +1,7 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { observe } from "../../reactive/index.js";
-import { For, type Root, createRoot, h } from "../index.js";
+import { h } from "../h.js";
+import { For, type Root, createRoot } from "../index.js";
 import { createLogBuffer } from "./testutil.js";
 
 describe("For", () => {

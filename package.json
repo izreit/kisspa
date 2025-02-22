@@ -46,6 +46,10 @@
       "types": "./dist/normal/html/jsx-runtime.d.ts",
       "import": "./dist/normal/html/jsx-runtime.mjs"
     },
+    "./h": {
+      "types": "./dist/normal/html/h.d.ts",
+      "import": "./dist/normal/html/h.mjs"
+    },
     "./jsx-dev-runtime": {
       "types": "./dist/normal/html/jsx-runtime.d.ts",
       "import": "./dist/normal/html/jsx-runtime.mjs"
