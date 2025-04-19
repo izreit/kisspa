@@ -1,5 +1,11 @@
 # kisspa
 
+## 0.8.0
+
+### Minor Changes
+
+- 38e6dc0: [upwind] allow functions as arguments of $()
+
 ## 0.7.0
 
 ### Minor Changes
