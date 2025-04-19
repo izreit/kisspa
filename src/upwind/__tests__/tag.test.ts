@@ -13,7 +13,7 @@ describe("tag", () => {
     $ = createUpwind(sheet);
   });
 
-  function makeTestFun(...args: (string | Upwind.ExtendedDOMCSSProperties)[]): () => { classes: string[], rule: CSSRuleListLike } {
+  function makeTestFun(...args: Parameters<Upwind>): () => { classes: string[], rule: CSSRuleListLike } {
     const fun = $(...args);
     return () => {
       el.className = fun();
@@ -24,7 +24,7 @@ describe("tag", () => {
     };
   }
 
-  function run(...args: (string | Upwind.ExtendedDOMCSSProperties)[]): { classes: string[], rule: CSSRuleListLike } {
+  function run(...args: Parameters<Upwind>): { classes: string[], rule: CSSRuleListLike } {
     return makeTestFun(...args)();
   }
 
@@ -60,7 +60,26 @@ describe("tag", () => {
     expect(r4).toMatchObject(expectingRule);
   });
 
-  it("can have function", () => {
+  it("can have function that returns string", () => {
+    const { classes, rule } = run("margin-bottom:1rem", () => "color:black");
+    expect(classes).toEqual(["margin-bottom:1rem", "color:black"]);
+    expect(rule).toMatchObject([
+      { cssText: ".margin-bottom\\:1rem{margin-bottom: 1rem}" },
+      { cssText: ".color\\:black{color: black}" },
+    ]);
+  });
+
+  it("can have function that returns object", () => {
+    const { classes, rule } = run("margin-bottom:1rem", () => ({ color: "black", background: "red" }));
+    expect(classes).toEqual(["margin-bottom:1rem", "color:black", "background:red"]);
+    expect(rule).toMatchObject([
+      { cssText: ".margin-bottom\\:1rem{margin-bottom: 1rem}" },
+      { cssText: ".color\\:black{color: black}" },
+      { cssText: ".background\\:red{background: red}" },
+    ]);
+  });
+
+  it("can have function in object", () => {
     const { classes, rule } = run("margin-bottom:1rem", { color: () => "black" });
     expect(classes).toEqual(["margin-bottom:1rem", "color:black"]);
     expect(rule).toMatchObject([

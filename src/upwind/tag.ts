@@ -160,7 +160,7 @@ export namespace Upwind {
 }
 
 export interface Upwind {
-  (...args: (string | Upwind.ExtendedDOMCSSProperties)[]): () => string;
+  (...args: (string | Upwind.ExtendedDOMCSSProperties | (() => string | Upwind.ExtendedDOMCSSProperties))[]): () => string;
   extend(opts: Upwind.ExtendOptions): void;
   add(rule: string): void;
 }
@@ -365,15 +365,15 @@ export function createUpwind(target?: Upwind.StyleSheetLike): Upwind {
     }
   }
 
-  const ret = (...args: (string | Upwind.ExtendedDOMCSSProperties)[]): () => string => {
-    const cs: (string | (() => string))[] = [];
-    for (const arg of args) {
-      if (isString(arg))
-        cs.push(parseAndRegister(arg));
-      else
-        cs.push(...parseDOMCSSProperties(arg));
-    }
-    const dyns = cs.map((v, i) => isString(v) ? null : [i, v] as const).filter(x => x != null);
+  const ret = (...args: (string | Upwind.ExtendedDOMCSSProperties | (() => string | Upwind.ExtendedDOMCSSProperties))[]): () => string => {
+    const cs = args.flatMap(arg => (
+      isString(arg) ? parseAndRegister(arg) :
+      isFunction(arg) ? (s = arg()) => ( // Ugh! use the argument as a local variable to avoid const and return.
+        isString(s) ? parseAndRegister(s) : ret(s)()
+      ) :
+      parseDOMCSSProperties(arg)
+    ));
+    const dyns = cs.map((v, i) => isString(v) ? null : [i, v] as const).filter(x => !!x);
     const base = cs.slice();
     return () => {
       for (const [i, v] of dyns)
