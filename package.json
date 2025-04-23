@@ -8,7 +8,7 @@
     "dev": "vitest",
     "build": "node ./scripts/build.mjs",
     "lint": "biome check",
-    "test": "vitest run",
+    "test": "tsc -p ./tsconfig.build.json --noEmit && vitest run",
     "cov": "vitest run --coverage",
     "changeset": "changeset",
     "changeset-version": "changeset version",
@@ -110,9 +110,21 @@
       "types": "./dist/full/upwind/bundle.d.ts",
       "import": "./dist/full/upwind/bundle.raw.mjs"
     },
+    "./raw/h": {
+      "types": "./dist/normal/html/h.d.ts",
+      "import": "./dist/normal/html/h.raw.mjs"
+    },
     "./raw/jsx-dev-runtime": {
       "types": "./dist/normal/html/jsx-runtime.d.ts",
-      "import": "./dist/normal/html/jsx-runtime.mjs"
+      "import": "./dist/normal/html/jsx-runtime.raw.mjs"
+    },
+    "./raw/extra/cloneutil": {
+      "types": "./dist/full/reactive/cloneutil.d.ts",
+      "import": "./dist/full/reactive/cloneutil.raw.mjs"
+    },
+    "./raw/extra/preset/colors": {
+      "types": "./dist/full/upwind/preset/colors.d.ts",
+      "import": "./dist/full/upwind/preset/colors.raw.mjs"
     }
   },
   "engines": {
