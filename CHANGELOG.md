@@ -1,5 +1,12 @@
 # kisspa
 
+## 0.8.1
+
+### Patch Changes
+
+- 6eaabf8: add exports /raw/h, /raw/extra/
+- af76d52: [html] fix crash when a component receives various length children
+
 ## 0.8.0
 
 ### Minor Changes
