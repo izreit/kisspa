@@ -1,7 +1,7 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { observe, signal } from "../../reactive/index.js";
-import { h } from "../h.js";
-import { type JSX, type JSXNode, type JSXNodeAsync, type JSXNodeAsyncValue, type Root, Suspense, createRef, createRoot, useComponentMethods } from "../index.js";
+import { Fragment, h } from "../h.js";
+import { type JSX, type JSXNode, type JSXNodeAsync, type JSXNodeAsyncValue, type PropChildren, type Root, Suspense, createRef, createRoot, useComponentMethods } from "../index.js";
 import { createLogBuffer, createSeparatedPromise } from "./testutil.js";
 
 describe("basic", () => {
@@ -91,6 +91,17 @@ describe("basic", () => {
       <Comp jsxattr={<span>foo</span>} />
     );
     expect(elem.innerHTML).toBe("<p><span>foo</span></p>");
+  });
+
+  it("can have JSX in attrs", async () => {
+    function Comp(props: { children: PropChildren }): JSX.Element {
+      return <p>{ props.children }<i>zzz</i></p>;
+    }
+    await root.attach(<>
+      <Comp><span>first</span></Comp>
+      <Comp>bee<span>second</span>zoo</Comp>
+    </>);
+    expect(elem.innerHTML).toBe("<p><span>first</span><i>zzz</i></p><p>bee<span>second</span>zoo<i>zzz</i></p>");
   });
 
   it("can have a function returns JSX in attrs", async () => {
