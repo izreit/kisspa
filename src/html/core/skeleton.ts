@@ -97,12 +97,15 @@ function codeOf(target: JSXNode | { [key: string]: any }, prefix = "", hasParent
   return `${prefix}${name}${codeOfChildren(children, "(", ")", true)}`;
 }
 
+const keyTable: WeakMap<object, object[]> = new WeakMap();
 const skelTable: Map<object | string, Skeleton[]> = new Map();
 
-export function allocateSkeletons(jnode: JSXNode, key?: object | null): JSXNode {
+export function allocateSkeletons(jnode: JSXNode): JSXNode;
+export function allocateSkeletons(jnode: JSXNode, keyBase: object, childrenCount: number): JSXNode;
+export function allocateSkeletons(jnode: JSXNode, keyBase?: object, childrenCount?: number): JSXNode {
   if (isJSXElement(jnode)) {
-    const code = key ?? codeOf(jnode);
-    const skels = skelTable.get(code) ?? skelTable.set(code, collectSkeletons(jnode)).get(code)!;
+    const key = keyBase ? (((keyTable.get(keyBase) ?? keyTable.set(keyBase, []).get(keyBase)!)[childrenCount!]) ??= {}) : codeOf(jnode);
+    const skels = skelTable.get(key) ?? skelTable.set(key, collectSkeletons(jnode)).get(key)!;
     assignSkeletons(skels, jnode);
   }
   return jnode;

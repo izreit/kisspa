@@ -237,7 +237,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
 
   const expanded = name({ ...attrs, children: rawChildren });
   // TODO check isPromise(expanded) to force delayAssemble() to cache the skeletons
-  return assembleImpl(actx, allocateSkeletons(expanded, name), loc);
+  return assembleImpl(actx, allocateSkeletons(expanded, name, children.length), loc);
 }
 
 interface ComponentMethodState {

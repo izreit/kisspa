@@ -710,7 +710,7 @@ export namespace JSXInternal {
 	type AriaRole = WAIAriaRole | DPubAriaRole;
 
 	export interface KisspaAttributes<RefType extends EventTarget = EventTarget> {
-		children?: Element | Element[];
+		children?: Element | (Element | Element[])[];
     ref?:
       | Ref<RefType>
       | ((v: RefType) => void)
