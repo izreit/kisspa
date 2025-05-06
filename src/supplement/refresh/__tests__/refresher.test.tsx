@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { h } from "../../../html/h.js";
 import { createSimpleBacking } from "../../../html/core/assemble.js";
 import type { Backing } from "../../../html/core/types.js";
-import { createRefresher, type ProxyBacking } from "../refresher.js";
+import { h } from "../../../html/h.js";
+import { type ProxyBacking, createRefresher } from "../refresher.js";
 
 function createCreateMockBacking(): (name: string) => Backing {
   let count = 0;
