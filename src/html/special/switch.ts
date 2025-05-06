@@ -1,6 +1,6 @@
 import { autorun, signal, watchProbe } from "../../reactive/index.js";
-import { type AssembleContext, type Backing, assemble, callAll, createSimpleBacking, createSpecial } from "../core/backing.js";
-import type { PropChildren } from "../core/types.js";
+import { type AssembleContext, assemble, callAll, createSimpleBacking, createSpecial } from "../core/assemble.js";
+import type { Backing, PropChildren } from "../core/types.js";
 import { mapCoerce } from "../core/util.js";
 
 interface SwitchContextValue {

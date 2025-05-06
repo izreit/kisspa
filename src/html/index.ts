@@ -5,10 +5,12 @@ export {
   assignLocation,
   createBackingCommon,
   createSpecial,
-  tailOf,
+  getRefresher,
+  resolveLocation,
+  setRefresher,
   useComponentMethods,
-} from "./core/backing.js";
-export type { Backing, BackingLocation, ComponentMethods } from "./core/backing.js";
+} from "./core/assemble.js";
+export type { ComponentMethods } from "./core/assemble.js";
 export { deprop } from "./core/helpers.js";
 export type { Prop } from "./core/helpers.js";
 export { attach, createRoot } from "./core/root.js";
@@ -17,6 +19,8 @@ export { createRef } from "./core/types.js";
 export type {
   Accessor,
   Attributes,
+  Backing,
+  BackingLocation,
   Component,
   JSXElement,
   JSXNode,
@@ -26,6 +30,7 @@ export type {
   PropChildren,
   PropRef,
   Ref,
+  Refresher,
 } from "./core/types.js";
 export { createContext, withContext } from "./special/context.js";
 export type { Context, ContextProviderProps } from "./special/context.js";

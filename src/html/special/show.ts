@@ -1,5 +1,5 @@
-import { type AssembleContext, type Backing, type SpecialComponent, createSimpleBacking, createSpecial } from "../core/backing.js";
-import type { JSXNode, PropChildren } from "../core/types.js";
+import { type AssembleContext, type SpecialComponent, createSimpleBacking, createSpecial } from "../core/assemble.js";
+import type { Backing, JSXNode, PropChildren } from "../core/types.js";
 import { Match, createSwitchContextValue, switchContextKey } from "./switch.js";
 
 export namespace Show {

@@ -18,5 +18,5 @@ export type Prop<T> = [T] extends [Function] ? never : (T | (() => T));
  * @param p target Prop<T>.
  */
 export function deprop<T>(p: Prop<T>): T {
-  return (typeof p === "function") ? p() : p;
+  return (typeof p === "function") ? p() : p as T;
 }
