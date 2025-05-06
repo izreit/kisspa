@@ -4,5 +4,6 @@ node_modules
 *.tgz
 
 dist/
+dist_supplement/
 lib/
 coverage/

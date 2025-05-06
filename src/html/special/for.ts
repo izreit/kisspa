@@ -1,7 +1,7 @@
 import { autorun, signal, withoutObserver } from "../../reactive/index.js";
-import { type AssembleContext, type Backing, assemble, createBackingCommon, createSpecial, tailOf } from "../core/backing.js";
+import { type AssembleContext, assemble, createBackingCommon, createSpecial } from "../core/assemble.js";
 import { deprop } from "../core/helpers.js";
-import type { JSXNode } from "../core/types.js";
+import type { Backing, JSXNode } from "../core/types.js";
 import { arrayify } from "../core/util.js";
 import { lcs } from "./internal/lcs.js";
 

@@ -1,5 +1,5 @@
-import { type AssembleContext, type Backing, assemble, assignLocation, createBackingCommon, createLocation, createSpecial, disposeBackings, insertBackings, tailOf, tailOfBackings } from "../core/backing.js";
-import type { PropChildren } from "../core/types.js";
+import { type AssembleContext, assemble, assignLocation, createBackingCommon, createLocation, createSpecial, disposeBackings, insertBackings, resolveLocation, tailOfBackings } from "../core/assemble.js";
+import type { Backing, PropChildren } from "../core/types.js";
 import { isNode } from "../core/util.js";
 import { lastOf, mapCoerce } from "../core/util.js";
 
@@ -74,7 +74,7 @@ export function PortalImpl(actx: AssembleContext, props: Portal.Props): Backing 
       if (assignLocation(physicalLoc, l))
         updateShow();
     },
-    tail: () => tailOfBackings(childBackings, physicalLoc.prev),
+    tail: () => tailOfBackings(childBackings, physicalLoc),
     dispose: () => physicalBacking.insert(), // Just disconnect. Disposed along with the 'virtual' backing
     name: "PortalSrcPhys",
   };
@@ -89,7 +89,7 @@ export function PortalImpl(actx: AssembleContext, props: Portal.Props): Backing 
       if (assignLocation(virtualLoc, l))
         updateShow();
     },
-    tail: () => tailOf(virtualLoc.prev),
+    tail: () => resolveLocation(virtualLoc),
     dispose: () => {
       disposeBackings(childBackings);
       destBackingFor(to).removeBacking_(physicalBacking);

@@ -11,6 +11,7 @@
   },
   "files": [
     "./vite-env.d.ts",
+    "./src/supplement/index.ts",
     "./src/index.ts"
   ],
   "include": [

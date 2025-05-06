@@ -62,3 +62,28 @@ export type PropRef =
   | Ref<HTMLElement>
   | ((v: HTMLElement) => void)
   | (Ref<HTMLElement> | ((v: HTMLElement) => void))[];
+
+export interface Backing {
+  insert(loc?: BackingLocation | null | undefined): void;
+  tail(): ResolvedBackingLocation | null | undefined;
+  dispose(): void;
+  name: Node | string;
+}
+
+export type ResolvedBackingLocation = [
+  /** parent */
+  Node | null | undefined,
+  /** prev */
+  Node | null | undefined,
+];
+
+export interface BackingLocation {
+  parent: Node | null | undefined;
+  prev: Backing | Node | null | undefined;
+}
+
+export interface Refresher {
+  register(c: Component<any>, family: string): void;
+  resolve<T>(c: Component<T>): Component<T>;
+  track<T>(c: Component<T>, backing: Backing, refresh: (c: Component<T>) => Node | Backing): Backing;
+}

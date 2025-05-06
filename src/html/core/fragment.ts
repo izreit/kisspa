@@ -1,5 +1,5 @@
-import type { FragmentComponent } from "./backing";
-import type { JSXElement, JSXNode } from "./types";
+import type { FragmentComponent } from "./assemble.js";
+import type { JSXElement, JSXNode } from "./types.js";
 
 /**
  * Fragment (`<></>`).

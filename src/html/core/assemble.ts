@@ -1,19 +1,8 @@
 import { autorun, withoutObserver } from "../../reactive/index.js";
 import { allocateSkeletons } from "./skeleton.js";
-import { $noel, type Component, type JSXNode, type PropChildren, type Ref, isJSXElement } from "./types.js";
+import type { Backing, BackingLocation, Component, JSXNode, PropChildren, Ref, Refresher, ResolvedBackingLocation, } from "./types.js";
+import { $noel, isJSXElement } from "./types.js";
 import { arrayify, doNothing, isFunction, isNode, isPromise, isString, objEntries } from "./util.js";
-
-export interface Backing {
-  insert(loc?: BackingLocation | null | undefined): void;
-  tail(): Node | null | undefined;
-  dispose(): void;
-  name: Node | string;
-}
-
-export interface BackingLocation {
-  parent: Node | null | undefined;
-  prev: Backing | Node | null | undefined;
-}
 
 export function createLocation(parent?: Node | null, prev?: Backing | Node | null): BackingLocation {
   return { parent, prev };
@@ -35,14 +24,18 @@ function isStrOrNumOrbool(v: any): v is number | string | boolean {
   return typeof v === "string" || typeof v === "number" || typeof v === "boolean";
 }
 
-export function tailOf(p: Backing | Node | null | undefined): Node | null | undefined {
-  return p && (isNode(p) ? p : p.tail());
+export function resolveLocation(loc: BackingLocation | null | undefined): ResolvedBackingLocation {
+  const { parent, prev } = loc ?? nullLocation;
+  return [parent, prev && (isNode(prev) ? prev : prev.tail()?.[1])];
 }
 
-function insertAfter(node: Node, parent: Node, prev: Backing | Node | null | undefined): void {
-  const rawPrev = tailOf(prev);
-  const after = rawPrev ? rawPrev.nextSibling : parent.firstChild;
-  parent.insertBefore(node, after);
+let refresher: Refresher | null | undefined;
+export const getRefresher = () => refresher;
+export const setRefresher = (r: Refresher | null | undefined) => (refresher = r);
+
+function insertAfter(node: Node, loc: BackingLocation): void {
+  const [parent, prev] = resolveLocation(loc);
+  parent?.insertBefore(node, prev ? prev.nextSibling : parent.firstChild);
 }
 
 export interface AssembleContext {
@@ -72,7 +65,7 @@ export function createBackingCommon(
       if (assignLocation(loc, l))
         insertBackings(resolveChildren(), l);
     },
-    tail: () => tailOfBackings(resolveChildren(), loc.prev),
+    tail: () => tailOfBackings(resolveChildren(), loc),
     dispose() {
       callAll(disposers);
       disposeBackings(resolveChildren());
@@ -106,16 +99,18 @@ export function createSimpleBacking(
 }
 
 function createNodeBackingIfNeeded(node: Node, staticParent: boolean, disposers?: (() => void)[]): Backing | Node {
+  const tail = () => [node.parentNode, node] as ResolvedBackingLocation;
+
   if (staticParent) {
     if (!disposers || !disposers.length)
       return node;
     const dispose = (disposers.length === 1) ? disposers[0] : () => callAll(disposers);
-    return { insert: doNothing, dispose, tail: () => node, name: node };
+    return { insert: doNothing, dispose, tail, name: node };
   }
 
-  const insert = (pos?: BackingLocation | null | undefined) => {
-    if (pos && pos.parent) {
-      insertAfter(node, pos.parent, pos.prev);
+  const insert = (loc?: BackingLocation | null | undefined) => {
+    if (loc && loc.parent) {
+      insertAfter(node, loc);
     } else {
       node.parentNode?.removeChild(node);
     }
@@ -124,7 +119,7 @@ function createNodeBackingIfNeeded(node: Node, staticParent: boolean, disposers?
     insert();
     disposers && callAll(disposers);
   };
-  return { insert, dispose, tail: () => node, name: node };
+  return { insert, dispose, tail, name: node };
 }
 
 function resolveRef(el: HTMLElement, r: Ref<HTMLElement> | ((e: HTMLElement) => void)): void {
@@ -135,7 +130,7 @@ function assignAttribute(el: HTMLElement, k: string, v: string | number | boolea
   (v != null) ? el.setAttribute(k, "" + v) : el.removeAttribute(k);
 }
 
-function assembleImpl(actx: AssembleContext, jnode: JSXNode): Backing;
+function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocation | null): Backing;
 function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node;
 function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node {
   if (isPromise(jnode)) {
@@ -164,8 +159,8 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
       (jnode.el && jnode.el !== $noel ? jnode.el.cloneNode(true) : null) :
       document.createTextNode(""));
 
-  if (el && !el.parentNode && loc && loc.parent)
-    insertAfter(el, loc.parent, loc.prev);
+  if (el && !el.parentNode && loc)
+    insertAfter(el, loc);
 
   if (!(jnode && typeof jnode === "object")) {
     el!.nodeValue = (jnode ?? "") + "";
@@ -202,7 +197,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
     }
 
     let skelCh: Node | null | undefined = el!.firstChild;
-    const chLoc = createLocation(el!);
+    const chLoc: BackingLocation = createLocation(el!);
     for (const v of children) {
       let ch: Backing | Node;
       // IMPORTANT This condition, for consuming the skeleton, must be correspondent with collectSkeletons().
@@ -229,15 +224,18 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
   if (special === "") // Fragment. (cf. fragment.ts)
     return createSimpleBacking("Frag", loc, children.map(c => assemble(actx, c)));
 
+  const args = { ...attrs, children: rawChildren };
   if (special) {
-    const b = special(actx, { ...attrs, children: rawChildren });
+    const b = special(actx, args);
     b.insert(loc);
     return b;
   }
 
-  const expanded = name({ ...attrs, children: rawChildren });
-  // TODO check isPromise(expanded) to force delayAssemble() to cache the skeletons
-  return assembleImpl(actx, allocateSkeletons(expanded, name, children.length), loc);
+  const assembler = (c: Component<any>) => assembleImpl(actx, allocateSkeletons(c(args), c, children.length), loc);
+  const comp = refresher?.resolve(name) ?? name;
+  const b = assembler(comp);
+  return refresher?.track(comp, b, assembler) ?? b;
+  // return assembleImpl(actx, allocateSkeletons(comp(args), comp, children.length), loc);
 }
 
 interface ComponentMethodState {
@@ -329,7 +327,7 @@ export function createSpecial<P>(impl: (actx: AssembleContext, props: P) => Back
   return ret;
 }
 
-export function tailOfBackings(bs: Backing[] | null | undefined, prev?: Backing | Node | null): Node | null | undefined {
+export function tailOfBackings(bs: Backing[] | null | undefined, prev?: BackingLocation): ResolvedBackingLocation {
   if (bs) {
     for (let i = bs.length - 1; i >= 0; --i) {
       const t = bs[i].tail();
@@ -337,7 +335,7 @@ export function tailOfBackings(bs: Backing[] | null | undefined, prev?: Backing 
         return t;
     }
   }
-  return tailOf(prev);
+  return resolveLocation(prev);
 }
 
 export function insertBackings(bs: Backing[] | null | undefined, loc: BackingLocation | null | undefined): void {
