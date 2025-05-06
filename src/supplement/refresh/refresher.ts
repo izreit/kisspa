@@ -59,7 +59,7 @@ export function createRefresher(): Refresher {
   };
 }
 
-interface ProxyBacking extends Backing {
+export interface ProxyBacking extends Backing {
   isDisposed(): boolean;
   getTarget(): Backing;
   replaceTarget(b: Backing): void;
@@ -80,6 +80,7 @@ function createProxyBacking(b: Backing): ProxyBacking {
       parent = null;
       disposed = true;
       proxied.dispose();
+      proxied = null!;
     },
     name: "Proxy",
     isDisposed: () => disposed,
