@@ -1,5 +1,12 @@
 # kisspa
 
+## 0.9.0
+
+### Minor Changes
+
+- 0454627: [supplement] add supplement/refresher and supplement/vite-plugin
+- 0454627: [html] add internal methods `getRefresher()`, `setRefresher()` for HMR
+
 ## 0.8.1
 
 ### Patch Changes
