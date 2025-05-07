@@ -1,5 +1,11 @@
 # kisspa
 
+## 0.9.1
+
+### Patch Changes
+
+- 418e465: [supplement] fix HMR that breaks DOM order
+
 ## 0.9.0
 
 ### Minor Changes
