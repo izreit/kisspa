@@ -67,28 +67,24 @@ export interface ProxyBacking extends Backing {
 
 function createProxyBacking(b: Backing): ProxyBacking {
   let proxied = b;
-  let disposed = false;
-  let parent: Node | null | undefined;
   return {
     insert: loc => {
-      parent = loc?.parent;
       proxied.insert(loc);
     },
     tail: () => proxied.tail(),
     dispose: () => {
-      if (disposed) return;
-      parent = null;
-      disposed = true;
+      if (!proxied) return;
       proxied.dispose();
       proxied = null!;
     },
     name: "Proxy",
-    isDisposed: () => disposed,
+    isDisposed: () => !proxied,
     getTarget: () => proxied,
     replaceTarget: b => {
-      if (disposed) return;
-      if (parent)
-        b.insert({ parent, prev: proxied });
+      if (!proxied) return;
+      const rloc = proxied.tail();
+      if (rloc?.[0])
+        b.insert({ parent: rloc[0], prev: rloc[1] });
       proxied.dispose();
       proxied = b;
     },
