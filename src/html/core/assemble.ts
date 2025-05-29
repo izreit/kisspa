@@ -127,7 +127,10 @@ function resolveRef(el: HTMLElement, r: Ref<HTMLElement> | ((e: HTMLElement) => 
 }
 
 function assignAttribute(el: HTMLElement, k: string, v: string | number | boolean | null): void {
-  (v != null) ? el.setAttribute(k, "" + v) : el.removeAttribute(k);
+  // several non-reflecting properties cannot be changed by setAttribute()...
+  (k === "value" || k === "checked" || k === "selected") ?
+    ((el as any)[k] = v !== !!v ? "" + v : !!v) :
+    ((v != null && v !== false) ? el.setAttribute(k, "" + v) : el.removeAttribute(k));
 }
 
 function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocation | null): Backing;
