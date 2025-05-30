@@ -2,12 +2,13 @@ import { autorun, withoutObserver } from "../../reactive/index.js";
 import { allocateSkeletons } from "./skeleton.js";
 import type { Backing, BackingLocation, Component, JSXNode, PropChildren, Ref, Refresher, ResolvedBackingLocation, } from "./types.js";
 import { $noel, isJSXElement } from "./types.js";
-import { arrayify, doNothing, isFunction, isNode, isPromise, isString, objEntries } from "./util.js";
+import { arrayify, doNothing, isArray, isFunction, isNode, isPromise, isString, objEntries } from "./util.js";
 
 export function createLocation(parent?: Node | null, prev?: Backing | Node | null): BackingLocation {
   return { parent, prev };
 }
 
+const reOnFocusInOut = /^onfocus(in|out)$/i;
 const nullLocation = createLocation();
 
 export function assignLocation(self: BackingLocation, loc: BackingLocation | null | undefined): boolean {
@@ -180,14 +181,15 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
         refVal = arrayify(v);
         continue;
       }
-      if (isStrOrNumOrbool(v)) {
+      if (k[0] === "o" && k[1] === "n") {
+        const lk = k.toLowerCase();
+        const [fun, opts] = isArray(v) ? v : [v];
+        el!.addEventListener((lk in el! || reOnFocusInOut.test(lk) ? lk : k).slice(2), fun, opts);
+
+      } else if (isStrOrNumOrbool(v)) {
         assignAttribute(el as HTMLElement, k, v);
       } else if (isFunction(v)) {
-        if (k[0] === "o" && k[1] === "n") {
-          (el as any)[k.toLowerCase()] = v;
-        } else {
-          disposers.push(autorun(() => { assignAttribute(el as HTMLElement, k, v()); }));
-        }
+        disposers.push(autorun(() => { assignAttribute(el as HTMLElement, k, v()); }));
       } else if (typeof v === "object" && v) {
         for (const [vk, vv] of objEntries(v)) {
           if (isStrOrNumOrbool(vv)) {
