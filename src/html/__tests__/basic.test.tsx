@@ -40,12 +40,72 @@ describe("basic", () => {
     const button = ref.value!;
     expect(button.type).toBe("button");
     expect(button.id).toBe("foo");
-    expect(button.onclick).toBe(handleClick);
     expect(button.getAttribute("allowFullScreen")).toBe("true");
     expect(button.style.margin).toBe("10px");
     expect(button.style.paddingLeft).toBe("0px");
     button.click();
     expect(button.style.paddingLeft).toBe("1px");
+  });
+
+  it("can add event listeners with options - signal", async () => {
+    const ref = createRef<HTMLButtonElement>();
+    const [store, setStore] = observe({ val: 0 });
+    const ac = new AbortController();
+
+    function handleClick() {
+      setStore(s => s.val++);
+    }
+
+    await root.attach(
+      <button
+        type="button"
+        ref={ref}
+        onClick={[handleClick, { signal: ac.signal }]}
+      />
+    );
+
+    const button = ref.value!;
+    expect(store.val).toBe(0);
+    button.click();
+    expect(store.val).toBe(1);
+    button.click();
+    expect(store.val).toBe(2);
+
+    ac.abort();
+    button.click();
+    expect(store.val).toBe(2);
+  });
+
+  it("can add event listeners with options - once", async () => {
+    const ref = createRef<HTMLInputElement>();
+
+    try {
+      // In happy-dom, `focus()` dispatches `FocusEvent` only if the element is attached to document
+      // while Web browsers seems not fire FocusEvent by `focus()` whether or not the element is attached.
+      // ref. https://github.com/capricorn86/happy-dom/blob/e4fea234/packages/happy-dom/src/nodes/html-element/HTMLElementUtility.ts#L21
+      elem.ownerDocument.body.appendChild(elem);
+
+      let count = 0;
+      await root.attach(
+        <input
+          type="text"
+          ref={ref}
+          value={""}
+          onFocusIn={[() => ++count, { once: true }]}
+        />
+      );
+
+      const el = ref.value!;
+      el.focus();
+      await Promise.resolve();
+      expect(count).toBe(1);
+      el.blur();
+      el.focus();
+      expect(count).toBe(1);
+
+    } finally {
+      elem.remove();
+    }
   });
 
   it("can set/remove attrs", async () => {
@@ -64,7 +124,7 @@ describe("basic", () => {
     expect(button.hasAttribute("className")).toBe(false);
   });
 
-  it("cares non-reflecting attributes", async () => {
+  it("takes care of non-reflecting attributes", async () => {
     const ref = createRef<HTMLInputElement>();
     const [val, setVal] = signal("initial");
 
