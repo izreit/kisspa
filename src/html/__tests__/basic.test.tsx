@@ -60,8 +60,25 @@ describe("basic", () => {
     expect(button.type).toBe("button");
     expect(button.className).toBe("foo");
 
-    setClassName(undefined)
+    setClassName(undefined);
     expect(button.hasAttribute("className")).toBe(false);
+  });
+
+  it("cares non-reflecting attributes", async () => {
+    const ref = createRef<HTMLInputElement>();
+    const [val, setVal] = signal("initial");
+
+    await root.attach(
+      <input type="text" ref={ref} value={val} />
+    );
+
+    const el = ref.value!;
+    expect(el.getAttribute("value")).toBeNull(); // not set by attribute
+    expect(el.value).toBe("initial");
+
+    setVal("altered");
+    expect(el.getAttribute("value")).toBeNull();
+    expect(el.value).toBe("altered");
   });
 
   it("can toggle attrs", async () => {
