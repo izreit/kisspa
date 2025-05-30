@@ -1,5 +1,16 @@
 # kisspa
 
+## 0.10.0
+
+### Minor Changes
+
+- 991865a: [html] accept array including `EventListnerOptions` for event listener attributes like `onClick`
+
+### Patch Changes
+
+- 0c6537a: [html] fix non-reflecting attribute (like checked, selected) isn't dynamic
+- 991865a: [html] remove unimplemented "Capture" attributes like `onClickCapture` or `onKeyUpCapture`
+
 ## 0.9.1
 
 ### Patch Changes
