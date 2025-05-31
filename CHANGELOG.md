@@ -1,5 +1,12 @@
 # kisspa
 
+## 0.10.1
+
+### Patch Changes
+
+- b5a6b59: [html] fix crash by a prop accepting both string and other types
+- 3e72036: [html] fix: allow `undefined` in JSX
+
 ## 0.10.0
 
 ### Minor Changes
