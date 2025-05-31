@@ -35,14 +35,14 @@ export interface JSXElement {
 }
 
 export type JSXNodeSync =
-  | null | string | number | JSXElement | (() => JSXNodeSync);
-
-export type JSXNodeAsyncValue = null | string | number | JSXElement | (() => JSXNode);
+  | undefined | null | string | number | JSXElement | (() => JSXNodeSync);
+export type JSXNodeAsyncValue =
+  | undefined | null | string | number | JSXElement | (() => JSXNode);
 export type JSXNodeAsync = Promise<JSXNodeAsyncValue>;
 
 export type JSXNode =
-  | null | string | number | JSXElement | (() => JSXNode)
-  | Promise<null | string | number | JSXElement | (() => JSXNode)>;
+  | undefined | null | string | number | JSXElement | (() => JSXNode)
+  | Promise<undefined | null | string | number | JSXElement | (() => JSXNode)>;
 
 // export type OmitNever<T> = { [K in keyof T as T[K] extends never ? never : K]: T[K] };
 export type Component<P> = (props: P) => JSXNode;
@@ -51,13 +51,13 @@ export function isJSXElement(v: any): v is JSXElement {
   return v && v.ksp$h;
 }
 
-export type Ref<T> = { value: T | null };
+export type Ref<T> = { value: T | null | undefined };
 
 export function createRef<T>(): Ref<T> {
   return { value: null };
 }
 
-export type PropChildren = JSXNode | JSXNode[] | null;
+export type PropChildren = JSXNode | JSXNode[] | null | undefined;
 export type PropRef =
   | Ref<HTMLElement>
   | ((v: HTMLElement) => void)

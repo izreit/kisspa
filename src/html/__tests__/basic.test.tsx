@@ -170,15 +170,24 @@ describe("basic", () => {
     expect(elem.innerHTML).toBe("<p><span>foo</span></p>");
   });
 
-  it("can have JSX in attrs", async () => {
+  it("can have various values in attrs", async () => {
     function Comp(props: { children: PropChildren }): JSX.Element {
       return <p>{ props.children }<i>zzz</i></p>;
     }
     await root.attach(<>
       <Comp><span>first</span></Comp>
       <Comp>bee<span>second</span>zoo</Comp>
+      <Comp>{ 21 * 2 }</Comp>
+      <Comp>{ null }</Comp>
+      <Comp>{ undefined }</Comp>
     </>);
-    expect(elem.innerHTML).toBe("<p><span>first</span><i>zzz</i></p><p>bee<span>second</span>zoo<i>zzz</i></p>");
+    expect(elem.innerHTML).toBe([
+      "<p><span>first</span><i>zzz</i></p>",
+      "<p>bee<span>second</span>zoo<i>zzz</i></p>",
+      "<p>42<i>zzz</i></p>",
+      "<p><i>zzz</i></p>",
+      "<p><i>zzz</i></p>",
+    ].join(""));
   });
 
   it("can have a function returns JSX in attrs", async () => {
