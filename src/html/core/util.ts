@@ -23,5 +23,8 @@ export const isString = (v: any): v is string => typeof v === "string";
 export const isFunction = (v: any): v is Function => typeof v === "function";
 export const isPromise = (v: any): v is Promise<any> => v && isFunction(v.then);
 export const isNode = (v: object): v is Node => "nodeName" in v;
+export const isStrOrNumOrbool = (v: any): v is number | string | boolean => (
+  typeof v === "string" || typeof v === "number" || typeof v === "boolean"
+);
 
 export const doNothing = () => {};

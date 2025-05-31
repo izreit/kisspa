@@ -178,6 +178,7 @@ describe("basic", () => {
       <Comp><span>first</span></Comp>
       <Comp>bee<span>second</span>zoo</Comp>
       <Comp>{ 21 * 2 }</Comp>
+      <Comp>{ "Foo".repeat(2) }</Comp>
       <Comp>{ null }</Comp>
       <Comp>{ undefined }</Comp>
     </>);
@@ -185,6 +186,7 @@ describe("basic", () => {
       "<p><span>first</span><i>zzz</i></p>",
       "<p>bee<span>second</span>zoo<i>zzz</i></p>",
       "<p>42<i>zzz</i></p>",
+      "<p>FooFoo<i>zzz</i></p>",
       "<p><i>zzz</i></p>",
       "<p><i>zzz</i></p>",
     ].join(""));

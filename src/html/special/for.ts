@@ -32,7 +32,7 @@ export const For = createSpecial(function For<E>(actx: AssembleContext, props: F
     for (let i = 0; i < es.length; ++i) { // not map() but for-loop, to skip deleted elements.
       const e = es[i];
       if (e != null) {
-        const k = key?.(e, i) ?? e;
+        const k = key ? key(e, i) : e;
         let b = backingTable.get(k);
         if (b) {
           ixTable.get(b!)![1](i); // update index

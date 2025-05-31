@@ -10,37 +10,36 @@ export interface Skeleton {
  * Collect the skeletons for the given JSXNode.
  * IMPORTANT This must be coresspondent with codeOf() and how assemble() consumes skeletons
  */
-function collectSkeletonsImpl(acc: Skeleton[], target: JSXNode | { [key: string]: any }, path: (number | string)[], parent?: Node | null): void {
-  if (isString(target) && parent) {
-    parent.appendChild(document.createTextNode(""));
-    return;
-  }
-
+function collectSkeletonsImpl(acc: Skeleton[], target: JSXNode | { [key: string]: any }, path: (number | string)[], parent?: HTMLElement | null): void {
   if (!isJSXElement(target)) {
     if (typeof target === "object" && target) {
+      // No need to append "" to parent, since this should be only in props, not a JSX tree structure itself.
       for (const [k, v] of objEntries(target))
         collectSkeletonsImpl(acc, v, path.concat(k));
+    } else {
+      parent && parent.append("");
     }
     return;
   }
 
-  if (target.el)
+  if (target.el) {
+    parent && parent.append("");
     return;
+  }
+
   const { name, attrs, chs: children } = target;
   if (!isString(name)) {
-    if (!parent)
-      acc.push({ el: $noel, path });
+    parent ? parent.append("") : acc.push({ el: $noel, path });
     for (const [k, v] of objEntries(attrs))
       collectSkeletonsImpl(acc, v, path.concat(k));
     for (let i = 0; i < children.length; ++i)
       collectSkeletonsImpl(acc, children[i], path.concat(i));
-    return;
+  } else {
+    const e = document.createElement(name);
+    parent ? parent.append(e) : acc.push({ el: e, path });
+    for (let i = 0; i < children.length; ++i)
+      collectSkeletonsImpl(acc, children[i], path.concat(i), e);
   }
-
-  const e = document.createElement(name);
-  parent ? parent.appendChild(e) : acc.push({ el: e, path });
-  for (let i = 0; i < children.length; ++i)
-    collectSkeletonsImpl(acc, children[i], path.concat(i), e);
 }
 
 function collectSkeletons(jnode: JSXNode): Skeleton[] {
@@ -66,32 +65,28 @@ function codeOfEntries(entries: [string, JSXNode | { [key: string]: any }][], pr
    return ret && prefix + ret + postfix;
 }
 
-function codeOfChildren(children: JSXNode[], prefix = "", postfix = "", hasParent?: boolean): string {
+function codeOfChildren(children: JSXNode[], prefix: string, postfix = "", hasParent?: boolean): string {
   const ret = children.map(c => codeOf(c, "", hasParent)).join(",");
   return ret && prefix + ret + postfix;
 }
 
 // IMPORTANT This must be coresspondent with how collectSkeletons() creates Node hierarchy.
 function codeOf(target: JSXNode | { [key: string]: any }, prefix = "", hasParent?: boolean): string {
-  if (isString(target) && hasParent)
-    return prefix + "T"; // "T" has no meaning. just to indicate a text node.
-
   if (!isJSXElement(target)) {
     return (typeof target === "object" && target) ?
       codeOfEntries(objEntries(target), prefix + "{", "}") :
-      "";
+      hasParent ? prefix + "T" : ""; // "T" has no meaning. just to indicate a text node.
   }
 
   if (target.el)
-    return "";
+    return hasParent ? "_" : ""; // "_" has no meaning. just to indicate a dummy text node.
 
   const { name, attrs, chs: children } = target;
   if (!isString(name)) {
     const a = codeOfEntries(objEntries(attrs));
     const c = codeOfChildren(children, "|");
-    // "." has no meaning. just to correspond to $noel in collectSkeletonsImpl().
-    const ret = `${hasParent ? "" : "."}${(a || c) ? `(${a}${c})` : ""}`;
-    return ret && prefix + ret;
+    // "_" and "." have no meaning. just to correspond to dummy text node or $noel in collectSkeletonsImpl().
+    return `${prefix}${hasParent ? "_" : "."}${a || c ? `(${a}${c})` : ""}`;
   }
 
   return `${prefix}${name}${codeOfChildren(children, "(", ")", true)}`;
