@@ -2,7 +2,7 @@ import { autorun, withoutObserver } from "../../reactive/index.js";
 import { allocateSkeletons } from "./skeleton.js";
 import type { Backing, BackingLocation, Component, JSXNode, PropChildren, Ref, Refresher, ResolvedBackingLocation, } from "./types.js";
 import { $noel, isJSXElement } from "./types.js";
-import { arrayify, doNothing, isArray, isFunction, isNode, isPromise, isString, objEntries } from "./util.js";
+import { arrayify, doNothing, isArray, isFunction, isNode, isPromise, isStrOrNumOrbool, isString, objEntries } from "./util.js";
 
 export function createLocation(parent?: Node | null, prev?: Backing | Node | null): BackingLocation {
   return { parent, prev };
@@ -21,10 +21,6 @@ export function assignLocation(self: BackingLocation, loc: BackingLocation | nul
   return differ;
 }
 
-function isStrOrNumOrbool(v: any): v is number | string | boolean {
-  return typeof v === "string" || typeof v === "number" || typeof v === "boolean";
-}
-
 export function resolveLocation(loc: BackingLocation | null | undefined): ResolvedBackingLocation {
   const { parent, prev } = loc ?? nullLocation;
   return [parent, prev && (isNode(prev) ? prev : prev.tail()?.[1])];
@@ -36,7 +32,7 @@ export const setRefresher = (r: Refresher | null | undefined) => (refresher = r)
 
 function insertAfter(node: Node, loc: BackingLocation): void {
   const [parent, prev] = resolveLocation(loc);
-  parent?.insertBefore(node, prev ? prev.nextSibling : parent.firstChild);
+  parent && parent.insertBefore(node, prev ? prev.nextSibling : parent.firstChild);
 }
 
 export interface AssembleContext {
@@ -204,14 +200,11 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
     let skelCh: Node | null | undefined = el!.firstChild;
     const chLoc: BackingLocation = createLocation(el!);
     for (const v of children) {
-      let ch: Backing | Node;
-      // IMPORTANT This condition, for consuming the skeleton, must be correspondent with collectSkeletons().
-      if (isString(v) || (isJSXElement(v) && !v.el && isString(v.name))) {
-        ch = assembleImpl(actx, v, null, skelCh);
-        skelCh = skelCh && skelCh.nextSibling;
-      } else {
-        ch = assembleImpl(actx, v, chLoc);
-      }
+      // IMPORTANT This condition, for consuming or skip the skeleton, must be correspondent with collectSkeletons().
+      const ch = (isJSXElement(v) && !v.el && isString(v.name)) ?
+        assembleImpl(actx, v, null, skelCh) :
+        assembleImpl(actx, v, chLoc);
+      skelCh = skelCh && skelCh.nextSibling;
       chLoc.prev = ch;
       if (!isNode(ch))
         disposers.push(ch.dispose);
@@ -237,10 +230,9 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
   }
 
   const assembler = (c: Component<any>) => assembleImpl(actx, allocateSkeletons(c(args), c, children.length), loc);
-  const comp = refresher?.resolve(name) ?? name;
+  const comp = refresher ? refresher.resolve(name) : name;
   const b = assembler(comp);
-  return refresher?.track(comp, b, assembler) ?? b;
-  // return assembleImpl(actx, allocateSkeletons(comp(args), comp, children.length), loc);
+  return refresher ? refresher.track(comp, b, assembler) : b;
 }
 
 interface ComponentMethodState {
