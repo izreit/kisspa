@@ -9,10 +9,7 @@ export interface StoreSetterOptions {
   lazyFlush?: boolean;
 }
 
-export interface StoreSetter<T> {
-  (writer: (val: T) => void, opts?: StoreSetterOptions): void;
-  autorun: (writer: (val: T) => void) => (() => void);
-}
+export type StoreSetter<T> = (writer: (val: T) => void, opts?: StoreSetterOptions) => void;
 
 const refTable = createRefTable();
 
@@ -135,7 +132,7 @@ function addRef(writeProxy: Wrapped, prop: Key, val: unknown) {
 
 export function observe<T extends object>(initial: T): [T, StoreSetter<T>] {
   const [readProxy, writeProxy] = wrap(initial);
-  const setter = ((writer: (val: T) => void, opts: StoreSetterOptions = {}): void => {
+  const setter = (writer: (val: T) => void, opts: StoreSetterOptions = {}): void => {
     try {
       writer(writeProxy);
     } finally {
@@ -144,10 +141,7 @@ export function observe<T extends object>(initial: T): [T, StoreSetter<T>] {
           requestFlush.immediate();
       }
     }
-  }) as StoreSetter<T>;
-
-  setter.autorun = (writer: (val: T) => void) => autorun(() => setter(writer));
-
+  };
   return [readProxy, setter];
 }
 
