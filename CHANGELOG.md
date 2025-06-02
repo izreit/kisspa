@@ -1,5 +1,11 @@
 # kisspa
 
+## 0.11.0
+
+### Minor Changes
+
+- 49d0de8: BREAKING! [reactive] remove `StoreSetter#autorun()` which is untested and never used
+
 ## 0.10.1
 
 ### Patch Changes
