@@ -51,17 +51,18 @@ export function isJSXElement(v: any): v is JSXElement {
   return v && v.ksp$h;
 }
 
-export type Ref<T> = { value: T | null | undefined };
+export type Ref<T> = {
+  value: T | null | undefined;
+  set: (val: T) => void;
+};
 
 export function createRef<T>(): Ref<T> {
-  return { value: null };
+  const ret: Ref<T> = { value: null, set: v => ret.value = v };
+  return ret;
 }
 
 export type PropChildren = JSXNode | JSXNode[] | null | undefined;
-export type PropRef =
-  | Ref<HTMLElement>
-  | ((v: HTMLElement) => void)
-  | (Ref<HTMLElement> | ((v: HTMLElement) => void))[];
+export type PropRef<T> = ((v: T) => void) | ((v: T) => void)[];
 
 export interface Backing {
   insert(loc?: BackingLocation | null | undefined): void;

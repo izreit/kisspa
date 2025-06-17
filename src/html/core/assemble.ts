@@ -119,10 +119,6 @@ function createNodeBackingIfNeeded(node: Node, staticParent: boolean, disposers?
   return { insert, dispose, tail, name: node };
 }
 
-function resolveRef(el: HTMLElement, r: Ref<HTMLElement> | ((e: HTMLElement) => void)): void {
-  isFunction(r) ? r(el) : (r.value = el);
-}
-
 function assignAttribute(el: HTMLElement, k: string, v: string | number | boolean | null): void {
   // several non-reflecting properties cannot be changed by setAttribute()...
   (k === "value" || k === "checked" || k === "selected") ?
@@ -169,7 +165,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
 
   const { name, attrs, chs: children, rchs: rawChildren } = jnode;
   if (isString(name)) {
-    let refVal: (Ref<HTMLElement> | ((v: HTMLElement) => void))[] | null | undefined;
+    let refVal: ((v: unknown) => void)[] | null | undefined;
     const disposers: (() => void)[] = [];
 
     for (const [k, v] of objEntries(attrs)) {
@@ -212,7 +208,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
 
     if (refVal) {
       for (const r of refVal)
-        resolveRef(el as HTMLElement, r);
+        r(el);
     }
 
     return createNodeBackingIfNeeded(el!, staticParent, disposers);

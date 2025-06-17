@@ -36,13 +36,13 @@ describe("root", () => {
     });
 
     it("accepts a component", async () => {
-      function Foo(props: { ref?: PropRef, c: string, l: string }): JSXNode {
+      function Foo(props: { ref?: PropRef<HTMLSpanElement>, c: string, l: string }): JSXNode {
         return <span ref={props.ref} class={() => props.c}>{() => props.l}</span>;
       }
 
       const divRef = createRef<HTMLDivElement>();
       const fooRef = createRef<HTMLElement>();
-      root.attach(<div ref={divRef}><Foo ref={fooRef} c={"cl"} l={"label"} /></div>);
+      root.attach(<div ref={divRef.set}><Foo ref={fooRef.set} c={"cl"} l={"label"} /></div>);
 
       expect(divRef.value?.tagName.toLowerCase()).toBe("div");
       expect(fooRef.value?.tagName.toLowerCase()).toBe("span");
