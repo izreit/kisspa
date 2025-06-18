@@ -36,7 +36,7 @@ describe("root", () => {
     });
 
     it("accepts a component", async () => {
-      function Foo(props: { ref?: PropRef, c: string, l: string }): JSXNode {
+      function Foo(props: { ref?: PropRef<HTMLSpanElement>, c: string, l: string }): JSXNode {
         return <span ref={props.ref} class={() => props.c}>{() => props.l}</span>;
       }
 

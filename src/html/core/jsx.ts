@@ -4,7 +4,7 @@
 
 /// <reference lib="dom" />
 
-import type { Accessor, AccessorOr, JSXNode, JSXNodeAsync, Ref } from './types';
+import type { Accessor, AccessorOr, JSXNode, JSXNodeAsync, PropRef } from './types';
 
 type Booleanish = boolean | 'true' | 'false';
 
@@ -15,10 +15,6 @@ export namespace JSXInternal {
   export const _ = 1;
 
 	// export interface IntrinsicAttributes {
-  //   ref?: // React compatible ref. We have no ref for components and moreover, IntrinsicAttributes cannot specify subclass of HTMLElement.
-  //     | Ref<HTMLElement>
-  //     | ((v: HTMLElement) => void)
-  //     | (Ref<HTMLElement> | ((v: HTMLElement) => void))[];
 	// 	// key?: any; // React compatible key. We use different `key` in <For>.
 	// }
 
@@ -624,10 +620,7 @@ export namespace JSXInternal {
 
 	export interface KisspaAttributes<RefType extends EventTarget = EventTarget> {
 		children?: Element | (Element | Element[])[];
-    ref?:
-      | Ref<RefType>
-      | ((v: RefType) => void)
-      | (Ref<RefType> | ((v: RefType) => void))[];
+    ref?: PropRef<RefType>;
 	}
 
 	export interface HTMLAttributes<RefType extends EventTarget = EventTarget>
