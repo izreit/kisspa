@@ -52,12 +52,13 @@ export function isJSXElement(v: any): v is JSXElement {
 }
 
 export type Ref<T> = {
-  value: T | null | undefined;
-  set: (val: T) => void;
+  (val: T): unknown;
+  value: T;
 };
 
 export function createRef<T>(): Ref<T> {
-  const ret: Ref<T> = { value: null, set: v => ret.value = v };
+  const ret = (v => (ret.value = v)) as Ref<T>;
+  ret.value = null!;
   return ret;
 }
 

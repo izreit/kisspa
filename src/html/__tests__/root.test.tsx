@@ -42,7 +42,7 @@ describe("root", () => {
 
       const divRef = createRef<HTMLDivElement>();
       const fooRef = createRef<HTMLElement>();
-      root.attach(<div ref={divRef.set}><Foo ref={fooRef.set} c={"cl"} l={"label"} /></div>);
+      root.attach(<div ref={divRef}><Foo ref={fooRef} c={"cl"} l={"label"} /></div>);
 
       expect(divRef.value?.tagName.toLowerCase()).toBe("div");
       expect(fooRef.value?.tagName.toLowerCase()).toBe("span");

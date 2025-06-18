@@ -26,7 +26,7 @@ describe("basic", () => {
 
     await root.attach(
       <button type="button"
-        ref={ref.set}
+        ref={ref}
         id="foo"
         allowFullScreen={true}
         onClick={handleClick}
@@ -59,7 +59,7 @@ describe("basic", () => {
     await root.attach(
       <button
         type="button"
-        ref={ref.set}
+        ref={ref}
         onClick={[handleClick, { signal: ac.signal }]}
       />
     );
@@ -89,7 +89,7 @@ describe("basic", () => {
       await root.attach(
         <input
           type="text"
-          ref={ref.set}
+          ref={ref}
           value={""}
           onFocusIn={[() => ++count, { once: true }]}
         />
@@ -113,7 +113,7 @@ describe("basic", () => {
     const [className, setClassName] = signal<string | undefined>("foo");
 
     await root.attach(
-      <button type="button" ref={ref.set} class={className} />
+      <button type="button" ref={ref} class={className} />
     );
 
     const button = ref.value!;
@@ -129,7 +129,7 @@ describe("basic", () => {
     const [val, setVal] = signal("initial");
 
     await root.attach(
-      <input type="text" ref={ref.set} value={val} />
+      <input type="text" ref={ref} value={val} />
     );
 
     const el = ref.value!;
@@ -146,7 +146,7 @@ describe("basic", () => {
     const [allowFullscreen, setAllowFullscreen] = signal<boolean | undefined>(true);
 
     await root.attach(
-      <button type="button" ref={ref.set} allowFullScreen={allowFullscreen} />
+      <button type="button" ref={ref} allowFullScreen={allowFullscreen} />
     );
 
     const button = ref.value!;
