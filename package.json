@@ -7,7 +7,7 @@
     "prepare": "npm run build",
     "dev": "vitest",
     "build": "npm run build:main && npm run build:suppl",
-    "build:main": "node ./scripts/build.mjs",
+    "build:main": "node ./scripts/build.mjs && node ./scripts/stat.mjs",
     "build:suppl": "tsc -p ./tsconfig.build-supplement.json",
     "lint": "biome check",
     "test": "tsc -p ./tsconfig.build.json --noEmit && vitest run",
