@@ -1,5 +1,11 @@
 # kisspa
 
+## 0.11.1
+
+### Patch Changes
+
+- 271d182: [html] make `ref` in JSX contravariant
+
 ## 0.11.0
 
 ### Minor Changes
