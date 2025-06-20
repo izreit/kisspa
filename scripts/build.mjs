@@ -38,16 +38,16 @@ function run(s) {
 
 // NOTE Apply terser. Only used for .mjs (ESM) because they are not minified by Vite.
 // See comments on "terserOptions" in vite.config.mts for the detail.
-function applyTerser(path) {
+function minify(path) {
   const out = path.replace(/\.raw\.mjs$/, ".mjs");
   run(`npx terser ${path} -c -m --mangle-props regex=/_$/ -o ${out} --toplevel`);
 }
 
 // build unbundled
 run("npx vite build -- --clean -t extra-preset");
-applyTerser("dist/full/upwind/preset/colors.raw.mjs");
+minify("dist/full/upwind/preset/colors.raw.mjs");
 run("npx vite build -- -t extra-cloneutil");
-applyTerser("dist/full/reactive/cloneutil.raw.mjs");
+minify("dist/full/reactive/cloneutil.raw.mjs");
 
 // build full
 if (targetFull) {
@@ -55,9 +55,9 @@ if (targetFull) {
   run("npx vite build -- -t html-full");
   run("npx vite build -- -t whole-full");
   run(`npx tsc -p ${path("tsconfig.build.json ")} --emitDeclarationOnly --outDir ${path("dist/full")}`);
-  applyTerser("dist/full/reactive/index.raw.mjs");
-  applyTerser("dist/full/html/bundle.raw.mjs");
-  applyTerser("dist/full/upwind/bundle.raw.mjs");
+  minify("dist/full/reactive/index.raw.mjs");
+  minify("dist/full/html/bundle.raw.mjs");
+  minify("dist/full/upwind/bundle.raw.mjs");
 }
 
 // build normal
@@ -68,9 +68,9 @@ if (targetNormal) {
   run("npx vite build -- -t jsx");
   run("npx vite build -- -t whole");
   run(`npx tsc -p ${path("tsconfig.build.json ")} --emitDeclarationOnly --outDir ${path("dist/normal")}`);
-  applyTerser("dist/normal/reactive/index.raw.mjs");
-  applyTerser("dist/normal/html/bundle.raw.mjs");
-  applyTerser("dist/normal/html/h.raw.mjs");
-  applyTerser("dist/normal/html/jsx-runtime.raw.mjs");
-  applyTerser("dist/normal/upwind/bundle.raw.mjs");
+  minify("dist/normal/reactive/index.raw.mjs");
+  minify("dist/normal/html/bundle.raw.mjs");
+  minify("dist/normal/html/h.raw.mjs");
+  minify("dist/normal/html/jsx-runtime.raw.mjs");
+  minify("dist/normal/upwind/bundle.raw.mjs");
 }

@@ -7,6 +7,7 @@
  * Only works after running build.js.
  */
 
+import { execSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { gzipSync } from "node:zlib";
@@ -49,6 +50,9 @@ function printSizeDescriptors(sizeDescs) {
   }
 }
 
+const hash = execSync("git rev-parse --short HEAD").toString().trim();
+console.log(`Commit ${hash}`);
+
 const allSizeDescs = [];
 
 if (targetFull) {
@@ -76,6 +80,7 @@ if (targetNormal) {
 }
 
 if (options.out) {
-  writeFileSync(options.out, JSON.stringify(allSizeDescs, null, 2), "utf-8");
+  const content = { hash, sizes: allSizeDescs };
+  writeFileSync(options.out, JSON.stringify(content, null, 2), "utf-8");
   console.log(`\nSaved to ${options.out}`);
 }

@@ -32,7 +32,7 @@ jobs:
         run: npm ci
       - name: Create Release PR or Publish
         id: changesets
-        uses: changesets/action@v1
+        uses: changesets/action@e0145edc7d9d8679003495b11f87bd8ef63c0cba # v1.5.3
         with:
           version: npm run changeset-version
           publish: npm run changeset-publish

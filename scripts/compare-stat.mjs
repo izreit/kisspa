@@ -24,26 +24,28 @@ if (!(1 <= positionals.length && positionals.length <= 2)) {
 
 if (positionals.length === 1) {
   const [statPath] = positionals;
-  // stat: { path: string, size: number, gzipSize: number }[]
-  const stat = JSON.parse(readFileSync(statPath, "utf-8"));
+  // sizes: { path: string, size: number, gzipSize: number }[]
+  const { hash, sizes } = JSON.parse(readFileSync(statPath, "utf-8"));
 
+  console.log(`Commit: ${hash}`);
+  console.log("");
   console.log("|path|size|min+gzip|");
   console.log("|:---:|:---|:---|");
-  for (const { path, size, gzipSize } of stat) {
+  for (const { path, size, gzipSize } of sizes) {
     console.log(`|\`${path}\`|${asKB(size)} (${size})|${asKB(gzipSize)} (${gzipSize})|`)
   }
 
 } else {
   const [statPath, basePath] = positionals;
-  // stat, base: { path: string, size: number, gzipSize: number }[]
-  const stat = JSON.parse(readFileSync(statPath, "utf-8"));
-  const base = JSON.parse(readFileSync(basePath, "utf-8"));
+  // headSizes, baseSizes: { path: string, size: number, gzipSize: number }[]
+  const { hash: headHash, sizes: headSizes } = JSON.parse(readFileSync(statPath, "utf-8"));
+  const { hash: baseHash, sizes: baseSizes } = JSON.parse(readFileSync(basePath, "utf-8"));
 
   // table: { [path: string]: { path: string, baseSize: number, baseGzipSize: number, size: number, gzipSize: number } }
   const table = {};
-  for (const { path, size, gzipSize } of stat)
+  for (const { path, size, gzipSize } of headSizes)
     table[path] = { path, size, gzipSize, baseSize: 0, baseGzipSize: 0 };
-  for (const { path, size, gzipSize } of base) {
+  for (const { path, size, gzipSize } of baseSizes) {
     if (table[path]) {
       table[path].baseSize = size;
       table[path].baseGzipSize = gzipSize;
@@ -52,6 +54,8 @@ if (positionals.length === 1) {
     }
   }
 
+  console.log(`Commit: ${baseHash} => ${headHash}`);
+  console.log("");
   console.log("|path|size|min+gzip|");
   console.log("|:---:|:---|:---|");
   for (const { path, baseSize, baseGzipSize, size, gzipSize } of Object.values(table)) {
