@@ -20,6 +20,9 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: npm
+      - name: Pick HEAD hash
+        id: head-hash
+        run: echo "hash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
       - name: Stat HEAD
         run: |
           npm ci
@@ -35,7 +38,7 @@ jobs:
 
       - name: Compare stats
         run: |
-          git checkout ${{ github.event.pull_request.head.ref }}
+          git checkout ${{ steps.head-hash.outputs.hash }}
           echo "### File size comparison" > __stat__.txt
           echo "" >> __stat__.txt
           node ./scripts/compare-stat.mjs ./__stat_after__.json ./__stat_before__.json >> __stat__.txt
