@@ -46,7 +46,7 @@ jobs:
           node ./scripts/compare-stat.mjs ./__stat_after__.json ./__stat_before__.json >> __stat__.txt
 
       - name: "Report stats as fallback"
-        if: ${{ steps.compare-stats.outcome != "success" }}
+        if: ${{ steps.compare-stats.outcome != 'success' }}
         run: |
           git checkout ${{ steps.head-hash.outputs.hash }}
           echo "### File size report" > __stat__.txt
