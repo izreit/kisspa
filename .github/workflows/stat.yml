@@ -4,6 +4,9 @@ on:
   pull_request:
     types: [opened, synchronize, reopend]
 
+permissions:
+  pull-requests: write
+
 jobs:
   main:
     runs-on: ubuntu-latest
