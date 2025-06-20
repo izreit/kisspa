@@ -23,7 +23,6 @@ jobs:
       - name: Stat HEAD
         run: |
           npm ci
-          npm run build:main
           node ./scripts/stat.mjs -o ./__stat_after__.json
 
       - name: Fetch base
@@ -32,11 +31,11 @@ jobs:
         run: |
           git checkout origin/${{ github.event.pull_request.base.ref }}
           npm ci
-          npm run build:main
           node ./scripts/stat.mjs -o ./__stat_before__.json
 
       - name: Compare stats
         run: |
+          git checkout origin/${{ github.event.pull_request.head.ref }}
           echo "### File size comparison" > __stat__.txt
           echo "" >> __stat__.txt
           node ./scripts/compare-stat.mjs ./__stat_after__.json ./__stat_before__.json >> __stat__.txt
