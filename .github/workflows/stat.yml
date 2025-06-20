@@ -37,18 +37,28 @@ jobs:
           node ./scripts/stat.mjs -o ./__stat_before__.json
 
       - name: Compare stats
+        id: compare-stats
+        continue-on-error: true
         run: |
           git checkout ${{ steps.head-hash.outputs.hash }}
-          echo "### File size comparison" > __stat__.txt
+          echo "### File size report" > __stat__.txt
           echo "" >> __stat__.txt
           node ./scripts/compare-stat.mjs ./__stat_after__.json ./__stat_before__.json >> __stat__.txt
+
+      - name: "Report stats as fallback"
+        if: ${{ steps.compare-stats.outcome != "success" }}
+        run: |
+          git checkout ${{ steps.head-hash.outputs.hash }}
+          echo "### File size report" > __stat__.txt
+          echo "" >> __stat__.txt
+          node ./scripts/compare-stat.mjs ./__stat_after__.json >> __stat__.txt
 
       - name: Find previous comment
         id: find-comment
         uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
         with:
           issue-number: ${{ github.event.pull_request.number }}
-          body-includes: "### File size comparison"
+          body-includes: "### File size report"
           comment-author: "github-actions[bot]"
 
       - name: Crate or update comment
