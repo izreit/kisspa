@@ -2,7 +2,7 @@ name: Stat
 
 on:
   pull_request:
-    types: [opened, syncronized, reopend]
+    types: [opened, syncronize, reopend]
 
 jobs:
   main:
