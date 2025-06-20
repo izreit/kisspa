@@ -35,7 +35,7 @@ jobs:
 
       - name: Compare stats
         run: |
-          git checkout origin/${{ github.event.pull_request.head.ref }}
+          git checkout ${{ github.event.pull_request.head.ref }}
           echo "### File size comparison" > __stat__.txt
           echo "" >> __stat__.txt
           node ./scripts/compare-stat.mjs ./__stat_after__.json ./__stat_before__.json >> __stat__.txt
