@@ -70,5 +70,5 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          body: $(cat __stat__.txt)
+          body-path: __stat__.txt
           edit-mode: replace
