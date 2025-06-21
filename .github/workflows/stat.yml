@@ -30,7 +30,7 @@ jobs:
       - name: Stat HEAD
         run: |
           npm ci
-          node ./scripts/stat.mjs -o ./__stat_after__.json
+          node ./scripts/stat.mjs -t normal -o ./__stat_after__.json
 
       - name: Fetch base
         run: git fetch origin ${{ github.event.pull_request.base.ref }}
@@ -38,7 +38,7 @@ jobs:
         run: |
           git checkout origin/${{ github.event.pull_request.base.ref }}
           npm ci
-          node ./scripts/stat.mjs -o ./__stat_before__.json
+          node ./scripts/stat.mjs -t normal -o ./__stat_before__.json
 
       - name: Compare stats
         id: compare-stats
