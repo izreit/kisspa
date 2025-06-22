@@ -1,5 +1,11 @@
 # kisspa
 
+## 0.12.0
+
+### Minor Changes
+
+- b934526: [html] make `withContext()` accept multiple contexts as array
+
 ## 0.11.1
 
 ### Patch Changes
