@@ -1,7 +1,7 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { observe } from "../../reactive/index.js";
 import { h } from "../h.js";
-import { type JSX, type JSXNode, type JSXNodeAsync, type Root, createContext, createRoot, withContext } from "../index.js";
+import { type JSX, type JSXNode, type JSXNodeAsync, type Prop, type Root, createContext, createRoot, deprop, withContext } from "../index.js";
 
 describe("createContext()", () => {
   let elem: HTMLElement;
@@ -117,5 +117,34 @@ describe("createContext()", () => {
     expect(elem.innerHTML).toBe("<main><p><nav><div>0</div></nav></p><nav><div>10</div></nav></main>");
     setStore(s => s.x++);
     expect(elem.innerHTML).toBe("<main><p><nav><div>0</div></nav></p><nav><div>11</div></nav></main>");
+  });
+
+  it("accepts multiple contexts", async () => {
+    const ctx1 = createContext({ x: () => 0 as number });
+    const ctx2 = createContext({ y: "foo" });
+    const [store, setStore] = observe({ x: 10 });
+
+    const Comp12 = withContext([ctx1, ctx2], (c1, c2) => (props: { val: Prop<number> }) => {
+      return <div>{() => c1.x() + deprop(props.val)}, { c2.y }</div>
+    });
+    const Comp1 = withContext(ctx1, (c1) => (props: { val: Prop<number> }) => {
+      return <div>{() => c1.x() + deprop(props.val)}</div>
+    });
+
+    await root.attach(
+      <main>
+        <p>
+          <Comp12 val={() => 100}/>
+        </p>
+        <ctx1.Provider value={{ x: () => store.x }}>
+          <Comp12 val={4} />
+          <Comp1 val={5} />
+        </ctx1.Provider>
+      </main>
+    );
+
+    expect(elem.innerHTML).toBe("<main><p><div>100, foo</div></p><div>14, foo</div><div>15</div></main>");
+    setStore(s => s.x++);
+    expect(elem.innerHTML).toBe("<main><p><div>100, foo</div></p><div>15, foo</div><div>16</div></main>");
   });
 });

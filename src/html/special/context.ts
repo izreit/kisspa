@@ -25,8 +25,12 @@ export function createContext<T>(initial: T): Context<T> {
   };
 }
 
-export function withContext<T, P>(ctx: Context<T>, fun: (contextValue: T) => Component<P>): Component<P> {
+export function withContext<T, P>(ctx: Context<T>, fun: (contextValue: T) => Component<P>): Component<P>;
+export function withContext<T extends any[], P>(ctxs: { [K in keyof T]: Context<T[K]> }, fun: (...contextValues: T) => Component<P>): Component<P>;
+export function withContext<T extends any[], P>(ctxs: { [K in keyof T]: Context<T[K]> } | Context<T>, fun: (...contextValues: T) => Component<P>): Component<P> {
   return createSpecial((actx: AssembleContext, props: P) => (
-    assemble(actx, fun(ctx.key in actx ? actx[ctx.key] as T : ctx.initial_)(props))
+    assemble(actx, fun(...(
+      mapCoerce(ctxs, ctx => ctx.key in actx ? actx[ctx.key] as T : ctx.initial_) as T
+    ))(props))
   ));
 }
