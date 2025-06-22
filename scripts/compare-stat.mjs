@@ -57,7 +57,7 @@ if (positionals.length === 1) {
   console.log(`Commit: ${baseHash} => ${headHash}`);
   console.log("");
   console.log("|path|size|gzip|");
-  console.log("|:---::---|:---|");
+  console.log("|:---|:---|:---|");
   for (const { path, baseSize, baseGzipSize, size, gzipSize } of Object.values(table)) {
     const sizeComp = `${asKB(size)} (${sign(size - baseSize)}B, ${percentDiff(size, baseSize)}%)`;
     const gzipSizeComp = `${asKB(gzipSize)} (${sign(gzipSize - baseGzipSize)}B, ${percentDiff(gzipSize, baseGzipSize)}%)`;
