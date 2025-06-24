@@ -1,7 +1,7 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { observe } from "../../reactive/index.js";
 import { h } from "../h.js";
-import { type Root, Show, createRoot } from "../index.js";
+import { type Root, Show, createRef, createRoot } from "../index.js";
 
 describe("Show", () => {
   let elem: HTMLElement;
@@ -15,22 +15,27 @@ describe("Show", () => {
     root.detach();
   });
 
-  it("can be toggled", () => {
+  it("can be toggled", async () => {
+    const ref = createRef<HTMLElement>();
     const [store, setStore] = observe({ foo: 0 });
-    root.attach(
+
+    await root.attach(
       <div>
         <Show when={() => store.foo === 1}>
-          <p>Foo</p>
+          <p ref={ref}>Foo</p>
         </Show>
       </div>
     );
     expect(elem.innerHTML).toBe("<div></div>");
+    expect(ref.value).toBe(null);
 
     setStore(s => s.foo++);
     expect(elem.innerHTML).toBe("<div><p>Foo</p></div>");
+    expect(ref.value).toBeInstanceOf(HTMLParagraphElement);
 
     setStore(s => s.foo++);
     expect(elem.innerHTML).toBe("<div></div>");
+    expect(ref.value).toBe(null);
   });
 
   it("shows fallback if given", () => {

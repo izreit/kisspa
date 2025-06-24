@@ -2,7 +2,7 @@ import { autorun, withoutObserver } from "../../reactive/index.js";
 import { allocateSkeletons } from "./skeleton.js";
 import type { Backing, BackingLocation, Component, JSXNode, PropChildren, Ref, Refresher, ResolvedBackingLocation, } from "./types.js";
 import { $noel, isJSXElement } from "./types.js";
-import { arrayify, doNothing, isArray, isFunction, isNode, isPromise, isStrOrNumOrbool, isString, objEntries } from "./util.js";
+import { doNothing, isArray, isFunction, isNode, isPromise, isStrOrNumOrbool, isString, mapCoerce, objEntries } from "./util.js";
 
 export function createLocation(parent?: Node | null, prev?: Backing | Node | null): BackingLocation {
   return { parent, prev };
@@ -165,15 +165,14 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
 
   const { name, attrs, chs: children, rchs: rawChildren } = jnode;
   if (isString(name)) {
-    let refVal: ((v: unknown) => void)[] | null | undefined;
+    let refVal: ((v: unknown) => void) | ((v: unknown) => void)[] | null | undefined;
     const disposers: (() => void)[] = [];
+    const addDisposer = (f: (() => void)) => disposers.push(f);
 
     for (const [k, v] of objEntries(attrs)) {
       if (k === "ref" && v) {
-        refVal = arrayify(v);
-        continue;
-      }
-      if (k[0] === "o" && k[1] === "n") {
+        refVal = v;
+      } else if (k[0] === "o" && k[1] === "n") {
         const lk = k.toLowerCase();
         const [fun, opts] = isArray(v) ? v : [v];
         el!.addEventListener((lk in el! || reOnFocusInOut.test(lk) ? lk : k).slice(2), fun, opts);
@@ -181,13 +180,13 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
       } else if (isStrOrNumOrbool(v)) {
         assignAttribute(el as HTMLElement, k, v);
       } else if (isFunction(v)) {
-        disposers.push(autorun(() => { assignAttribute(el as HTMLElement, k, v()); }));
+        addDisposer(autorun(() => { assignAttribute(el as HTMLElement, k, v()); }));
       } else if (typeof v === "object" && v) {
         for (const [vk, vv] of objEntries(v)) {
           if (isStrOrNumOrbool(vv)) {
             (el as any)[k][vk] = vv;
           } else if (isFunction(vv)) {
-            disposers.push(autorun(() => { (el as any)[k][vk] = vv(); }));
+            addDisposer(autorun(() => { (el as any)[k][vk] = vv(); }));
           }
         }
       }
@@ -203,13 +202,13 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
       skelCh = skelCh && skelCh.nextSibling;
       chLoc.prev = ch;
       if (!isNode(ch))
-        disposers.push(ch.dispose);
+        addDisposer(ch.dispose);
     }
 
-    if (refVal) {
-      for (const r of refVal)
-        r(el);
-    }
+    mapCoerce(refVal, r => {
+      r(el);
+      addDisposer(() => r(null));
+    });
 
     return createNodeBackingIfNeeded(el!, staticParent, disposers);
   }
