@@ -45,6 +45,9 @@ describe("basic", () => {
     expect(button.style.paddingLeft).toBe("0px");
     button.click();
     expect(button.style.paddingLeft).toBe("1px");
+
+    root.detach();
+    expect(ref.value).toBeNull();
   });
 
   it("can add event listeners with options - signal", async () => {
