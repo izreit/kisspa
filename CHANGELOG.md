@@ -1,5 +1,11 @@
 # kisspa
 
+## 0.12.1
+
+### Patch Changes
+
+- e09719d: [html] fix: reset `ref` when detach
+
 ## 0.12.0
 
 ### Minor Changes
