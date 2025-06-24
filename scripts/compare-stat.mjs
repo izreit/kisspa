@@ -59,8 +59,8 @@ if (positionals.length === 1) {
   console.log("|path|size|gzip|");
   console.log("|:---|:---|:---|");
   for (const { path, baseSize, baseGzipSize, size, gzipSize } of Object.values(table)) {
-    const sizeComp = `${asKB(size)} (${sign(size - baseSize)}B, ${percentDiff(size, baseSize)}%)`;
-    const gzipSizeComp = `${asKB(gzipSize)} (${sign(gzipSize - baseGzipSize)}B, ${percentDiff(gzipSize, baseGzipSize)}%)`;
+    const sizeComp = `${asKB(size)} (${asDiff(size, baseSize)}, ${asPerDiff(size, baseSize)})`;
+    const gzipSizeComp = `${asKB(gzipSize)} (${asDiff(gzipSize, baseGzipSize)}, ${asPerDiff(gzipSize, baseGzipSize)})`;
     console.log(`|\`${path}\`|${sizeComp}|${gzipSizeComp}|`);
   }
 }
@@ -69,10 +69,11 @@ function asKB(n) {
   return `${(n / 1024).toFixed(2)} kB`;
 }
 
-function sign(n) {
-  return ((n >= 0) ? "+" : "") + n;
+function asDiff(value, base) {
+  const diff = value - base;
+  return (diff > 0 ? `**+${diff}** B` : `${(diff === 0) ? "+" : ""}${diff}B`)
 }
 
-function percentDiff(value, base) {
-  return ((value >= base) ? "+" : "") + ((value - base) / base * 100).toFixed(2);
+function asPerDiff(value, base) {
+  return ((value >= base) ? "+" : "") + ((value - base) / base * 100).toFixed(2) + "%";
 }
