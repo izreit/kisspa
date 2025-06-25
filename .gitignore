@@ -7,3 +7,6 @@ dist/
 dist_supplement/
 lib/
 coverage/
+
+# temporarily ignore while experimenting locally on doc/
+doc/
