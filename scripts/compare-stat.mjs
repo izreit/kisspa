@@ -71,7 +71,7 @@ function asKB(n) {
 
 function asDiff(value, base) {
   const diff = value - base;
-  return (diff > 0 ? `**+${diff}** B` : `${(diff === 0) ? "+" : ""}${diff}B`)
+  return (diff > 0 ? `**+${diff}B**` : `${(diff === 0) ? "+" : ""}${diff}B`);
 }
 
 function asPerDiff(value, base) {
