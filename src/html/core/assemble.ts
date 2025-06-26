@@ -1,6 +1,6 @@
 import { autorun, withoutObserver } from "../../reactive/index.js";
 import { allocateSkeletons } from "./skeleton.js";
-import type { Backing, BackingLocation, Component, JSXNode, PropChildren, Ref, Refresher, ResolvedBackingLocation, } from "./types.js";
+import type { Backing, BackingLocation, Component, JSXNode, PropChildren, Refresher, ResolvedBackingLocation, SuspenseContext } from "./types.js";
 import { $noel, isJSXElement } from "./types.js";
 import { doNothing, isArray, isFunction, isNode, isPromise, isStrOrNumOrbool, isString, mapCoerce, objEntries } from "./util.js";
 
@@ -36,10 +36,7 @@ function insertAfter(node: Node, loc: BackingLocation): void {
 }
 
 export interface AssembleContext {
-  suspenseContext_: Promise<void>[] | {
-    push: (p: Promise<void>) => void,
-    then: (onfulfilled: () => void, onrejected?: (e: unknown) => void) => void;
-  };
+  suspenseContext_: SuspenseContext;
   [key: symbol]: unknown;
   // TODO? Not yet considered but may be efficent to gather disposers
   // disposeContext_: (() => void)[];
@@ -136,7 +133,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
     const p = jnode.then((j) => {
       disposed || b.setBackings_([assemble(actx, j)]);
     });
-    actx.suspenseContext_.push(p);
+    actx.suspenseContext_.add_(p);
     return b;
   }
 
@@ -284,7 +281,7 @@ export function assemble(actx: AssembleContext, jnode: JSXNode): Backing {
       b.insert(l);
       if (!mounted && l && l.parent) {
         mounted = true;
-        (Array.isArray(sctx) ? Promise.all(sctx) : sctx).then(() => {
+        sctx.then_(() => {
           // Check the length each time for onMount() called inside onMount()
           for (let i = 0; i < onMounts.length; ++i)
             onMounts[i]();
