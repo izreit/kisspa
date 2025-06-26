@@ -84,6 +84,11 @@ export interface BackingLocation {
   prev: Backing | Node | null | undefined;
 }
 
+export interface SuspenseContext {
+  add_: (p: Promise<void>) => void,
+  then_: (onfulfilled: () => void) => void;
+}
+
 export interface Refresher {
   register(c: Component<any>, family: string): void;
   resolve<T>(c: Component<T>): Component<T>;

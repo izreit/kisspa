@@ -197,4 +197,34 @@ describe("Suspense", () => {
     await promiseAttach;
     expect(elem.innerHTML).toBe("<div>(Sync)<div>0</div></div>");
   });
+
+  it("evaluates fallback only once even if there are multiple promises (regression)", async () => {
+    let count = 0;
+    function Fallback() {
+      ++count;
+      return <i>fallback</i>;
+    }
+
+    async function MultiPromise() {
+      await Promise.resolve();
+      return <div>
+        <h1>{Promise.resolve().then(() => <main />)}</h1>
+        <h2>{Promise.resolve().then(() => <sub />)}</h2>
+        <h3>{Promise.resolve().then(() => <footer />)}</h3>
+      </div>;
+    }
+
+    const promiseAttach = root.attach(
+      <Suspense fallback={<Fallback />}>
+        <MultiPromise />
+      </Suspense>
+    );
+
+    expect(elem.innerHTML).toBe("<i>fallback</i>");
+    expect(count).toEqual(1);
+    count = 0;
+    await promiseAttach;
+    expect(elem.innerHTML).toBe("<div><h1><main></main></h1><h2><sub></sub></h2><h3><footer></footer></h3></div>");
+    expect(count).toEqual(0); // this was 3 as of v0.12.1, corresponding 3 Promises written in JSX.
+  });
 });

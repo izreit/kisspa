@@ -1,5 +1,7 @@
 import { assemble, createLocation } from "./assemble.js";
 import type { Backing, JSXNode } from "./types.js";
+import { doNothing } from "./util.js";
+import { createWaiter } from "./waiter.js";
 
 export interface Root {
   attach(jnode: JSXNode): Promise<unknown>;
@@ -9,11 +11,11 @@ export interface Root {
 export function createRoot(parent: Element | null | undefined, prev?: Node | null): Root {
   let b: Backing | null | undefined;
   const attach = (jnode: JSXNode) => {
-    const suspenseContext: Promise<void>[] = [];
+    const waiter = createWaiter(doNothing, doNothing, doNothing);
     b && b.dispose();
-    b = assemble({ suspenseContext_: suspenseContext }, jnode);
+    b = assemble({ suspenseContext_: waiter }, jnode);
     b.insert(createLocation(parent || prev!.parentElement, prev));
-    return Promise.all(suspenseContext);
+    return waiter.currentPromise_();
   };
   const detach = () => {
     b && b.dispose();

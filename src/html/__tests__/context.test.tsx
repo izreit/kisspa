@@ -1,7 +1,7 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { observe } from "../../reactive/index.js";
 import { h } from "../h.js";
-import { type JSX, type JSXNode, type JSXNodeAsync, type Prop, type Root, createContext, createRoot, deprop, withContext } from "../index.js";
+import { type JSX, type JSXNode, type JSXNodeAsync, type Prop, type Root, Suspense, createContext, createRoot, deprop, withContext } from "../index.js";
 
 describe("createContext()", () => {
   let elem: HTMLElement;
@@ -117,6 +117,39 @@ describe("createContext()", () => {
     expect(elem.innerHTML).toBe("<main><p><nav><div>0</div></nav></p><nav><div>10</div></nav></main>");
     setStore(s => s.x++);
     expect(elem.innerHTML).toBe("<main><p><nav><div>0</div></nav></p><nav><div>11</div></nav></main>");
+  });
+
+  it("can be used even in suspensed and asyncrounously rendered", async () => {
+    type TestContextValue = { x: () => number; };
+    const TestContext = createContext<TestContextValue>({ x: () => 0 });
+    const [store, setStore] = observe({ x: 10 });
+
+    const Comp = withContext(TestContext, ctx => function Comp(_props: {}): JSX.Element {
+      return <div>{ctx.x}</div>;
+    });
+
+    async function AsyncComp(_props: {}): JSXNodeAsync {
+      await new Promise(res => setTimeout(res, 1));
+      return <nav><Comp />{new Promise(resolve => setTimeout(resolve, 1)).then(() => 3)}</nav>;
+    }
+
+    const promiseAttach = root.attach(
+      <main>
+        <p>
+          <AsyncComp />
+        </p>
+        <Suspense>
+          <TestContext.Provider value={{ x: () => store.x }}>
+            <AsyncComp />
+          </TestContext.Provider>
+        </Suspense>
+      </main>
+    );
+    expect(elem.innerHTML).toBe("<main><p></p></main>");
+    await promiseAttach;
+    expect(elem.innerHTML).toBe("<main><p><nav><div>0</div>3</nav></p><nav><div>10</div>3</nav></main>");
+    setStore(s => s.x++);
+    expect(elem.innerHTML).toBe("<main><p><nav><div>0</div>3</nav></p><nav><div>11</div>3</nav></main>");
   });
 
   it("accepts multiple contexts", async () => {
