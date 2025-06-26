@@ -1,5 +1,12 @@
 # kisspa
 
+## 0.12.2
+
+### Patch Changes
+
+- 2ff30f1: [html] fix: `<Suspense/>` renders the fallback as many times as there are Promises in JSX
+- 2ff30f1: [html] fix: `<Suspense/>` ovrelooks `Promise` in descendants of context providers
+
 ## 0.12.1
 
 ### Patch Changes
