@@ -2,7 +2,7 @@ import { autorun, signal, withoutObserver } from "../../reactive/index.js";
 import { type AssembleContext, assemble, createBackingCommon, createSpecial } from "../core/assemble.js";
 import { deprop } from "../core/helpers.js";
 import type { Backing, JSXNode } from "../core/types.js";
-import { arrayify } from "../core/util.js";
+import { isArray } from "../core/util.js";
 import { lcs } from "./internal/lcs.js";
 
 export namespace For {
@@ -17,7 +17,7 @@ export namespace For {
 
 export const For = createSpecial(function For<E>(actx: AssembleContext, props: For.Props<E>): Backing {
   const { each, key, children } = props;
-  const fun = arrayify(children)[0];
+  const fun = isArray(children) ? children[0] : children;
 
   const ixTable: WeakMap<Backing, [() => number, (v: number) => void]> = new WeakMap();
   const base = createBackingCommon("For", () => backings);

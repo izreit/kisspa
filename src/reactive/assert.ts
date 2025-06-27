@@ -2,7 +2,7 @@ export function throwError(s: string): never {
   throw new Error(s);
 }
 
-export function assert(val: boolean, msg: string): asserts val {
+export function assert(val: unknown, msg: string): asserts val {
   if (!val)
     throwError(msg)
 }

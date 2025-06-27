@@ -1,8 +1,9 @@
+import { assert } from "../../reactive/assert.js";
 import { autorun, withoutObserver } from "../../reactive/index.js";
 import { allocateSkeletons } from "./skeleton.js";
 import type { Backing, BackingLocation, Component, JSXNode, PropChildren, Refresher, ResolvedBackingLocation, SuspenseContext } from "./types.js";
 import { $noel, isJSXElement } from "./types.js";
-import { doNothing, isArray, isFunction, isNode, isPromise, isStrOrNumOrbool, isString, mapCoerce, objEntries } from "./util.js";
+import { doNothing, isArray, isFunction, isNode, isPromise, isStrOrNumOrbool, isString, mapCoerce, objEntries, pushFuncOf } from "./util.js";
 
 export function createLocation(parent?: Node | null, prev?: Backing | Node | null): BackingLocation {
   return { parent, prev };
@@ -35,7 +36,18 @@ function insertAfter(node: Node, loc: BackingLocation): void {
   parent && parent.insertBefore(node, prev ? prev.nextSibling : parent.firstChild);
 }
 
+export interface ComponentMethods {
+  onMount: (f: () => void) => void;
+  onCleanup: (f: () => void) => void;
+}
+
+export interface LifecycleContext extends ComponentMethods {
+  onMountFuncs_: (() => void)[];
+  onCleanupFuncs_: (() => void)[];
+}
+
 export interface AssembleContext {
+  lifecycleContext_: LifecycleContext | null;
   suspenseContext_: SuspenseContext;
   [key: symbol]: unknown;
   // TODO? Not yet considered but may be efficent to gather disposers
@@ -64,7 +76,7 @@ export function createBackingCommon(
       callAll(disposers);
       disposeBackings(resolveChildren());
     },
-    addDisposer_: f => disposers.push(f),
+    addDisposer_: pushFuncOf(disposers),
     location_: loc,
     name,
   };
@@ -164,7 +176,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
   if (isString(name)) {
     let refVal: ((v: unknown) => void) | ((v: unknown) => void)[] | null | undefined;
     const disposers: (() => void)[] = [];
-    const addDisposer = (f: (() => void)) => disposers.push(f);
+    const addDisposer = pushFuncOf(disposers);
 
     for (const [k, v] of objEntries(attrs)) {
       if (k === "ref" && v) {
@@ -227,34 +239,29 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
   return refresher ? refresher.track(comp, b, assembler) : b;
 }
 
-interface ComponentMethodState {
-  onMounts: (() => void)[];
-  onCleanups: (() => void)[];
-}
-
-export interface ComponentMethods {
-  onMount: (f: () => void) => void;
-  onCleanup: (f: () => void) => void;
-  reaction: (f: () => void) => void;
-}
-
-const componentContexts: ([ComponentMethodState, ComponentMethods] | null)[] = [];
+let currentActx: AssembleContext | undefined | null;
 
 export function useComponentMethods(): ComponentMethods {
-  const last = componentContexts.length - 1;
-  const cctx = componentContexts[last];
-  if (cctx)
-    return cctx[1];
+  assert(currentActx, "Not in (synchrnous part of) component");
+  if (!currentActx.lifecycleContext_) {
+    const onMountFuncs_: (() => void)[] = [];
+    const onCleanupFuncs_: (() => void)[] = [];
+    currentActx.lifecycleContext_ = {
+      onMountFuncs_,
+      onCleanupFuncs_,
+      onMount: pushFuncOf(onMountFuncs_),
+      onCleanup: pushFuncOf(onCleanupFuncs_),
+    } as LifecycleContext;
+  }
+  return currentActx.lifecycleContext_;
+}
 
-  const onMounts: (() => void)[] = [];
-  const onCleanups: (() => void)[] = [];
-  const m: ComponentMethods = {
-    onMount(f) { onMounts.push(f); },
-    onCleanup(f) { onCleanups.push(f); },
-    reaction(f) { onCleanups.push(autorun(f)); },
-  };
-  componentContexts[last] = [{ onMounts, onCleanups }, m];
-  return m;
+export function onMount(f: () => void): void {
+  useComponentMethods().onMount(f);
+}
+
+export function onCleanup(f: () => void): void {
+  useComponentMethods().onCleanup(f);
 }
 
 export function assemble(actx: AssembleContext, jnode: JSXNode): Backing {
@@ -263,19 +270,18 @@ export function assemble(actx: AssembleContext, jnode: JSXNode): Backing {
       allocateSkeletons(jnode);
 
     let b: Backing;
-    let cctx: typeof componentContexts[number];
-    componentContexts.push(null);
     try {
+      currentActx = actx = { ...actx, lifecycleContext_: null };
       b = assembleImpl(actx, jnode);
     } finally {
-      cctx = componentContexts.pop()!;
+      currentActx = null;
     }
-    if (!cctx)
+    if (!actx.lifecycleContext_)
       return b;
 
     // wrap insert() and dispose() to call lifecycle methods if onMount()/onCleanup() is called.
     let mounted = false;
-    const { onMounts, onCleanups } = cctx[0];
+    const { onMountFuncs_, onCleanupFuncs_ } = actx.lifecycleContext_;
     const sctx = actx.suspenseContext_;
     const insert = (l: BackingLocation | null | undefined): void => {
       b.insert(l);
@@ -283,22 +289,20 @@ export function assemble(actx: AssembleContext, jnode: JSXNode): Backing {
         mounted = true;
         sctx.then_(() => {
           // Check the length each time for onMount() called inside onMount()
-          for (let i = 0; i < onMounts.length; ++i)
-            onMounts[i]();
+          for (let i = 0; i < onMountFuncs_.length; ++i)
+            onMountFuncs_[i]();
         });
       }
     };
     const dispose = (): void => {
       b.dispose();
       // Revserse order for notify detach from decendants to ancestors.
-      for (let i = onCleanups.length - 1; i >= 0; --i)
-        onCleanups[i]();
+      for (let i = onCleanupFuncs_.length - 1; i >= 0; --i)
+        onCleanupFuncs_[i]();
     };
     return { ...b, insert, dispose };
   });
 }
-
-// export type MemberType<P, Key> = Key extends keyof P ? P[Key] : never;
 
 export interface SpecialComponent<P> extends Component<P> {
   special: (actx: AssembleContext, props: P) => Backing;
