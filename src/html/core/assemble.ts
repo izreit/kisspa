@@ -3,7 +3,7 @@ import { autorun, withoutObserver } from "../../reactive/index.js";
 import { allocateSkeletons } from "./skeleton.js";
 import type { Backing, BackingLocation, Component, JSXNode, PropChildren, Refresher, ResolvedBackingLocation, SuspenseContext } from "./types.js";
 import { $noel, isJSXElement } from "./types.js";
-import { doNothing, isArray, isFunction, isNode, isPromise, isStrOrNumOrbool, isString, mapCoerce, objEntries } from "./util.js";
+import { doNothing, isArray, isFunction, isNode, isPromise, isStrOrNumOrbool, isString, mapCoerce, objEntries, pushFuncOf } from "./util.js";
 
 export function createLocation(parent?: Node | null, prev?: Backing | Node | null): BackingLocation {
   return { parent, prev };
@@ -76,7 +76,7 @@ export function createBackingCommon(
       callAll(disposers);
       disposeBackings(resolveChildren());
     },
-    addDisposer_: f => disposers.push(f),
+    addDisposer_: pushFuncOf(disposers),
     location_: loc,
     name,
   };
@@ -176,7 +176,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
   if (isString(name)) {
     let refVal: ((v: unknown) => void) | ((v: unknown) => void)[] | null | undefined;
     const disposers: (() => void)[] = [];
-    const addDisposer = (f: (() => void)) => disposers.push(f);
+    const addDisposer = pushFuncOf(disposers);
 
     for (const [k, v] of objEntries(attrs)) {
       if (k === "ref" && v) {
@@ -249,8 +249,8 @@ export function useComponentMethods(): ComponentMethods {
     currentActx.lifecycleContext_ = {
       onMountFuncs_,
       onCleanupFuncs_,
-      onMount(f) { onMountFuncs_.push(f); },
-      onCleanup(f) { onCleanupFuncs_.push(f); },
+      onMount: pushFuncOf(onMountFuncs_),
+      onCleanup: pushFuncOf(onCleanupFuncs_),
     } as LifecycleContext;
   }
   return currentActx.lifecycleContext_;

@@ -1,24 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { arrayify, lastOf, mapCoerce } from "../core/util.js";
+import { lastOf, mapCoerce } from "../core/util.js";
 
 describe("util", () => {
-  describe("arrayify", () => {
-    it("makes array from an element", () => {
-      expect(arrayify("")).toEqual([""]);
-      expect(arrayify(0)).toEqual([0]);
-    });
-
-    it("makes empty array from nullish", () => {
-      expect(arrayify(null)).toEqual([]);
-      expect(arrayify(undefined)).toEqual([]);
-    });
-
-    it("returns itself for array", () => {
-      const target = [{}, false, 0];
-      expect(arrayify(target)).toBe(target);
-    });
-  });
-
   describe("lastOf", () => {
     it("works on non-empty array", () => {
       expect(lastOf([3, 5, 100])).toBe(100);
