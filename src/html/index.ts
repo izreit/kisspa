@@ -9,6 +9,8 @@ export {
   resolveLocation,
   setRefresher,
   useComponentMethods,
+  onMount,
+  onCleanup,
 } from "./core/assemble.js";
 export type { ComponentMethods } from "./core/assemble.js";
 export { deprop } from "./core/helpers.js";

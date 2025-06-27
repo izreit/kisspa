@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { observe, signal } from "../../reactive/index.js";
+import { autorun, observe, signal } from "../../reactive/index.js";
 import { Fragment, h } from "../h.js";
 import { type JSX, type JSXNode, type JSXNodeAsync, type JSXNodeAsyncValue, type PropChildren, type Root, Suspense, createRef, createRoot, useComponentMethods } from "../index.js";
 import { createLogBuffer, createSeparatedPromise } from "./testutil.js";
@@ -224,12 +224,12 @@ describe("basic", () => {
   });
 
   describe("useComponentMethods()", () => {
-    it("provides onMount, onCleanup, reaction", async () => {
+    it("provides onMount, onCleanup", async () => {
       const { log, reap } = createLogBuffer();
       const promise = createSeparatedPromise();
 
       function Comp(props: { x: () => number }): JSX.Element {
-        const { onMount, onCleanup, reaction } = useComponentMethods();
+        const { onMount, onCleanup } = useComponentMethods();
 
         let refp: HTMLParagraphElement;
         onMount(() => {
@@ -240,7 +240,7 @@ describe("basic", () => {
 
             promise.then(() => {
               log("onmount-async");
-              reaction(() => log(`reaction ${props.x()}`));
+              onCleanup(autorun(() => log(`autorun ${props.x()}`)));
               onCleanup(() => log("oncleanup-async"));
             });
           });
@@ -264,12 +264,12 @@ describe("basic", () => {
       await promise.resolve();
       expect(reap()).toEqual([
         "onmount-async",
-        "reaction 10",
+        "autorun 10",
       ]);
 
       setStore(s => s.value++);
       expect(reap()).toEqual([
-        "reaction 11",
+        "autorun 11",
       ]);
 
       root.detach();
@@ -279,19 +279,18 @@ describe("basic", () => {
       ]);
 
       setStore(s => s.value++);
-      expect(reap()).toEqual([]); // already detached: no reaction() run.
+      expect(reap()).toEqual([]); // already detached: no autorun() run.
     });
 
     it("can be called twice", async () => {
       const { log, reap } = createLogBuffer();
 
       function Comp(props: { x: () => number }): JSX.Element {
-        const { onMount, onCleanup, reaction } = useComponentMethods();
-        const { onMount: onMount2, onCleanup: onCleanup2, reaction: reaction2 } = useComponentMethods();
+        const { onMount, onCleanup } = useComponentMethods();
+        const { onMount: onMount2, onCleanup: onCleanup2 } = useComponentMethods();
 
         log(`onMount identical: ${onMount === onMount2}`);
         log(`onCleanup identical: ${onCleanup === onCleanup2}`);
-        log(`reaction identical: ${reaction === reaction2}`);
 
         onMount(() => log("onmount"));
         onCleanup(() => log("oncleanup"));
@@ -307,7 +306,6 @@ describe("basic", () => {
       expect(reap()).toEqual([
         "onMount identical: true",
         "onCleanup identical: true",
-        "reaction identical: true",
         "onmount",
       ]);
 
