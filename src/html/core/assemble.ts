@@ -241,9 +241,14 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
 
 const assembleContextStack: AssembleContext[] = [];
 
-export function useComponentMethods(): ComponentMethods {
+export function useAssembleContext(): AssembleContext {
   const actx = lastOf(assembleContextStack);
   assert(actx, "Not in (synchrnous part of) component");
+  return actx;
+}
+
+export function useComponentMethods(): ComponentMethods {
+  const actx = useAssembleContext();
   if (!actx.lifecycleContext_) {
     const onMountFuncs_: (() => void)[] = [];
     const onCleanupFuncs_: (() => void)[] = [];
