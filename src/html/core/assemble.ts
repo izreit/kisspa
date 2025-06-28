@@ -3,7 +3,7 @@ import { autorun, withoutObserver } from "../../reactive/index.js";
 import { allocateSkeletons } from "./skeleton.js";
 import type { Backing, BackingLocation, Component, JSXNode, PropChildren, Refresher, ResolvedBackingLocation, SuspenseContext } from "./types.js";
 import { $noel, isJSXElement } from "./types.js";
-import { doNothing, isArray, isFunction, isNode, isPromise, isStrOrNumOrbool, isString, mapCoerce, objEntries, pushFuncOf } from "./util.js";
+import { doNothing, isArray, isFunction, isNode, isPromise, isStrOrNumOrbool, isString, lastOf, mapCoerce, objEntries, pushFuncOf } from "./util.js";
 
 export function createLocation(parent?: Node | null, prev?: Backing | Node | null): BackingLocation {
   return { parent, prev };
@@ -239,21 +239,22 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
   return refresher ? refresher.track(comp, b, assembler) : b;
 }
 
-let currentActx: AssembleContext | undefined | null;
+const assembleContextStack: AssembleContext[] = [];
 
 export function useComponentMethods(): ComponentMethods {
-  assert(currentActx, "Not in (synchrnous part of) component");
-  if (!currentActx.lifecycleContext_) {
+  const actx = lastOf(assembleContextStack);
+  assert(actx, "Not in (synchrnous part of) component");
+  if (!actx.lifecycleContext_) {
     const onMountFuncs_: (() => void)[] = [];
     const onCleanupFuncs_: (() => void)[] = [];
-    currentActx.lifecycleContext_ = {
+    actx.lifecycleContext_ = {
       onMountFuncs_,
       onCleanupFuncs_,
       onMount: pushFuncOf(onMountFuncs_),
       onCleanup: pushFuncOf(onCleanupFuncs_),
     } as LifecycleContext;
   }
-  return currentActx.lifecycleContext_;
+  return actx.lifecycleContext_;
 }
 
 export function onMount(f: () => void): void {
@@ -270,11 +271,12 @@ export function assemble(actx: AssembleContext, jnode: JSXNode): Backing {
       allocateSkeletons(jnode);
 
     let b: Backing;
+    actx = { ...actx, lifecycleContext_: null };
     try {
-      currentActx = actx = { ...actx, lifecycleContext_: null };
+      assembleContextStack.push(actx);
       b = assembleImpl(actx, jnode);
     } finally {
-      currentActx = null;
+      assembleContextStack.pop();
     }
     if (!actx.lifecycleContext_)
       return b;
