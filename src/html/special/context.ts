@@ -1,4 +1,4 @@
-import { type AssembleContext, type SimpleBacking, assemble, createSimpleBacking, createSpecial } from "../core/assemble.js";
+import { type AssembleContext, type SimpleBacking, assemble, createSimpleBacking, createSpecial, useAssembleContext } from "../core/assemble.js";
 import type { Component, PropChildren } from "../core/types.js";
 import { mapCoerce } from "../core/util.js";
 
@@ -25,12 +25,7 @@ export function createContext<T>(initial: T): Context<T> {
   };
 }
 
-export function withContext<T, P>(ctx: Context<T>, fun: (contextValue: T) => Component<P>): Component<P>;
-export function withContext<T extends any[], P>(ctxs: { [K in keyof T]: Context<T[K]> }, fun: (...contextValues: T) => Component<P>): Component<P>;
-export function withContext<T extends any[], P>(ctxs: { [K in keyof T]: Context<T[K]> } | Context<T>, fun: (...contextValues: T) => Component<P>): Component<P> {
-  return createSpecial((actx: AssembleContext, props: P) => (
-    assemble(actx, fun(...(
-      mapCoerce(ctxs, ctx => ctx.key in actx ? actx[ctx.key] as T : ctx.initial_) as T
-    ))(props))
-  ));
+export function useContext<T>(ctx: Context<T>): T {
+  const actx = useAssembleContext();
+  return ctx.key in actx ? actx[ctx.key] as T : ctx.initial_;
 }

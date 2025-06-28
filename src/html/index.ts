@@ -34,7 +34,7 @@ export type {
   Ref,
   Refresher,
 } from "./core/types.js";
-export { createContext, withContext } from "./special/context.js";
+export { createContext, useContext } from "./special/context.js";
 export type { Context, ContextProviderProps } from "./special/context.js";
 export { Dynamic } from "./special/dynamic.js";
 export { For } from "./special/for.js";
