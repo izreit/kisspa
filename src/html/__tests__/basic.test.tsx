@@ -1,7 +1,7 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { autorun, observe, signal } from "../../reactive/index.js";
 import { Fragment, h } from "../h.js";
-import { type JSX, type JSXNode, type JSXNodeAsync, type JSXNodeAsyncValue, type PropChildren, type Root, Suspense, createRef, createRoot, useComponentMethods } from "../index.js";
+import { type JSX, type JSXNode, type JSXNodeAsync, type JSXNodeAsyncValue, type PropChildren, type Root, Suspense, createRef, createRoot, onMount, useComponentMethods } from "../index.js";
 import { createLogBuffer, createSeparatedPromise } from "./testutil.js";
 
 describe("basic", () => {
@@ -391,6 +391,35 @@ describe("basic", () => {
         "oncleanup",
         "oncleanup-out",
       ]);
+    });
+
+    it("doesn't reproduce a bug in commit aacfaee (regression)", async () => {
+      const { log, reap } = createLogBuffer();
+      const [store, setStore] = observe({ x: 10 });
+
+      function Comp0(_props: {}): JSXNode {
+        return <b>{() => store.x}</b>;
+      }
+
+      function Comp1(_props: {}): JSXNode {
+        onMount(() => log("mount1"));
+        return <i/>;
+      }
+
+      const attachPromise = root.attach(
+        <p>
+          <Comp0 />{/* this caused nested assemble and reset actx stack in aacfaee */}
+          <Comp1 />{/* and then onMount() in this caused crash */}
+        </p>
+      );
+      expect(elem.innerHTML).toBe("<p><b>10</b><i></i></p>");
+      expect(reap()).toEqual([]);
+      await attachPromise;
+
+      expect(reap()).toEqual(["mount1"]);
+      setStore(s => s.x++);
+      expect(elem.innerHTML).toBe("<p><b>11</b><i></i></p>");
+      expect(reap()).toEqual([]);
     });
   });
 });
