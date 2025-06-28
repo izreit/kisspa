@@ -15,12 +15,11 @@ const { values: rawOptions } = parseArgs({
   options: {
     target: {
       type: "string",
-      default: "all",
       short: "t",
     },
   },
 });
-const target = rawOptions.target + "";
+const target = (rawOptions.target != null) ? (rawOptions.target + "") : (process.env.KISSPA_BUILD ?? "all");
 const targetNormal = /^all|normal$/.test(target);
 const targetFull = /^all|full$/.test(target);
 

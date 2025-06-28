@@ -17,7 +17,6 @@ const { values: rawOptions } = parseArgs({
   options: {
     target: {
       type: "string", // "all" | "normal" | "full"
-      default: "all",
       short: "t",
     },
     out: {
@@ -27,7 +26,7 @@ const { values: rawOptions } = parseArgs({
   },
 });
 const options = {
-  target: rawOptions.target + "",
+  target: (rawOptions.target != null) ? (rawOptions.target + "") : (process.env.KISSPA_BUILD ?? "all"),
   out: rawOptions.out ? (rawOptions.out + "") : null,
 };
 const targetNormal = /^all|normal$/.test(options.target);
