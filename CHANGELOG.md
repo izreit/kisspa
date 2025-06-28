@@ -1,5 +1,14 @@
 # kisspa
 
+## 0.13.0
+
+### Minor Changes
+
+- f6f26ce: [html] feat: add global `onMount()` and `onCleanup()` (but not properties of `useComponentMethods()`)
+- ec63b23: [html] feat: add `useContext()`
+- f6f26ce: BREAKING! [html] remove unused `useComponentMethods().reaction()` (use `onCleanup(autorun(fun))` instead)
+- ec63b23: BREAKING! [html] remove `withContext()` unhandy to HMR (use `useContext()` instead)
+
 ## 0.12.2
 
 ### Patch Changes
