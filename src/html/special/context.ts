@@ -1,4 +1,4 @@
-import { type AssembleContext, type SimpleBacking, assemble, createSimpleBacking, createSpecial, useAssembleContext } from "../core/assemble.js";
+import { type AssembleContext, type TransparentBacking, assemble, createSpecial, createTransparentBacking, useAssembleContext } from "../core/assemble.js";
 import type { Component, PropChildren } from "../core/types.js";
 import { mapCoerce } from "../core/util.js";
 
@@ -16,9 +16,9 @@ export type Context<T> = {
 export function createContext<T>(initial: T): Context<T> {
   const key = Symbol();
   return {
-    Provider: createSpecial((actx: AssembleContext, { value, children }: ContextProviderProps<T>): SimpleBacking => {
+    Provider: createSpecial((actx: AssembleContext, { value, children }: ContextProviderProps<T>): TransparentBacking => {
       const childActx = { ...actx, [key]: value };
-      return createSimpleBacking("Ctx", null, mapCoerce(children, c => assemble(childActx, c)));
+      return createTransparentBacking("Ctx", null, mapCoerce(children, c => assemble(childActx, c)));
     }),
     key,
     initial_: initial,

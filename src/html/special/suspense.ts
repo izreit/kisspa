@@ -1,4 +1,4 @@
-import { type AssembleContext, assemble, createBackingCommon, createSpecial, disposeBackings, insertBackings } from "../core/assemble.js";
+import { type AssembleContext, assemble, createBackingCommon, createSpecial, disposeBackings, mountBackings } from "../core/assemble.js";
 import type { Backing, JSXNode, PropChildren } from "../core/types.js";
 import { doNothing, isFunction, mapCoerce } from "../core/util.js";
 import { createWaiter } from "../core/waiter.js";
@@ -21,8 +21,8 @@ export const Suspense = createSpecial(function Suspense(actx: AssembleContext, p
   const base = createBackingCommon("Suspense", () => currentBackings);
 
   const setCurrent = (bs: Backing[] | null | undefined): void => {
-    insertBackings(currentBackings, null);
-    insertBackings(bs, base.location_);
+    disposeBackings(currentBackings);
+    mountBackings(bs, base.location_);
     currentBackings = bs;
   };
 

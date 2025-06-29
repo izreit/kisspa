@@ -68,8 +68,8 @@ export interface ProxyBacking extends Backing {
 function createProxyBacking(b: Backing): ProxyBacking {
   let proxied = b;
   return {
-    insert: loc => {
-      proxied.insert(loc);
+    mount: loc => {
+      proxied.mount(loc);
     },
     tail: () => proxied.tail(),
     dispose: () => {
@@ -84,7 +84,7 @@ function createProxyBacking(b: Backing): ProxyBacking {
       if (!proxied) return;
       const rloc = proxied.tail();
       if (rloc?.[0])
-        b.insert({ parent: rloc[0], prev: rloc[1] });
+        b.mount({ parent: rloc[0], prev: rloc[1] });
       proxied.dispose();
       proxied = b;
     },

@@ -10,20 +10,14 @@ export function createLocation(parent?: Node | null, prev?: Backing | Node | nul
 }
 
 const reOnFocusInOut = /^onfocus(in|out)$/i;
-const nullLocation = createLocation();
 
-export function assignLocation(self: BackingLocation, loc: BackingLocation | null | undefined): boolean {
-  const { parent, prev } = loc ?? nullLocation;
-  const differ = self.parent !== parent || self.prev !== prev;
-  if (differ) {
-    self.parent = parent;
-    self.prev = prev;
-  }
-  return differ;
+export function assignLocation(self: BackingLocation, { parent, prev }: BackingLocation): void {
+  self.parent = parent;
+  self.prev = prev;
 }
 
-export function resolveLocation(loc: BackingLocation | null | undefined): ResolvedBackingLocation {
-  const { parent, prev } = loc ?? nullLocation;
+export function resolveLocation(loc: BackingLocation): ResolvedBackingLocation {
+  const { parent, prev } = loc;
   return [parent, prev && (isNode(prev) ? prev : prev.tail()?.[1])];
 }
 
@@ -67,9 +61,9 @@ export function createBackingCommon(
   const loc = l ? { ...l } : createLocation();
   const disposers: (() => void)[] = [];
   return {
-    insert(l) {
-      if (assignLocation(loc, l))
-        insertBackings(resolveChildren(), l);
+    mount(l) {
+      assignLocation(loc, l);
+      mountBackings(resolveChildren(), l);
     },
     tail: () => tailOfBackings(resolveChildren(), loc),
     dispose() {
@@ -82,25 +76,25 @@ export function createBackingCommon(
   };
 }
 
-export interface SimpleBacking extends BackingCommon {
-  setBackings_: (bs: Backing[] | null | undefined) => void;
+export interface TransparentBacking extends BackingCommon {
+  resetMount_: (bs: Backing[] | null | undefined) => void;
 }
 
-export function createSimpleBacking(
+export function createTransparentBacking(
   name: string,
   l?: BackingLocation | null,
   bs?: Backing[] | null,
-): SimpleBacking {
+): TransparentBacking {
   let backings: Backing[] | null | undefined;
-  const base = createBackingCommon(name, () => backings, l) as SimpleBacking;
-  base.setBackings_ = (bs) => {
+  const base = createBackingCommon(name, () => backings, l) as TransparentBacking;
+  base.resetMount_ = (bs) => {
     if (backings !== bs) {
       disposeBackings(backings);
       backings = bs;
-      insertBackings(bs, base.location_);
+      mountBackings(bs, base.location_);
     }
   };
-  base.setBackings_(bs);
+  base.resetMount_(bs);
   return base;
 }
 
@@ -111,21 +105,18 @@ function createNodeBackingIfNeeded(node: Node, staticParent: boolean, disposers?
     if (!disposers || !disposers.length)
       return node;
     const dispose = (disposers.length === 1) ? disposers[0] : () => callAll(disposers);
-    return { insert: doNothing, dispose, tail, name: node };
+    return { mount: doNothing, dispose, tail, name: node };
   }
 
-  const insert = (loc?: BackingLocation | null | undefined) => {
-    if (loc && loc.parent) {
-      insertAfter(node, loc);
-    } else {
+  return {
+    mount: (loc: BackingLocation) => insertAfter(node, loc),
+    dispose: () => {
       node.parentNode?.removeChild(node);
-    }
+      disposers && callAll(disposers);
+    },
+    tail,
+    name: node
   };
-  const dispose = () => {
-    insert();
-    disposers && callAll(disposers);
-  };
-  return { insert, dispose, tail, name: node };
 }
 
 function assignAttribute(el: HTMLElement, k: string, v: string | number | boolean | null): void {
@@ -140,19 +131,19 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
 function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node {
   if (isPromise(jnode)) {
     let disposed: boolean | undefined;
-    const b = createSimpleBacking("Delay", loc);
+    const b = createTransparentBacking("Delay", loc);
     b.addDisposer_(() => { disposed = true; });
     const p = jnode.then((j) => {
-      disposed || b.setBackings_([assemble(actx, j)]);
+      disposed || b.resetMount_([assemble(actx, j)]);
     });
     actx.suspenseContext_.add_(p);
     return b;
   }
 
   if (isFunction(jnode)) {
-    const b = createSimpleBacking("Fun", loc);
+    const b = createTransparentBacking("Fun", loc);
     b.addDisposer_(autorun(() => {
-      b.setBackings_([assemble(actx, jnode())]);
+      b.resetMount_([assemble(actx, jnode())]);
     }));
     return b;
   }
@@ -224,12 +215,13 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
 
   const special = (name as SpecialComponent<unknown> | FragmentComponent).special;
   if (special === "") // Fragment. (cf. fragment.ts)
-    return createSimpleBacking("Frag", loc, children.map(c => assemble(actx, c)));
+    return createTransparentBacking("Frag", loc, children.map(c => assemble(actx, c)));
 
   const args = { ...attrs, children: rawChildren };
   if (special) {
     const b = special(actx, args);
-    b.insert(loc);
+    if (loc)
+      b.mount(loc);
     return b;
   }
 
@@ -286,13 +278,13 @@ export function assemble(actx: AssembleContext, jnode: JSXNode): Backing {
     if (!actx.lifecycleContext_)
       return b;
 
-    // wrap insert() and dispose() to call lifecycle methods if onMount()/onCleanup() is called.
+    // wrap mount() and dispose() to call lifecycle methods if onMount()/onCleanup() is called.
     let mounted = false;
     const { onMountFuncs_, onCleanupFuncs_ } = actx.lifecycleContext_;
     const sctx = actx.suspenseContext_;
-    const insert = (l: BackingLocation | null | undefined): void => {
-      b.insert(l);
-      if (!mounted && l && l.parent) {
+    const mount = (l: BackingLocation): void => {
+      b.mount(l);
+      if (!mounted && l.parent) {
         mounted = true;
         sctx.then_(() => {
           // Check the length each time for onMount() called inside onMount()
@@ -307,7 +299,7 @@ export function assemble(actx: AssembleContext, jnode: JSXNode): Backing {
       for (let i = onCleanupFuncs_.length - 1; i >= 0; --i)
         onCleanupFuncs_[i]();
     };
-    return { ...b, insert, dispose };
+    return { ...b, mount, dispose };
   });
 }
 
@@ -327,7 +319,7 @@ export function createSpecial<P>(impl: (actx: AssembleContext, props: P) => Back
   return ret;
 }
 
-export function tailOfBackings(bs: Backing[] | null | undefined, prev?: BackingLocation): ResolvedBackingLocation {
+export function tailOfBackings(bs: Backing[] | null | undefined, prev: BackingLocation): ResolvedBackingLocation {
   if (bs) {
     for (let i = bs.length - 1; i >= 0; --i) {
       const t = bs[i].tail();
@@ -338,16 +330,9 @@ export function tailOfBackings(bs: Backing[] | null | undefined, prev?: BackingL
   return resolveLocation(prev);
 }
 
-export function insertBackings(bs: Backing[] | null | undefined, loc: BackingLocation | null | undefined): void {
-  if (bs) {
-    if (loc && loc.parent) {
-      const parent = loc.parent;
-      bs.reduce((prev, b) => (b.insert({ parent, prev }), b), loc.prev);
-    } else {
-      for (const b of bs)
-        b.insert();
-    }
-  }
+export function mountBackings(bs: Backing[] | null | undefined, loc: BackingLocation): void {
+  const parent = loc.parent;
+  bs && bs.reduce((prev, b) => (b.mount({ parent, prev }), b), loc.prev);
 }
 
 export function disposeBackings(bs: Backing[] | null | undefined): void {

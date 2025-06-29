@@ -1,5 +1,5 @@
 import { autorun, signal, watchProbe } from "../../reactive/index.js";
-import { type AssembleContext, assemble, callAll, createSimpleBacking, createSpecial } from "../core/assemble.js";
+import { type AssembleContext, assemble, callAll, createSpecial, createTransparentBacking } from "../core/assemble.js";
 import type { Backing, PropChildren } from "../core/types.js";
 import { mapCoerce } from "../core/util.js";
 
@@ -44,7 +44,7 @@ export const switchContextKey = Symbol();
 
 export const Switch = createSpecial((actx: AssembleContext, props: Switch.Props): Backing => {
   const childActx = { ...actx, [switchContextKey]: createSwitchContextValue() };
-  return createSimpleBacking("Sw", null, mapCoerce(props.children, c => assemble(childActx, c)));
+  return createTransparentBacking("Sw", null, mapCoerce(props.children, c => assemble(childActx, c)));
 });
 
 export namespace Match {
@@ -64,7 +64,7 @@ export namespace Match {
 export const Match = createSpecial(<T>(actx: AssembleContext, props: Match.Props<T>): Backing => {
   const { when, capture, children } = props;
   const [isActive, capturedValue] = (actx[switchContextKey] as SwitchContextValue).register_(when || (() => true), capture);
-  const base = createSimpleBacking("Match");
+  const base = createTransparentBacking("Match");
 
   base.addDisposer_(
     watchProbe(isActive, toShow => {
@@ -75,7 +75,7 @@ export const Match = createSpecial(<T>(actx: AssembleContext, props: Match.Props
           children;
         bs = mapCoerce(cs, c => assemble(actx, c));
       }
-      base.setBackings_(bs);
+      base.resetMount_(bs);
     })
   );
 

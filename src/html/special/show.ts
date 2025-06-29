@@ -1,4 +1,4 @@
-import { type AssembleContext, type SpecialComponent, createSimpleBacking, createSpecial } from "../core/assemble.js";
+import { type AssembleContext, type SpecialComponent, createSpecial, createTransparentBacking } from "../core/assemble.js";
 import type { Backing, JSXNode, PropChildren } from "../core/types.js";
 import { Match, createSwitchContextValue, switchContextKey } from "./switch.js";
 
@@ -22,7 +22,7 @@ export const Show = createSpecial(<P>(actx: AssembleContext, props: Show.Props<P
   const { fallback } = props;
   const childActx = { ...actx, [switchContextKey]: createSwitchContextValue() };
   const matchFun = (Match as SpecialComponent<Match.Props<P>>).special;
-  return fallback ? createSimpleBacking("Show", null, [
+  return fallback ? createTransparentBacking("Show", null, [
     matchFun(childActx, props),
     matchFun(childActx, { children: fallback }),
   ]) : matchFun(childActx, props);

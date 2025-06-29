@@ -1,5 +1,5 @@
-import { type AssembleContext, assemble, assignLocation, createBackingCommon, createLocation, createSpecial, disposeBackings, insertBackings, resolveLocation, tailOfBackings } from "../core/assemble.js";
-import type { Backing, PropChildren } from "../core/types.js";
+import { type AssembleContext, assemble, assignLocation, createBackingCommon, createLocation, createSpecial, disposeBackings, mountBackings, resolveLocation, tailOfBackings } from "../core/assemble.js";
+import type { Backing, BackingLocation, PropChildren } from "../core/types.js";
 import { isNode } from "../core/util.js";
 import { lastOf, mapCoerce } from "../core/util.js";
 
@@ -21,12 +21,12 @@ function createPortalDestBacking(): PortalDestBacking {
     ...base,
     addBacking_(b: Backing): void {
       if (base.location_.parent)
-        b.insert(createLocation(base.location_.parent, lastOf(childBackings)));
+        b.mount(createLocation(base.location_.parent, lastOf(childBackings)));
       childBackings.push(b);
     },
     removeBacking_(b: Backing): void {
       const i = childBackings.indexOf(b);
-      b.insert();
+      b.dispose();
       childBackings.splice(i, 1);
     },
   };
@@ -62,32 +62,33 @@ export function PortalImpl(actx: AssembleContext, props: Portal.Props): Backing 
     if (toShow) {
       // assert(!childBackings);
       childBackings = mapCoerce(children, c => assemble(actx, c));
-      insertBackings(childBackings, physicalLoc);
+      mountBackings(childBackings, physicalLoc);
     } else {
       disposeBackings(childBackings);
       childBackings = null;
     }
   }
 
+  const setPhycycalLoc = (l: BackingLocation = createLocation()) => {
+    assignLocation(physicalLoc, l);
+    updateShow();
+  };
   const physicalBacking: Backing = {
-    insert: l => {
-      if (assignLocation(physicalLoc, l))
-        updateShow();
-    },
+    mount: setPhycycalLoc,
     tail: () => tailOfBackings(childBackings, physicalLoc),
-    dispose: () => physicalBacking.insert(), // Just disconnect. Disposed along with the 'virtual' backing
+    dispose: setPhycycalLoc, // Just disconnect. Disposed along with the 'virtual' backing
     name: "PortalSrcPhys",
   };
 
   if (typeof to === "object" && isNode(to) && !destBackings.has(to))
-    destBackingFor(to).insert(createLocation(to));
+    destBackingFor(to).mount(createLocation(to));
 
   destBackingFor(to).addBacking_(physicalBacking);
 
   return {
-    insert: (l) => {
-      if (assignLocation(virtualLoc, l))
-        updateShow();
+    mount: (l) => {
+      assignLocation(virtualLoc, l);
+      updateShow();
     },
     tail: () => resolveLocation(virtualLoc),
     dispose: () => {
