@@ -218,17 +218,51 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
     return createTransparentBacking("Frag", loc, children.map(c => assemble(actx, c)));
 
   const args = { ...attrs, children: rawChildren };
-  if (special) {
-    const b = special(actx, args);
-    if (loc)
-      b.mount(loc);
-    return b;
-  }
+  const assembler = (c: Component<any>) => {
+    let b: Backing;
+    actx = { ...actx, lifecycleContext_: null };
+    try {
+      assembleContextStack.push(actx);
+      b = special ?
+        special(actx, args) :
+        assembleImpl(actx, allocateSkeletons(c(args), c, children.length));
+    } finally {
+      assembleContextStack.pop();
+    }
 
-  const assembler = (c: Component<any>) => assembleImpl(actx, allocateSkeletons(c(args), c, children.length), loc);
+    if (!actx.lifecycleContext_)
+      return b;
+
+    // wrap mount() and dispose() to call lifecycle methods if onMount()/onCleanup() is called.
+    let mounted = false;
+    const { onMountFuncs_, onCleanupFuncs_ } = actx.lifecycleContext_;
+    const sctx = actx.suspenseContext_;
+    const mount = (l: BackingLocation): void => {
+      b.mount(l);
+      if (!mounted && l.parent) {
+        mounted = true;
+        sctx.then_(() => {
+          // Check the length each time for onMount() called inside onMount()
+          for (let i = 0; i < onMountFuncs_.length; ++i)
+            onMountFuncs_[i]();
+        });
+      }
+    };
+    const dispose = (): void => {
+      b.dispose();
+      // Revserse order for notify detach from decendants to ancestors.
+      for (let i = onCleanupFuncs_.length - 1; i >= 0; --i)
+        onCleanupFuncs_[i]();
+    };
+    return { ...b, mount, dispose };
+  };
+
   const comp = refresher ? refresher.resolve(name) : name;
-  const b = assembler(comp);
-  return refresher ? refresher.track(comp, b, assembler) : b;
+  const assembled = assembler(comp);
+  const b = refresher ? refresher.track(comp, assembled, assembler) : assembled;
+  if (loc)
+    b.mount(loc);
+  return b;
 }
 
 const assembleContextStack: AssembleContext[] = [];
@@ -266,40 +300,7 @@ export function assemble(actx: AssembleContext, jnode: JSXNode): Backing {
   return withoutObserver(() => {
     if (isJSXElement(jnode) && !jnode.el)
       allocateSkeletons(jnode);
-
-    let b: Backing;
-    actx = { ...actx, lifecycleContext_: null };
-    try {
-      assembleContextStack.push(actx);
-      b = assembleImpl(actx, jnode);
-    } finally {
-      assembleContextStack.pop();
-    }
-    if (!actx.lifecycleContext_)
-      return b;
-
-    // wrap mount() and dispose() to call lifecycle methods if onMount()/onCleanup() is called.
-    let mounted = false;
-    const { onMountFuncs_, onCleanupFuncs_ } = actx.lifecycleContext_;
-    const sctx = actx.suspenseContext_;
-    const mount = (l: BackingLocation): void => {
-      b.mount(l);
-      if (!mounted && l.parent) {
-        mounted = true;
-        sctx.then_(() => {
-          // Check the length each time for onMount() called inside onMount()
-          for (let i = 0; i < onMountFuncs_.length; ++i)
-            onMountFuncs_[i]();
-        });
-      }
-    };
-    const dispose = (): void => {
-      b.dispose();
-      // Revserse order for notify detach from decendants to ancestors.
-      for (let i = onCleanupFuncs_.length - 1; i >= 0; --i)
-        onCleanupFuncs_[i]();
-    };
-    return { ...b, mount, dispose };
+    return assembleImpl(actx, jnode);
   });
 }
 
