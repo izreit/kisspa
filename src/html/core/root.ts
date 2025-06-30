@@ -14,7 +14,7 @@ export function createRoot(parent: Element | null | undefined, prev?: Node | nul
     const waiter = createWaiter(doNothing, doNothing, doNothing);
     b && b.dispose();
     b = assemble({ lifecycleContext_: null, suspenseContext_: waiter }, jnode);
-    b.insert(createLocation(parent || prev!.parentElement, prev));
+    b.mount(createLocation(parent || prev!.parentElement, prev));
     return waiter.currentPromise_();
   };
   const detach = () => {

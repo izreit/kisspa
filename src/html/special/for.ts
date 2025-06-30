@@ -63,7 +63,7 @@ export const For = createSpecial(function For<E>(actx: AssembleContext, props: F
       for (let cmi = 0; cmi < commonBackings.length; ++cmi) {
         const commonBacking = commonBackings[cmi];
         for (let nb = nextBackings[ni]; ni < nextBackings.length && nb !== commonBacking; ++ni, nb = nextBackings[ni]) {
-          nb.insert(l);
+          nb.mount(l);
           l.prev = nb;
         }
         ++ni;

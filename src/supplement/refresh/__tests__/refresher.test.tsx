@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createSimpleBacking } from "../../../html/core/assemble.js";
+import { createTransparentBacking } from "../../../html/core/assemble.js";
 import type { Backing } from "../../../html/core/types.js";
 import { h } from "../../../html/h.js";
 import { type ProxyBacking, createRefresher } from "../refresher.js";
@@ -9,7 +9,7 @@ function createCreateMockBacking(): (name: string) => Backing {
 
   return function createMockBacking(name: string): Backing {
     return {
-      ...createSimpleBacking("MockBacking"),
+      ...createTransparentBacking("MockBacking"),
       name: `Mock(${name}/${count++})`,
     };
   }
@@ -92,7 +92,6 @@ describe("createRefresher()", () => {
     expect(extractProxied(w1c)?.name).toBe("Mock(Comp3/5)");
 
     // confirm nothing happens (just for coverage...)
-    w1c.insert(null);
     w1a.dispose();
     (w1a as ProxyBacking).replaceTarget(createMockBacking(""));
   });
