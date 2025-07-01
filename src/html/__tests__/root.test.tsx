@@ -73,17 +73,5 @@ describe("root", () => {
       expect(elem.innerHTML).toBe("<header></header><span>Foo</span><main></main>");
       root.detach();
     });
-
-    it("can specify the position by the previous node, without parent", () => {
-      const elem = document.createElement("div");
-      const header = document.createElement("header");
-      const main = document.createElement("main");
-      elem.appendChild(header);
-      elem.appendChild(main);
-
-      const root = attach(<span>Foo</span>, null, main);
-      expect(elem.innerHTML).toBe("<header></header><main></main><span>Foo</span>");
-      root.detach();
-    });
   });
 });

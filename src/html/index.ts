@@ -29,6 +29,7 @@ export type {
   JSXNodeAsync,
   JSXNodeAsyncValue,
   JSXNodeSync,
+  MountLocation,
   PropChildren,
   PropRef,
   Ref,

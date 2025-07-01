@@ -1,7 +1,7 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { autorun, observe, signal } from "../../reactive/index.js";
 import { Fragment, h } from "../h.js";
-import { type JSX, type JSXNode, type JSXNodeAsync, type JSXNodeAsyncValue, type PropChildren, type Root, Suspense, createRef, createRoot, onMount, useComponentMethods } from "../index.js";
+import { type JSX, type JSXNode, type JSXNodeAsync, type JSXNodeAsyncValue, type PropChildren, type Root, Show, Suspense, createRef, createRoot, onCleanup, onMount, useComponentMethods } from "../index.js";
 import { createLogBuffer, createSeparatedPromise } from "./testutil.js";
 
 describe("basic", () => {
@@ -419,6 +419,29 @@ describe("basic", () => {
       expect(reap()).toEqual(["mount1"]);
       setStore(s => s.x++);
       expect(elem.innerHTML).toBe("<p><b>11</b><i></i></p>");
+      expect(reap()).toEqual([]);
+    });
+
+    it("doen't call neither onMount nor onCleanup handlers until the promise is settled", async () => {
+      const { log, reap } = createLogBuffer();
+      const [showing, setShowing] = signal(true);
+
+      async function Comp(): JSXNodeAsync {
+        onMount(() => log("mount"));
+        onCleanup(() => log("unmount"));
+        await new Promise(() => {}); // never settled
+        return <b/>;
+      }
+
+      root.attach( // must not await this since it's never settled
+        <Show when={showing}>
+          <Comp />
+        </Show>
+      );
+      await new Promise(resolve => setTimeout(resolve, 1)); // instead of awaiting attach(). may not be needed.
+
+      expect(reap()).toEqual([]);
+      setShowing(false);
       expect(reap()).toEqual([]);
     });
   });

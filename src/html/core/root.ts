@@ -8,13 +8,13 @@ export interface Root {
   detach(): void;
 }
 
-export function createRoot(parent: Element | null | undefined, prev?: Node | null): Root {
+export function createRoot(parent: Element, prev?: Node | null): Root {
   let b: Backing | null | undefined;
   const attach = (jnode: JSXNode) => {
     const waiter = createWaiter(doNothing, doNothing, doNothing);
     b && b.dispose();
     b = assemble({ lifecycleContext_: null, suspenseContext_: waiter }, jnode);
-    b.mount(createLocation(parent || prev!.parentElement, prev));
+    b.mount(createLocation(parent, prev));
     return waiter.currentPromise_();
   };
   const detach = () => {
@@ -24,8 +24,8 @@ export function createRoot(parent: Element | null | undefined, prev?: Node | nul
   return { attach, detach };
 }
 
-export function attach(jnode: JSXNode, location: Element | null | undefined, prev?: Node | null): Root {
-  const r = createRoot(location, prev);
+export function attach(jnode: JSXNode, parent: Element, prev?: Node | null): Root {
+  const r = createRoot(parent, prev);
   r.attach(jnode);
   return r;
 }
