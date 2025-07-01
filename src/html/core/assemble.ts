@@ -1,17 +1,19 @@
 import { assert } from "../../reactive/assert.js";
 import { autorun, withoutObserver } from "../../reactive/index.js";
 import { allocateSkeletons } from "./skeleton.js";
-import type { Backing, BackingLocation, Component, JSXNode, PropChildren, Refresher, ResolvedBackingLocation, SuspenseContext } from "./types.js";
+import type { Backing, BackingLocation, Component, JSXNode, MountLocation, PropChildren, Refresher, ResolvedBackingLocation, SuspenseContext } from "./types.js";
 import { $noel, isJSXElement } from "./types.js";
 import { doNothing, isArray, isFunction, isNode, isPromise, isStrOrNumOrbool, isString, lastOf, mapCoerce, objEntries, pushFuncOf } from "./util.js";
 
-export function createLocation(parent?: Node | null, prev?: Backing | Node | null): BackingLocation {
+export function createLocation(parent: Node, prev?: Backing | Node | null): MountLocation;
+export function createLocation(parent?: Node | null | undefined, prev?: Backing | Node | null): BackingLocation;
+export function createLocation(parent?: Node | null | undefined, prev?: Backing | Node | null): MountLocation | BackingLocation {
   return { parent, prev };
 }
 
 const reOnFocusInOut = /^onfocus(in|out)$/i;
 
-export function assignLocation(self: BackingLocation, { parent, prev }: BackingLocation): void {
+export function assignLocation(self: BackingLocation, { parent, prev }: MountLocation): void {
   self.parent = parent;
   self.prev = prev;
 }
@@ -25,7 +27,7 @@ let refresher: Refresher | null | undefined;
 export const getRefresher = () => refresher;
 export const setRefresher = (r: Refresher | null | undefined) => (refresher = r);
 
-function insertAfter(node: Node, loc: BackingLocation): void {
+function insertAfter(node: Node, loc: MountLocation): void {
   const [parent, prev] = resolveLocation(loc);
   parent && parent.insertBefore(node, prev ? prev.nextSibling : parent.firstChild);
 }
@@ -56,9 +58,9 @@ export interface BackingCommon extends Backing {
 export function createBackingCommon(
   name: string,
   resolveChildren: () => Backing[] | null | undefined,
-  l?: BackingLocation | null
+  l?: MountLocation | null
 ): BackingCommon {
-  const loc = l ? { ...l } : createLocation();
+  const loc: BackingLocation = l ? { ...l } : createLocation();
   const disposers: (() => void)[] = [];
   return {
     mount(l) {
@@ -82,7 +84,7 @@ export interface TransparentBacking extends BackingCommon {
 
 export function createTransparentBacking(
   name: string,
-  l?: BackingLocation | null,
+  l?: MountLocation | null,
   bs?: Backing[] | null,
 ): TransparentBacking {
   let backings: Backing[] | null | undefined;
@@ -109,7 +111,7 @@ function createNodeBackingIfNeeded(node: Node, staticParent: boolean, disposers?
   }
 
   return {
-    mount: (loc: BackingLocation) => insertAfter(node, loc),
+    mount: (loc: MountLocation) => insertAfter(node, loc),
     dispose: () => {
       node.parentNode?.removeChild(node);
       disposers && callAll(disposers);
@@ -126,9 +128,9 @@ function assignAttribute(el: HTMLElement, k: string, v: string | number | boolea
     ((v != null && v !== false) ? el.setAttribute(k, "" + v) : el.removeAttribute(k));
 }
 
-function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocation | null): Backing;
-function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node;
-function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocation | null, node?: Node | null): Backing | Node {
+function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: MountLocation | null): Backing;
+function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: MountLocation | null, node?: Node | null): Backing | Node;
+function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: MountLocation | null, node?: Node | null): Backing | Node {
   if (isPromise(jnode)) {
     let disposed: boolean | undefined;
     const b = createTransparentBacking("Delay", loc);
@@ -193,7 +195,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
     }
 
     let skelCh: Node | null | undefined = el!.firstChild;
-    const chLoc: BackingLocation = createLocation(el!);
+    const chLoc: MountLocation = createLocation(el!);
     for (const v of children) {
       // IMPORTANT This condition, for consuming or skip the skeleton, must be correspondent with collectSkeletons().
       const ch = (isJSXElement(v) && !v.el && isString(v.name)) ?
@@ -234,27 +236,34 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: BackingLocati
       return b;
 
     // wrap mount() and dispose() to call lifecycle methods if onMount()/onCleanup() is called.
-    let mounted = false;
     const { onMountFuncs_, onCleanupFuncs_ } = actx.lifecycleContext_;
-    const sctx = actx.suspenseContext_;
-    const mount = (l: BackingLocation): void => {
-      b.mount(l);
-      if (!mounted && l.parent) {
-        mounted = true;
-        sctx.then_(() => {
-          // Check the length each time for onMount() called inside onMount()
-          for (let i = 0; i < onMountFuncs_.length; ++i)
-            onMountFuncs_[i]();
-        });
-      }
+    const INITIAL = 0;
+    const MOUNTING = 1;
+    const MOUNTED = 2;
+    let mountState: typeof INITIAL | typeof MOUNTED | typeof MOUNTING = INITIAL;
+    return {
+      ...b,
+      mount: (l: MountLocation): void => {
+        b.mount(l);
+        if (mountState === INITIAL) {
+          mountState = MOUNTING;
+          actx.suspenseContext_.then_(() => {
+            mountState = MOUNTED;
+            // Check the length each time for onMount() called inside onMount()
+            for (let i = 0; i < onMountFuncs_.length; ++i)
+              onMountFuncs_[i]();
+          });
+        }
+      },
+      dispose: (): void => {
+        b.dispose();
+        if (mountState === MOUNTED) {
+          // Revserse order for notify detach from decendants to ancestors.
+          for (let i = onCleanupFuncs_.length - 1; i >= 0; --i)
+            onCleanupFuncs_[i]();
+        }
+      },
     };
-    const dispose = (): void => {
-      b.dispose();
-      // Revserse order for notify detach from decendants to ancestors.
-      for (let i = onCleanupFuncs_.length - 1; i >= 0; --i)
-        onCleanupFuncs_[i]();
-    };
-    return { ...b, mount, dispose };
   };
 
   const comp = refresher ? refresher.resolve(name) : name;
@@ -333,7 +342,7 @@ export function tailOfBackings(bs: Backing[] | null | undefined, prev: BackingLo
 
 export function mountBackings(bs: Backing[] | null | undefined, loc: BackingLocation): void {
   const parent = loc.parent;
-  bs && bs.reduce((prev, b) => (b.mount({ parent, prev }), b), loc.prev);
+  parent && bs && bs.reduce((prev, b) => (b.mount({ parent, prev }), b), loc.prev);
 }
 
 export function disposeBackings(bs: Backing[] | null | undefined): void {

@@ -66,7 +66,7 @@ export type PropChildren = JSXNode | JSXNode[] | null | undefined;
 export type PropRef<T> = ((v: T) => void) | ((v: T) => void)[];
 
 export interface Backing {
-  mount(loc: BackingLocation): void;
+  mount(loc: MountLocation): void;
   tail(): ResolvedBackingLocation | null | undefined;
   dispose(): void;
   name: Node | string;
@@ -81,6 +81,11 @@ export type ResolvedBackingLocation = [
 
 export interface BackingLocation {
   parent: Node | null | undefined;
+  prev: Backing | Node | null | undefined;
+}
+
+export interface MountLocation {
+  parent: Node;
   prev: Backing | Node | null | undefined;
 }
 

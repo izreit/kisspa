@@ -2,4 +2,4 @@
 "kisspa": patch
 ---
 
-[html] fix: HMR fails for components using `onMount()`, `onCleanup()` or `useContext()`
+[html] fix: error in HMR on components using `onMount()`, `onCleanup()` or `useContext()`

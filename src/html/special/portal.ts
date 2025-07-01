@@ -1,7 +1,6 @@
 import { type AssembleContext, assemble, assignLocation, createBackingCommon, createLocation, createSpecial, disposeBackings, mountBackings, resolveLocation, tailOfBackings } from "../core/assemble.js";
-import type { Backing, BackingLocation, PropChildren } from "../core/types.js";
-import { isNode } from "../core/util.js";
-import { lastOf, mapCoerce } from "../core/util.js";
+import type { Backing, MountLocation, PropChildren } from "../core/types.js";
+import { isNode, lastOf, mapCoerce } from "../core/util.js";
 
 export namespace PortalDest {
   export type Props = {
@@ -69,14 +68,17 @@ export function PortalImpl(actx: AssembleContext, props: Portal.Props): Backing 
     }
   }
 
-  const setPhycycalLoc = (l: BackingLocation = createLocation()) => {
-    assignLocation(physicalLoc, l);
-    updateShow();
-  };
   const physicalBacking: Backing = {
-    mount: setPhycycalLoc,
+    mount: (l: MountLocation) => {
+      assignLocation(physicalLoc, l);
+      updateShow();
+    },
     tail: () => tailOfBackings(childBackings, physicalLoc),
-    dispose: setPhycycalLoc, // Just disconnect. Disposed along with the 'virtual' backing
+    dispose: () => {
+      // Just disconnect. Disposed along with the 'virtual' backing
+      physicalLoc.parent = null;
+      updateShow();
+    },
     name: "PortalSrcPhys",
   };
 

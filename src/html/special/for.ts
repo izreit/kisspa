@@ -1,7 +1,7 @@
 import { autorun, signal, withoutObserver } from "../../reactive/index.js";
 import { type AssembleContext, assemble, createBackingCommon, createSpecial } from "../core/assemble.js";
 import { deprop } from "../core/helpers.js";
-import type { Backing, JSXNode } from "../core/types.js";
+import type { Backing, JSXNode, MountLocation } from "../core/types.js";
 import { isArray } from "../core/util.js";
 import { lcs } from "./internal/lcs.js";
 
@@ -57,7 +57,7 @@ export const For = createSpecial(function For<E>(actx: AssembleContext, props: F
 
     if (loc.parent) {
       let ni = 0;
-      const l = { ...loc };
+      const l = { ...(loc as MountLocation) }; // `as` must be valid since already checked loc.parent
       const commonBackings: (Backing | null)[] = lcs(backings, nextBackings);
       commonBackings.push(null); // The sentinel. Must be different to any valid backings.
       for (let cmi = 0; cmi < commonBackings.length; ++cmi) {
