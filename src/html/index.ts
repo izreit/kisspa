@@ -3,7 +3,6 @@ import type { JSXInternal } from "./core/jsx.js";
 export {
   assemble,
   assignLocation,
-  createBackingCommon,
   createSpecial,
   getRefresher,
   resolveLocation,
