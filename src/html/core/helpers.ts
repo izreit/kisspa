@@ -1,3 +1,5 @@
+import { isFunction } from "./util.js";
+
 /**
  * Utility type: either given type T or function returns T (i.e. `(() => T)`).
  *
@@ -18,5 +20,5 @@ export type Prop<T> = [T] extends [Function] ? never : (T | (() => T));
  * @param p target Prop<T>.
  */
 export function deprop<T>(p: Prop<T>): T {
-  return (typeof p === "function") ? p() : p as T;
+  return isFunction(p) ? p() : p as T;
 }
