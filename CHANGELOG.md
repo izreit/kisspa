@@ -1,5 +1,18 @@
 # kisspa
 
+## 0.14.0
+
+### Minor Changes
+
+- 464e276: BREAKING! [html] unallow `attach()` and `createRoot()` without parent
+- c8839e1: BREAKING! [html] remove wrongly exposed `createBackingCommon()`
+- 2c92646: BREAKING! [html] simplify backing lifecycle: now custom `Backing` (required to use `createSpecial()`) must have `mount()` instead of `insert()`. Unlike `insert()`, `mount()` is called just once with `BackingLocation`.
+
+### Patch Changes
+
+- 464e276: [html] fix: skip `onCleanup()` handlers of async components when disposed before `onMount()`
+- ddc24a4: [html] fix: error in HMR on components using `onMount()`, `onCleanup()` or `useContext()`
+
 ## 0.13.0
 
 ### Minor Changes
