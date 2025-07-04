@@ -1,27 +1,36 @@
 import { assemble, createLocation } from "./assemble.js";
 import type { Backing, JSXNode } from "./types.js";
-import { doNothing } from "./util.js";
 import { createWaiter } from "./waiter.js";
 
 export interface Root {
   attach(jnode: JSXNode): Promise<unknown>;
   detach(): void;
+  flush(): Promise<void>;
 }
 
 export function createRoot(parent: Element, prev?: Node | null): Root {
   let b: Backing | null | undefined;
+  const rootWaiter = createWaiter();
   const attach = (jnode: JSXNode) => {
-    const waiter = createWaiter(doNothing, doNothing, doNothing);
+    const waiter = createWaiter();
     b && b.dispose();
-    b = assemble({ lifecycleContext_: null, suspenseContext_: waiter }, jnode);
+    b = assemble(
+      {
+        lifecycleContext_: null,
+        suspenseContext_: waiter,
+        rootSuspenseContext_: rootWaiter,
+      },
+      jnode
+    );
     b.mount(createLocation(parent, prev));
-    return waiter.currentPromise_();
+    return waiter.current_();
   };
   const detach = () => {
     b && b.dispose();
     b = null;
   };
-  return { attach, detach };
+  const flush = rootWaiter.current_;
+  return { attach, detach, flush };
 }
 
 export function attach(jnode: JSXNode, parent: Element, prev?: Node | null): Root {

@@ -1,7 +1,8 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { observe } from "../../reactive/index.js";
 import { h } from "../h.js";
-import { type JSXNode, type JSXNodeAsync, type Root, Suspense, createRoot } from "../index.js";
+import { type JSXNode, type JSXNodeAsync, type Prop, type Root, Suspense, createRoot, onCleanup, onMount } from "../index.js";
+import { createLogBuffer, createSeparatedPromise } from "./testutil.js";
 
 describe("Suspense", () => {
   let elem: HTMLElement;
@@ -33,6 +34,8 @@ describe("Suspense", () => {
 
     setStore(s => s.foo++);
     await promiseAttach;
+    expect(elem.innerHTML).toBe("<div>(Sync)</div>");
+    await root.flush();
     expect(elem.innerHTML).toBe("<div>(Sync)<p>(Async) 1</p></div>");
   });
 
@@ -55,6 +58,8 @@ describe("Suspense", () => {
 
     setStore(s => s.foo++);
     await promiseAttach;
+    expect(elem.innerHTML).toBe("<div>(Sync)</div>");
+    await root.flush();
     expect(elem.innerHTML).toBe("<div>(Sync)<p>(Async) 1</p></div>");
   });
 
@@ -77,6 +82,8 @@ describe("Suspense", () => {
 
     setStore(s => s.foo++);
     await promiseAttach;
+    expect(elem.innerHTML).toBe("<div>(Sync)</div>");
+    await root.flush();
     expect(elem.innerHTML).toBe("<div>(Sync)<p>(Async) 1</p></div>");
   });
 
@@ -98,6 +105,8 @@ describe("Suspense", () => {
 
     await promiseAttach;
     setStore(s => s.foo++);
+    expect(elem.innerHTML).toBe("<div>(Sync)<span>loading...</span></div>");
+    await root.flush();
     expect(elem.innerHTML).toBe("<div>(Sync)<p>(Async) 1</p></div>");
   });
 
@@ -117,6 +126,8 @@ describe("Suspense", () => {
     );
     expect(elem.innerHTML).toBe("<div>(Sync)<span>loading...</span></div>");
     await promiseAttach;
+    expect(elem.innerHTML).toBe("<div>(Sync)<span>loading...</span></div>");
+    await root.flush();
     expect(elem.innerHTML).toBe("<div>(Sync)</div>");
   });
 
@@ -136,6 +147,8 @@ describe("Suspense", () => {
     );
     expect(elem.innerHTML).toBe("<div>(Sync)<span>loading...</span></div>");
     await promiseAttach;
+    expect(elem.innerHTML).toBe("<div>(Sync)<span>loading...</span></div>");
+    await root.flush();
     expect(elem.innerHTML).toBe("<div>(Sync)</div>");
   });
 
@@ -180,6 +193,8 @@ describe("Suspense", () => {
     );
     expect(elem.innerHTML).toBe("<div>(Sync)<span>loading...</span></div>");
     await promiseAttach;
+    expect(elem.innerHTML).toBe("<div>(Sync)<span>loading...</span></div>");
+    await root.flush();
     expect(elem.innerHTML).toBe("<div>(Sync)error</div>");
   });
 
@@ -224,7 +239,58 @@ describe("Suspense", () => {
     expect(count).toEqual(1);
     count = 0;
     await promiseAttach;
+    expect(elem.innerHTML).toBe("<i>fallback</i>");
+    await root.flush();
     expect(elem.innerHTML).toBe("<div><h1><main></main></h1><h2><sub></sub></h2><h3><footer></footer></h3></div>");
     expect(count).toEqual(0); // this was 3 as of v0.12.1, corresponding 3 Promises written in JSX.
+  });
+
+  it("mounts and diposes the fallbacks", async () => {
+    const { log, reap } = createLogBuffer();
+
+    function Print({ val }: { val: string }) {
+      onMount(() => log(`mount:${val}`));
+      onCleanup(() => log(`unmount:${val}`));
+      return <i>{val}</i>;
+    }
+
+    function Pending(props: { content: Prop<Promise<string>>, onGotRestart: (restart: () => void) => void }) {
+      return <div>
+        <Suspense
+          fallback={<Print val="FB" />}
+          errorFallback={(_err, restart) => {
+            props.onGotRestart(restart);
+            return <Print val="EF" />;
+          }}
+        >
+          <b>{props.content}</b>
+        </Suspense>
+      </div>;
+    }
+
+    let restart: (() => void) | null = null;
+    const manualPromise1 = createSeparatedPromise<string>();
+
+    const contentFun = (): Promise<string> => {
+      return restart ? Promise.resolve("mustsuccess") : manualPromise1;
+    }
+
+    await root.attach(<Pending content={contentFun} onGotRestart={r => { restart = r; }}/>);
+
+    expect(elem.innerHTML).toBe("<div><i>FB</i></div>");
+    expect(reap()).toEqual(["mount:FB"]);
+
+    // Rejct a promise returned by contentFun() to test `errorCallback`.
+    manualPromise1.reject(new Error("INTENTIONAL"));
+    await root.flush();
+    expect(reap()).toEqual(["unmount:FB", "mount:EF"]);
+    expect(elem.innerHTML).toBe("<div><i>EF</i></div>");
+
+    // Once `restart` is set, `contentFun()` in this test returns a resolved promise and
+    // then `restart()` makes `<Suspense/>` settled successfuly.
+    restart!();
+    await root.flush();
+    expect(reap()).toEqual(["unmount:EF", "mount:FB", "unmount:FB"]);
+    expect(elem.innerHTML).toBe("<div><b>mustsuccess</b></div>");
   });
 });

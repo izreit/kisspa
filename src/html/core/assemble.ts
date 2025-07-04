@@ -45,6 +45,7 @@ export interface LifecycleContext extends ComponentMethods {
 export interface AssembleContext {
   lifecycleContext_: LifecycleContext | null;
   suspenseContext_: SuspenseContext;
+  rootSuspenseContext_: SuspenseContext;
   [key: symbol]: unknown;
   // TODO? Not yet considered but may be efficent to gather disposers
   // disposeContext_: (() => void)[];
@@ -247,7 +248,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: MountLocation
         b.mount(l);
         if (mountState === INITIAL) {
           mountState = MOUNTING;
-          actx.suspenseContext_.then_(() => {
+          actx.suspenseContext_.current_().then(() => {
             mountState = MOUNTED;
             // Check the length each time for onMount() called inside onMount()
             for (let i = 0; i < onMountFuncs_.length; ++i)
