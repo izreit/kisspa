@@ -1,16 +1,16 @@
 import type { SuspenseContext } from "./types.js";
+import { doNothing } from "./util.js";
 
 export interface Waiter extends SuspenseContext {
   add_(p: Promise<void>): void;
-  then_(onfulfilled: () => void): void;
   isWaiting_(): boolean;
-  currentPromise_(): Promise<void>;
+  current_(): Promise<void>;
 }
 
 export function createWaiter(
-  onResolve: () => void,
-  onReject: (e: unknown) => void,
-  onStart: () => void,
+  onStart: () => void = doNothing,
+  onEnd: () => void = doNothing,
+  onFail: (e: unknown) => void = doNothing,
 ): Waiter {
   let generation = 0;
   let waiting = 0;
@@ -31,7 +31,7 @@ export function createWaiter(
         () => (
           // if `promise` is alive (i.e. `generation` is unchanged), decrement the waiting count.
           // (otherwise the promise has already reset and there is nothing to do.)
-          genStart === generation && --waiting === 0 && (resolve(), onResolve())
+          genStart === generation && --waiting === 0 && (resolve(), onEnd())
         ),
         e => {
           // if `promise` is alive (i.e. `generation` is unchanged), reject and reset the current promise.
@@ -40,14 +40,13 @@ export function createWaiter(
             generation = (generation + 1) & 0xffff;
             waiting = 0;
             reject(e);
-            onReject(e);
+            onFail(e);
             allPromise = Promise.resolve();
           }
         }
       );
     },
-    then_: (onfulfilled) => allPromise.then(onfulfilled),
     isWaiting_: () => waiting > 0,
-    currentPromise_: () => allPromise,
+    current_: () => allPromise,
   };
 }

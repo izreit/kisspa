@@ -375,16 +375,17 @@ describe("basic", () => {
       }
 
       const [store, _setStore] = observe({ value: 10 });
-      const promiseAttach = root.attach(<Root />);
+      const attachPromise = root.attach(<Root />);
 
+      expect(reap()).toEqual([]);
       expect(elem.innerHTML).toBe("<div><i></i></div>");
-      await promiseAttach;
 
+      await attachPromise;
+      expect(reap()).toEqual(["onmount-out"]);
+
+      await root.flush();
       expect(elem.innerHTML).toBe("<div><p>10</p></div>");
-      expect(reap()).toEqual([
-        "onmount",
-        "onmount-out",
-      ]);
+      expect(reap()).toEqual(["onmount"]);
 
       root.detach();
       expect(reap()).toEqual([

@@ -12,9 +12,7 @@ export namespace Suspense {
 }
 
 export const Suspense = createSpecial(function Suspense(actx: AssembleContext, props: Suspense.Props): Backing {
-  let fallbackBackings: Backing[] | null | undefined;
-  let errorFallbackBackings: Backing[] | null | undefined;
-  let backings: Backing[];
+  let childBackings: Backing[] | null | undefined;
   let currentBackings: Backing[] | null | undefined;
 
   const { fallback, errorFallback, children } = props;
@@ -26,40 +24,29 @@ export const Suspense = createSpecial(function Suspense(actx: AssembleContext, p
     currentBackings = bs;
   };
 
+  const showChildBackings = () => setCurrent(childBackings);
+  const assembleFallback = () => setCurrent(fallback ? [assemble(actx, fallback)] : null);
   const assembleErrorFallback = (e: any) => {
-    errorFallbackBackings = errorFallback ?
-      [assemble(actx, isFunction(errorFallback) ? errorFallback(e, start) : errorFallback)] :
-      null;
-    setCurrent(errorFallbackBackings);
+    setCurrent(
+      errorFallback ?
+        [assemble(actx, isFunction(errorFallback) ? errorFallback(e, start) : errorFallback)] :
+        null
+    );
   };
 
-  const assembleFallback = () => {
-    fallbackBackings = fallback ? [assemble(actx, fallback)] : null;
-    setCurrent(fallbackBackings);
-  };
-
-  const showBackings = () => {
-    setCurrent(backings);
-    disposeBackings(fallbackBackings);
-    fallbackBackings = null;
-  };
-
-  const waiter = createWaiter(showBackings, assembleErrorFallback, assembleFallback);
+  const waiter = createWaiter(assembleFallback, showChildBackings, assembleErrorFallback);
   const childActx: AssembleContext = { ...actx, suspenseContext_: waiter };
 
   const start = () => {
     try {
-      disposeBackings(errorFallbackBackings);
-      errorFallbackBackings = null;
-
-      disposeBackings(backings);
-      backings = mapCoerce(children, c => assemble(childActx, c));
+      disposeBackings(childBackings);
+      childBackings = mapCoerce(children, c => assemble(childActx, c));
 
       if (waiter.isWaiting_()) {
         // As <Suspense />, we need .catch() to stop propagation of rejection.
-        actx.suspenseContext_.add_(waiter.currentPromise_().catch(doNothing));
+        actx.rootSuspenseContext_.add_(waiter.current_().catch(doNothing));
       } else {
-        showBackings();
+        showChildBackings();
       }
     } catch (e) {
       assembleErrorFallback(e);

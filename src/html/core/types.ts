@@ -90,8 +90,8 @@ export interface MountLocation {
 }
 
 export interface SuspenseContext {
-  add_: (p: Promise<void>) => void,
-  then_: (onfulfilled: () => void) => void;
+  add_: (p: Promise<void>, isSub?: boolean) => void;
+  current_: () => Promise<void>;
 }
 
 export interface Refresher {

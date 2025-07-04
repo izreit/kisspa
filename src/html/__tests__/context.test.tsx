@@ -152,6 +152,8 @@ describe("createContext()", () => {
     );
     expect(elem.innerHTML).toBe("<main><p></p></main>");
     await promiseAttach;
+    expect(elem.innerHTML).toBe("<main><p><nav><div>0</div>3</nav></p></main>");
+    await root.flush();
     expect(elem.innerHTML).toBe("<main><p><nav><div>0</div>3</nav></p><nav><div>10</div>3</nav></main>");
     setStore(s => s.x++);
     expect(elem.innerHTML).toBe("<main><p><nav><div>0</div>3</nav></p><nav><div>11</div>3</nav></main>");
