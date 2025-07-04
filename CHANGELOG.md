@@ -1,5 +1,17 @@
 # kisspa
 
+## 0.15.0
+
+### Minor Changes
+
+- 34dcad3: BREAKING! [html] change `onMount` timing: call `onMount()` handlers without waiting for resolution of the promises inside `<Suspense/>`
+- 34dcad3: [html] feat: add `Root#flush()` to wait all promises inside `<Suspense/>` attached to the `Root`
+- 34dcad3: BREAKING! [html] make `Root#attach()` fulfilled without waiting for resolution of the promises inside `<Suspense/>` (use `Root#flush()` instead to wait all promises)
+
+### Patch Changes
+
+- 51bee89: [html] fix: avoid to call `onMount()` handlers when it is disposed while waiting promises
+
 ## 0.14.0
 
 ### Minor Changes
