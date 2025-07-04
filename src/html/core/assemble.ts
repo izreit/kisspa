@@ -239,22 +239,21 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: MountLocation
     // wrap mount() and dispose() to call lifecycle methods if onMount()/onCleanup() is called.
     const { onMountFuncs_, onCleanupFuncs_ } = actx.lifecycleContext_;
     const INITIAL = 0;
-    const MOUNTING = 1;
-    const MOUNTED = 2;
-    let mountState: typeof INITIAL | typeof MOUNTED | typeof MOUNTING = INITIAL;
+    const MOUNTED = 1;
+    const DISPOSED = 2;
+    let mountState: typeof INITIAL | typeof MOUNTED | typeof DISPOSED = INITIAL;
     return {
       ...b,
       mount: (l: MountLocation): void => {
         b.mount(l);
-        if (mountState === INITIAL) {
-          mountState = MOUNTING;
-          actx.suspenseContext_.current_().then(() => {
+        actx.suspenseContext_.current_().then(() => {
+          if (mountState === INITIAL) {
             mountState = MOUNTED;
             // Check the length each time for onMount() called inside onMount()
             for (let i = 0; i < onMountFuncs_.length; ++i)
               onMountFuncs_[i]();
-          });
-        }
+          }
+        });
       },
       dispose: (): void => {
         b.dispose();
@@ -263,6 +262,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: MountLocation
           for (let i = onCleanupFuncs_.length - 1; i >= 0; --i)
             onCleanupFuncs_[i]();
         }
+        mountState = DISPOSED;
       },
     };
   };

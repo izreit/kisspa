@@ -293,4 +293,24 @@ describe("Suspense", () => {
     expect(reap()).toEqual(["unmount:EF", "mount:FB", "unmount:FB"]);
     expect(elem.innerHTML).toBe("<div><b>mustsuccess</b></div>");
   });
+
+  it("doesn't call onCleanup handlers when disposed while waiting promises to fire onMount", async () => {
+    const { log, reap } = createLogBuffer();
+
+    function Comp(props: { promise: Promise<string> }) {
+      onMount(() => log("mount"));
+      onCleanup(() => log("unmount"));
+      return <b>{props.promise}</b>;
+    }
+
+    const manualPromise = createSeparatedPromise<string>();
+    root.attach(<Comp promise={manualPromise} />);
+    expect(elem.innerHTML).toBe("<b></b>");
+    expect(reap()).toEqual([]);
+
+    root.detach(); // process onCleanup() handler (but don't call them since onMount() is not processed)
+    manualPromise.resolve("foo"); // and then resolving the promise unlocks the promise to process onMount()
+    await new Promise(res => setTimeout(res, 1)); // wait async to kick the promise to process onMount() actually
+    expect(reap()).toEqual([]); // and still onMount() hanlders must not called since it's already disposed
+  });
 });
