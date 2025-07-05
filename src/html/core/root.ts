@@ -1,5 +1,6 @@
 import { assemble, createLocation } from "./assemble.js";
 import type { Backing, JSXNode } from "./types.js";
+import { doNothing } from "./util.js";
 import { createWaiter } from "./waiter.js";
 
 export interface Root {
@@ -19,6 +20,7 @@ export function createRoot(parent: Element, prev?: Node | null): Root {
         lifecycleContext_: null,
         suspenseContext_: waiter,
         rootSuspenseContext_: rootWaiter,
+        disposeContext_: doNothing,
       },
       jnode
     );
