@@ -46,9 +46,8 @@ export interface AssembleContext {
   lifecycleContext_: LifecycleContext | null;
   suspenseContext_: SuspenseContext;
   rootSuspenseContext_: SuspenseContext;
+  disposeContext_: (f: () => void) => void;
   [key: symbol]: unknown;
-  // TODO? Not yet considered but may be efficent to gather disposers
-  // disposeContext_: (() => void)[];
 }
 
 export interface BackingCommon extends Backing {
@@ -101,23 +100,11 @@ export function createTransparentBacking(
   return base;
 }
 
-function createNodeBackingIfNeeded(node: Node, staticParent: boolean, disposers?: (() => void)[]): Backing | Node {
-  const tail = () => [node.parentNode, node] as ResolvedBackingLocation;
-
-  if (staticParent) {
-    if (!disposers || !disposers.length)
-      return node;
-    const dispose = (disposers.length === 1) ? disposers[0] : () => callAll(disposers);
-    return { mount: doNothing, dispose, tail, name: node };
-  }
-
-  return {
+function createNodeBackingIfNeeded(node: Node, staticParent: boolean): Backing | Node {
+  return staticParent ? node : {
     mount: (loc: MountLocation) => insertAfter(node, loc),
-    dispose: () => {
-      node.parentNode?.removeChild(node);
-      disposers && callAll(disposers);
-    },
-    tail,
+    dispose: () => node.parentNode?.removeChild(node),
+    tail: () => [node.parentNode, node] as ResolvedBackingLocation,
     name: node
   };
 }
@@ -169,8 +156,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: MountLocation
   const { name, attrs, chs: children, rchs: rawChildren } = jnode;
   if (isString(name)) {
     let refVal: ((v: unknown) => void) | ((v: unknown) => void)[] | null | undefined;
-    const disposers: (() => void)[] = [];
-    const addDisposer = pushFuncOf(disposers);
+    const addDisposer = actx.disposeContext_;
 
     for (const [k, v] of objEntries(attrs)) {
       if (k === "ref" && v) {
@@ -213,7 +199,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: MountLocation
       addDisposer(() => r(null));
     });
 
-    return createNodeBackingIfNeeded(el!, staticParent, disposers);
+    return createNodeBackingIfNeeded(el!, staticParent);
   }
 
   const special = (name as SpecialComponent<unknown> | FragmentComponent).special;
@@ -310,7 +296,13 @@ export function assemble(actx: AssembleContext, jnode: JSXNode): Backing {
   return withoutObserver(() => {
     if (isJSXElement(jnode) && !jnode.el)
       allocateSkeletons(jnode);
-    return assembleImpl(actx, jnode);
+
+    const disposers: (() => void)[] = [];
+    const childActx = { ...actx, disposeContext_: pushFuncOf(disposers) };
+    const b = assembleImpl(childActx, jnode);
+    return disposers.length ?
+      { ...b, dispose: () => (callAll(disposers), b.dispose()) } :
+      b;
   });
 }
 
