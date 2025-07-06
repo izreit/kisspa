@@ -91,11 +91,11 @@ export const requestFlush = (() => {
           observers.add(fun);
         });
         if (hasPropObserver)
-          notifyPropChange(wrapped, key, readProxyOrItselfOf(val), readProxyOrItselfOf(prev));
+          notifyChange(wrapped, key, readProxyOrItselfOf(val), readProxyOrItselfOf(prev), val === DELETE_MARKER, arrayMutatorCallDepth > 0);
       } else {
         arrayMutatorCallDepth += (val ? 1 : -1);
         if (hasPropObserver && val != null)
-          notifyPropChange(wrapped, key, val, prev);
+          notifyFunCall(wrapped, val, prev);
       }
     }
     writtens.length = 0;
@@ -395,7 +395,28 @@ function finishNotifyPropChange(): void {
   flushingWatchers.clear();
 }
 
-function notifyPropChange(target: Wrapped, prop: Key, val: any, prev: any): void {
+function notifyFunCall(target: Wrapped, self: any, args: any): void {
+  notifyPropChange(target, (_wid, watcher, _pref, pathTrie) => {
+    const { onApply } = watcher;
+    onApply && onApply(pathTrie.trace_(), self, args);
+  });
+}
+
+function notifyChange(target: Wrapped, prop: Key, val: any, prev: any, isDelete: boolean, isCallAlternative: boolean) {
+  notifyPropChange(target, (wid, watcher, pref, pathTrie) => {
+    const { onAssign, onApply, deep } = watcher;
+
+    if (deep) {
+      unregisterParentRefs(wid, target, prop, prev);
+      registerParentRef(wid, target, prop, val, pref.minNorm_ + 1, true);
+    }
+
+    if (!onApply || !isCallAlternative)
+      onAssign(pathTrie.childFor_(prop).trace_(), isDelete ? undefined : val, isDelete);
+  });
+}
+
+function notifyPropChange(target: Wrapped, fun: (wid: PropWatcherId, watcher: PropWatcherEntry, pref: ParentRef, pathTrie: Trie<Key>) => void): void {
   if (__DCE_DISABLE_WATCH__) return;
   const tableFromChild = parentRefTable.get(target);
   if (!tableFromChild) return;
@@ -412,24 +433,12 @@ function notifyPropChange(target: Wrapped, prop: Key, val: any, prev: any): void
     if (!pathTrie)
       return;
 
-    const { onAssign, onApply, deep } = watcher;
     if (!flushingWatchers.has(wid)) {
       flushingWatchers.add(wid);
       watcher.onStartFlush?.();
     }
 
-    if (prop === MUTATION_MARKER) {
-      onApply && onApply(pathTrie.trace_(), val, prev);  // when (prop === MUTATION_HANDLER), val and prev is this and arguments. Ugh! need more readability...
-      return;
-    }
-
-    if (deep) {
-      unregisterParentRefs(wid, target, prop, prev);
-      registerParentRef(wid, target, prop, val, pref.minNorm_ + 1, true);
-    }
-
-    if (!onApply || arrayMutatorCallDepth === 0)
-      onAssign(pathTrie.childFor_(prop).trace_(), (val !== DELETE_MARKER) ? val : undefined, val === DELETE_MARKER);
+    fun(wid, watcher, pref, pathTrie);
   });
 
   for (const wid of stale) {
