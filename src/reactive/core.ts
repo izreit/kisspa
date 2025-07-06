@@ -33,10 +33,13 @@ const activeObserverStack: ScopedStack<Observer> = createScopedStack();
 // where 'hpo' (stands for 'has-property-observer') equals hasPropWatcher(wrapped) at the written time.
 const writtens: (Wrapped | Key | any)[] = [];
 
-const DELETE_MARKER = {};
+const DELETE_MARKER = Symbol();
 
 const arrayMutators = ((a) => new Set<Function>([a.shift, a.unshift, a.push, a.pop, a.splice, a.sort]))([] as any[]);
 const MUTATION_MARKER = Symbol();
+
+const readProxyOrItselfOf = <T>(v: T): T => isWrappable(v) ? wrap(v)[0] : v;
+
 let arrayMutatorCallDepth = 0;
 
 export function debugGetInternal() {
@@ -87,9 +90,8 @@ export const requestFlush = (() => {
           collectObserverDescendants(fun, observerDescendants);
           observers.add(fun);
         });
-        // fire deep watchers
         if (hasPropObserver)
-          notifyPropChange(wrapped, key, val, prev);
+          notifyPropChange(wrapped, key, readProxyOrItselfOf(val), readProxyOrItselfOf(prev));
       } else {
         arrayMutatorCallDepth += (val ? 1 : -1);
         if (hasPropObserver && val != null)
@@ -122,11 +124,11 @@ const mustGetRaw: ((o: any, p: PropertyKey) => boolean | undefined) =
   (o: any, p: PropertyKey, d?: PropertyDescriptor) =>
     ((d = Object.getOwnPropertyDescriptor(o, p)) && !d.configurable && !d.writable);
 
-function addRef(writeProxy: Wrapped, prop: Key, val: unknown) {
+function addRef(readProxy: Wrapped, prop: Key, val: unknown) {
   const observer = activeObserverStack.top_();
   if (observer) {
-    refTable.add_(writeProxy, prop, observer);
-    (valueCacheTable.get(writeProxy) ?? valueCacheTable.set(writeProxy, new Map()).get(writeProxy)!).set(prop, val);
+    refTable.add_(readProxy, prop, observer);
+    (valueCacheTable.get(readProxy) ?? valueCacheTable.set(readProxy, new Map()).get(readProxy)!).set(prop, val);
   }
 }
 
@@ -152,7 +154,7 @@ function wrap<T extends object>(initial: T): [T, T] {
   const readProxy = new Proxy(initial, {
     get(target, prop, receiver) {
       const raw = unwrap(Reflect.get(target, prop, receiver));
-      addRef(writeProxy, prop, raw); // Note refTable and valueCacheTable are keyed by writeProxy
+      addRef(readProxy, prop, raw); // Note refTable and valueCacheTable are keyed by writeProxy
       return (!isWrappable(raw) || mustGetRaw(target, prop)) ? raw : wrap(raw)[0];
     },
     set: rejectWithPropName,
@@ -165,7 +167,7 @@ function wrap<T extends object>(initial: T): [T, T] {
       if (!arrayMutators.has(rawTarget))
         return Reflect.apply(target as Function, thisArg, argArray);
 
-      const wrappedSelf = wrap(thisArg)[1];
+      const wrappedSelf = wrap(thisArg)[0];
       const hasPropObserver = hasPropWatcher(wrappedSelf);
       writtens.push(wrappedSelf, MUTATION_MARKER, rawTarget, argArray, hasPropObserver);
       const ret = Reflect.apply(target as Function, thisArg, argArray);
@@ -175,7 +177,7 @@ function wrap<T extends object>(initial: T): [T, T] {
 
     get(target, prop, receiver) {
       const raw = Reflect.get(target, prop, receiver);
-      addRef(writeProxy, prop, raw);
+      addRef(readProxy, prop, raw);
       return (!isWrappable(raw) || mustGetRaw(target, prop)) ? raw : wrap(raw)[1];
     },
 
@@ -188,12 +190,12 @@ function wrap<T extends object>(initial: T): [T, T] {
       // Because some operations on 'target' may alter properties on 'target' **implicitly**.
       // For example, Array.prototype.push() called on proxy invokes the 'set' handler twice: to set an element and to update the length.
       // The latter invocation sets the length property, but the length of 'target' have already been increased by setting the element.
-      // So we may miss update if we compare 'v' with the original value
-      const cacheEntry = valueCacheTable.get(writeProxy);
+      // So we may miss update if we compare 'v' with the original value.
+      const cacheEntry = valueCacheTable.get(readProxy);
       const cache = cacheEntry && cacheEntry.get(prop);
       if (cache !== v) {
-        writtens.push(writeProxy, prop, v, cacheEntry?.has(prop) ? cache : Reflect.get(target, prop, receiver), hasPropWatcher(writeProxy));
-        (cacheEntry ?? valueCacheTable.set(writeProxy, new Map()).get(writeProxy)!).set(prop, v);
+        writtens.push(readProxy, prop, v, cacheEntry?.has(prop) ? cache : Reflect.get(target, prop, receiver), hasPropWatcher(readProxy));
+        (cacheEntry ?? valueCacheTable.set(readProxy, new Map()).get(readProxy)!).set(prop, v);
         requestFlush();
       }
 
@@ -201,10 +203,10 @@ function wrap<T extends object>(initial: T): [T, T] {
     },
 
     deleteProperty(target, prop) {
-      const cacheEntry = valueCacheTable.get(writeProxy);
+      const cacheEntry = valueCacheTable.get(readProxy);
       const cache = (cacheEntry && cacheEntry.has(prop)) ? cacheEntry.get(prop) : Reflect.get(target, prop);
       cacheEntry && cacheEntry.delete(prop);
-      writtens.push(writeProxy, prop, DELETE_MARKER, cache, hasPropWatcher(writeProxy));
+      writtens.push(readProxy, prop, DELETE_MARKER, cache, hasPropWatcher(readProxy));
       requestFlush();
 
       return Reflect.deleteProperty(target, prop);
@@ -284,7 +286,6 @@ const parentRefTable: WeakMap<object /* chid */, Map<PropWatcherId, ParentRef>> 
 
 function registerParentRef(wid: PropWatcherId, target: object, key: Key, child: any, norm: number, deep: boolean) {
   if (!isWrappable(child)) return;
-  child = wrap(child)[1];
 
   const tableFromChild = (parentRefTable.has(child) ? parentRefTable : (parentRefTable.set(child, new Map()))).get(child)!;
   const pref = (
@@ -308,8 +309,7 @@ function registerParentRef(wid: PropWatcherId, target: object, key: Key, child: 
 
 function unregisterParentRefs(wid: PropWatcherId, parent: object, prop: Key, child: any): void {
   if (!isWrappable(child)) return;
-  const wchild = wrap(child)[1];
-  const pref = parentRefTable.get(wchild)?.get(wid);
+  const pref = parentRefTable.get(child)?.get(wid);
   if (!pref) return;
   if (pref.minParent_ === parent) {
     pref.minNorm_ = Infinity;
@@ -318,7 +318,7 @@ function unregisterParentRefs(wid: PropWatcherId, parent: object, prop: Key, chi
 
   pref.locations_.delete_(parent, prop);
   if (pref.locations_.size_ === 0)
-    parentRefTable.get(wchild)!.delete(wid);
+    parentRefTable.get(child)!.delete(wid);
 }
 
 let nextWatcherId = 0;
@@ -326,7 +326,7 @@ let nextWatcherId = 0;
 function watchImpl<T extends object>(target: T, opts: PropWatcherEntry): PropWatcherId {
   const wid = { id: nextWatcherId++ } as PropWatcherId; // should be the only place to cast to PropWatcherId
   propWatcherTable.set(wid, opts);
-  registerParentRef(wid, DUMMY_ROOT, DUMMY_SYMBOL, unwrap(target), 0, opts.deep);
+  registerParentRef(wid, DUMMY_ROOT, DUMMY_SYMBOL, target, 0, opts.deep);
   return wid;
 }
 
