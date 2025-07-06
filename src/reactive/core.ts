@@ -1,9 +1,14 @@
-import { dceNeverReach, throwError } from "./assert.js";
+import { throwError } from "./assert.js";
 import { decimated } from "./decimated.js";
-import { type Mapset, createMapset } from "./internal/mapset.js";
 import { type Key, type Observer, type Target, type Wrapped, createRefTable } from "./internal/reftable.js";
 import { type ScopedStack, createScopedStack } from "./internal/stack.js";
-import { type Trie, createTrie } from "./internal/trie.js";
+
+export interface WatchHandlers {
+  hasWatcher(target: Wrapped): boolean;
+  onFlush(): void;
+  onCall(target: Wrapped, self: any, args: any): void;
+  onChange(target: Wrapped, prop: Key, val: any, prev: any, isDelete: boolean, isCallAlternative: boolean): void;
+};
 
 export interface StoreSetterOptions {
   lazyFlush?: boolean;
@@ -30,7 +35,7 @@ const activeObserverStack: ScopedStack<Observer> = createScopedStack();
 /** Properties that currently altered and not yet notified to its observers.  */
 // To reduce allocation, this is a heterogeneous array consists of
 // (wrapped, key, value, prevValue, hpo), (wrapped, MUTATION_MARKER, this, arg, hpo) or (wrapped, MUTATION_MARKER, null, null, hpo)
-// where 'hpo' (stands for 'has-property-observer') equals hasPropWatcher(wrapped) at the written time.
+// where 'hpo' (stands for 'has-property-observer') equals hasWatcher(wrapped) at the written time.
 const writtens: (Wrapped | Key | any)[] = [];
 
 const DELETE_MARKER = Symbol();
@@ -39,11 +44,18 @@ const arrayMutators = ((a) => new Set<Function>([a.shift, a.unshift, a.push, a.p
 const MUTATION_MARKER = Symbol();
 
 const readProxyOrItselfOf = <T>(v: T): T => isWrappable(v) ? wrap(v)[0] : v;
+const hasWatcher = (readProxy: Wrapped): boolean => watchHandlers ? watchHandlers.hasWatcher(readProxy) : false;
 
 let arrayMutatorCallDepth = 0;
 
+let watchHandlers: WatchHandlers | null | undefined;
+
+export function setWatchHandlers(h: WatchHandlers | null): void {
+  watchHandlers = h;
+}
+
 export function debugGetInternal() {
-  return { refTable, memoizedTable, parentRefTable, propWatcherTable, wrap };
+  return { refTable, memoizedTable, wrap };
 }
 
 function isWrappable(v: any): v is object {
@@ -77,9 +89,9 @@ export const requestFlush = (() => {
       const key = writtens[i + 1]; // or MUTATION_MARKER
       const val = writtens[i + 2]; // or thisArg/null for MUTATION_MARKER
       const prev = writtens[i + 3] // or argArray/null for MUTATION_MARKER
-      const hasPropObserver = writtens[i + 4];
+      const isWatched = writtens[i + 4];
 
-      // NOTE checking hasPropObserver is important for not only performance but also right behavior especially for MUTATION_MARKER.
+      // NOTE checking isWatched is important for not only performance but also right behavior especially for MUTATION_MARKER.
       // if no property observer found at the written time, no MUTATION_MARKER is required. Moreover, thisArg (val) may be a property
       // which has notified earlier in this loop as the value mutated by target (one of arrayMutators).
       // In this case notifying mutation with MUTATION_MARKER causes duplication.
@@ -90,16 +102,16 @@ export const requestFlush = (() => {
           collectObserverDescendants(fun, observerDescendants);
           observers.add(fun);
         });
-        if (hasPropObserver)
-          notifyChange(wrapped, key, readProxyOrItselfOf(val), readProxyOrItselfOf(prev), val === DELETE_MARKER, arrayMutatorCallDepth > 0);
+        if (watchHandlers && isWatched)
+          watchHandlers.onChange(wrapped, key, readProxyOrItselfOf(val), readProxyOrItselfOf(prev), val === DELETE_MARKER, arrayMutatorCallDepth > 0);
       } else {
         arrayMutatorCallDepth += (val ? 1 : -1);
-        if (hasPropObserver && val != null)
-          notifyFunCall(wrapped, val, prev);
+        if (watchHandlers && isWatched && val != null)
+          watchHandlers.onCall(wrapped, val, prev);
       }
     }
     writtens.length = 0;
-    finishNotifyPropChange();
+    watchHandlers && watchHandlers.onFlush();
 
     observerDescendants.forEach(refTable.clear_);
     for (const observer of observers) {
@@ -168,10 +180,10 @@ function wrap<T extends object>(initial: T): [T, T] {
         return Reflect.apply(target as Function, thisArg, argArray);
 
       const wrappedSelf = wrap(thisArg)[0];
-      const hasPropObserver = hasPropWatcher(wrappedSelf);
-      writtens.push(wrappedSelf, MUTATION_MARKER, rawTarget, argArray, hasPropObserver);
+      const isWatched = hasWatcher(wrappedSelf);
+      writtens.push(wrappedSelf, MUTATION_MARKER, rawTarget, argArray, isWatched);
       const ret = Reflect.apply(target as Function, thisArg, argArray);
-      writtens.push(wrappedSelf, MUTATION_MARKER, null, null, hasPropObserver);
+      writtens.push(wrappedSelf, MUTATION_MARKER, null, null, isWatched);
       return ret;
     },
 
@@ -194,7 +206,7 @@ function wrap<T extends object>(initial: T): [T, T] {
       const cacheEntry = valueCacheTable.get(readProxy);
       const cache = cacheEntry && cacheEntry.get(prop);
       if (cache !== v) {
-        writtens.push(readProxy, prop, v, cacheEntry?.has(prop) ? cache : Reflect.get(target, prop, receiver), hasPropWatcher(readProxy));
+        writtens.push(readProxy, prop, v, cacheEntry?.has(prop) ? cache : Reflect.get(target, prop, receiver), hasWatcher(readProxy));
         (cacheEntry ?? valueCacheTable.set(readProxy, new Map()).get(readProxy)!).set(prop, v);
         requestFlush();
       }
@@ -206,7 +218,7 @@ function wrap<T extends object>(initial: T): [T, T] {
       const cacheEntry = valueCacheTable.get(readProxy);
       const cache = (cacheEntry && cacheEntry.has(prop)) ? cacheEntry.get(prop) : Reflect.get(target, prop);
       cacheEntry && cacheEntry.delete(prop);
-      writtens.push(readProxy, prop, DELETE_MARKER, cache, hasPropWatcher(readProxy));
+      writtens.push(readProxy, prop, DELETE_MARKER, cache, hasWatcher(readProxy));
       requestFlush();
 
       return Reflect.deleteProperty(target, prop);
@@ -252,197 +264,4 @@ export function bindObserver<A extends [...any], R>(fun: (...args: A) => R, obse
 
 export function withoutObserver<T>(fun: () => T): T {
   return activeObserverStack.callWith_(fun, null);
-}
-
-// --- watch ----
-
-declare const PropWatcherIdSymbol: unique symbol;
-export type PropWatcherId = { id: number; [PropWatcherIdSymbol]: never };
-
-const DUMMY_ROOT = {};
-const DUMMY_SYMBOL = Symbol();
-
-type PropWatcherEntry = {
-  deep: boolean;
-  onAssign: (path: readonly Key[], val: any, deleted: boolean) => void;
-  onApply?: ((path: readonly Key[], fun: Function, args: any[]) => void) | undefined;
-  onStartFlush?: (() => void) | undefined;
-  onEndFlush?: (() => void) | undefined;
-};
-
-type ParentRef = {
-  locations_: Mapset<object, Key>;
-  /**
-   * The minimal distance from the watcher root. Used to notify changes with the shortest path from the root.
-   * This is important not only to be efficient but also to avoid infinite loop caused by cyclic references.
-   */
-  minNorm_: number;
-  minParent_: object | null;
-  minKey_: Key | null | undefined;
-};
-
-const propWatcherTable: WeakMap<PropWatcherId, PropWatcherEntry> = new WeakMap();
-const parentRefTable: WeakMap<object /* chid */, Map<PropWatcherId, ParentRef>> = new WeakMap();
-
-function registerParentRef(wid: PropWatcherId, target: object, key: Key, child: any, norm: number, deep: boolean) {
-  if (!isWrappable(child)) return;
-
-  const tableFromChild = (parentRefTable.has(child) ? parentRefTable : (parentRefTable.set(child, new Map()))).get(child)!;
-  const pref = (
-    tableFromChild.has(wid) ?
-      tableFromChild :
-      tableFromChild.set(wid, { locations_: createMapset(), minParent_: null, minKey_: null, minNorm_: Infinity })
-  ).get(wid)!;
-
-  pref.locations_.add_(target, key);
-  if (pref.minNorm_ > norm) {
-    pref.minNorm_ = norm;
-    pref.minParent_ = target;
-    pref.minKey_ = key;
-  }
-
-  if (deep) {
-    for (const [key, grandChild] of Object.entries(child))
-      registerParentRef(wid, child, key, grandChild, norm + 1, true);
-  }
-}
-
-function unregisterParentRefs(wid: PropWatcherId, parent: object, prop: Key, child: any): void {
-  if (!isWrappable(child)) return;
-  const pref = parentRefTable.get(child)?.get(wid);
-  if (!pref) return;
-  if (pref.minParent_ === parent) {
-    pref.minNorm_ = Infinity;
-    pref.minKey_ = pref.minParent_ = null;
-  }
-
-  pref.locations_.delete_(parent, prop);
-  if (pref.locations_.size_ === 0)
-    parentRefTable.get(child)!.delete(wid);
-}
-
-let nextWatcherId = 0;
-
-function watchImpl<T extends object>(target: T, opts: PropWatcherEntry): PropWatcherId {
-  const wid = { id: nextWatcherId++ } as PropWatcherId; // should be the only place to cast to PropWatcherId
-  propWatcherTable.set(wid, opts);
-  registerParentRef(wid, DUMMY_ROOT, DUMMY_SYMBOL, target, 0, opts.deep);
-  return wid;
-}
-
-export type WatchDeepOptions = Omit<PropWatcherEntry, "deep">;
-
-export function watchDeep<T extends object>(target: T, opts: WatchDeepOptions | ((path: readonly Key[], val: any, deleted: boolean) => void)): PropWatcherId {
-  if (__DCE_DISABLE_WATCH__) return dceNeverReach();
-  return watchImpl(target, (typeof opts === "function") ? { onAssign: opts, deep: true } : { ...opts, deep: true });
-}
-
-export type WatchShallowOptions = Omit<PropWatcherEntry, "deep" | "onAssign" | "onApply"> & {
-  onAssign: (path: Key, val: any, deleted: boolean) => void;
-  onApply: ((fun: Function, args: any[]) => void) | undefined;
-}
-
-export function watchShallow<T extends object>(target: T, opts: WatchShallowOptions | ((path: Key, val: any, deleted: boolean) => void)): PropWatcherId {
-  if (__DCE_DISABLE_WATCH__) return dceNeverReach();
-  opts = (typeof opts === "function") ? { onAssign: opts } as WatchShallowOptions : opts;
-  const { onAssign: onAssignShallow, onApply: onApplyShallow } = opts;
-  const onAssign = (path: readonly Key[], val: any, deleted: boolean) => onAssignShallow(path[0], val, deleted);
-  const onApply = onApplyShallow ? (_path: readonly Key[], fun: Function, args: any[]) => onApplyShallow(fun, args) : undefined;
-  return watchImpl(target, { ...opts, onAssign, onApply, deep: false });
-}
-
-export function unwatch(watcherId: PropWatcherId): void {
-  if (__DCE_DISABLE_WATCH__) return;
-  propWatcherTable.delete(watcherId);
-}
-
-function hasPropWatcher(target: Wrapped): boolean {
-  if (__DCE_DISABLE_WATCH__) return false;
-  return parentRefTable.has(target);
-}
-
-const trieRoot = createTrie<Key>();
-
-function getPathTrie(wid: PropWatcherId, target: Wrapped): Trie<Key> | null | undefined {
-  const pref = parentRefTable.get(target)?.get(wid);
-  if (!pref) return null; // unwatched
-
-  // calculate minKey if invalidated
-  if (!pref.minParent_) {
-    let n = Infinity;
-    pref.locations_.forEach_((keys, parent) => {
-      const ppref = parentRefTable.get(parent)?.get(wid);
-      if (ppref && n > ppref.minNorm_ + 1) {
-        pref.minNorm_ = n = ppref.minNorm_ + 1;
-        pref.minParent_ = parent;
-        pref.minKey_ = keys.values().next().value;
-      }
-    })
-  }
-
-  if (pref.minKey_ === DUMMY_SYMBOL)
-    return trieRoot;
-
-  return getPathTrie(wid, pref.minParent_!)?.childFor_(pref.minKey_!);
-}
-
-const flushingWatchers: Set<PropWatcherId> = new Set();
-
-function finishNotifyPropChange(): void {
-  if (__DCE_DISABLE_WATCH__) return;
-  for (const wid of flushingWatchers)
-    propWatcherTable.get(wid)?.onEndFlush?.();
-  flushingWatchers.clear();
-}
-
-function notifyFunCall(target: Wrapped, self: any, args: any): void {
-  notifyPropChange(target, (_wid, watcher, _pref, pathTrie) => {
-    const { onApply } = watcher;
-    onApply && onApply(pathTrie.trace_(), self, args);
-  });
-}
-
-function notifyChange(target: Wrapped, prop: Key, val: any, prev: any, isDelete: boolean, isCallAlternative: boolean) {
-  notifyPropChange(target, (wid, watcher, pref, pathTrie) => {
-    const { onAssign, onApply, deep } = watcher;
-
-    if (deep) {
-      unregisterParentRefs(wid, target, prop, prev);
-      registerParentRef(wid, target, prop, val, pref.minNorm_ + 1, true);
-    }
-
-    if (!onApply || !isCallAlternative)
-      onAssign(pathTrie.childFor_(prop).trace_(), isDelete ? undefined : val, isDelete);
-  });
-}
-
-function notifyPropChange(target: Wrapped, fun: (wid: PropWatcherId, watcher: PropWatcherEntry, pref: ParentRef, pathTrie: Trie<Key>) => void): void {
-  if (__DCE_DISABLE_WATCH__) return;
-  const tableFromChild = parentRefTable.get(target);
-  if (!tableFromChild) return;
-
-  const stale: PropWatcherId[] = [];
-
-  tableFromChild.forEach((pref, wid) => {
-    const watcher = propWatcherTable.get(wid);
-    if (!watcher) { // already unwatched
-      stale.push(wid);
-      return;
-    }
-    const pathTrie = getPathTrie(wid, target);
-    if (!pathTrie)
-      return;
-
-    if (!flushingWatchers.has(wid)) {
-      flushingWatchers.add(wid);
-      watcher.onStartFlush?.();
-    }
-
-    fun(wid, watcher, pref, pathTrie);
-  });
-
-  for (const wid of stale) {
-    if (tableFromChild.delete(wid) && tableFromChild.size === 0)
-      parentRefTable.delete(target);
-  }
 }

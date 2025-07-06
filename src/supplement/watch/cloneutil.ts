@@ -1,4 +1,4 @@
-import type { Key } from "./internal/reftable.js";
+import type { Key } from "../../reactive/internal/reftable.js";
 
 export function cloneDeep<T>(val: T): T {
   return (

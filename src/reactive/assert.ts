@@ -10,7 +10,3 @@ export function assert(val: unknown, msg: string): asserts val {
 export function unreachable(_: never): never {
   throwError("unreachable");
 }
-
-export function dceNeverReach(): never {
-  throwError("only available in the full build");
-}
