@@ -53,7 +53,7 @@
     },
     "./jsx-dev-runtime": {
       "types": "./dist/html/jsx-runtime.d.ts",
-      "import": "./dist/html/jsx-runtime.mjs"
+      "import": "./dist/html/jsx-runtime.raw.mjs"
     },
     "./html": {
       "types": "./dist/html/bundle.d.ts",
@@ -65,7 +65,7 @@
     },
     "./html/jsx-dev-runtime": {
       "types": "./dist/html/jsx-runtime.d.ts",
-      "import": "./dist/html/jsx-runtime.mjs"
+      "import": "./dist/html/jsx-runtime.raw.mjs"
     },
     "./reactive": {
       "types": "./dist/reactive/index.d.ts",
@@ -89,6 +89,10 @@
     "./raw/h": {
       "types": "./dist/html/h.d.ts",
       "import": "./dist/html/h.raw.mjs"
+    },
+    "./raw/jsx-runtime": {
+      "types": "./dist/html/jsx-runtime.d.ts",
+      "import": "./dist/html/jsx-runtime.raw.mjs"
     },
     "./raw/jsx-dev-runtime": {
       "types": "./dist/html/jsx-runtime.d.ts",
