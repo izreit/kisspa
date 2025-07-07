@@ -1,14 +1,8 @@
 import { throwError } from "./assert.js";
 import { decimated } from "./decimated.js";
-import { type Key, type Observer, type Target, type Wrapped, createRefTable } from "./internal/reftable.js";
+import { createRefTable } from "./internal/reftable.js";
 import { type ScopedStack, createScopedStack } from "./internal/stack.js";
-
-export interface WatchHandlers {
-  hasWatcher(target: Wrapped): boolean;
-  onFlush(): void;
-  onCall(target: Wrapped, self: any, args: any): void;
-  onChange(target: Wrapped, prop: Key, val: any, prev: any, isDelete: boolean, isCallAlternative: boolean): void;
-};
+import type { Key, Observer, Target, WatchHandlers, Wrapped } from "./types.js";
 
 export interface StoreSetterOptions {
   lazyFlush?: boolean;
@@ -34,8 +28,8 @@ const activeObserverStack: ScopedStack<Observer> = createScopedStack();
 
 /** Properties that currently altered and not yet notified to its observers.  */
 // To reduce allocation, this is a heterogeneous array consists of
-// (wrapped, key, value, prevValue, hpo), (wrapped, MUTATION_MARKER, this, arg, hpo) or (wrapped, MUTATION_MARKER, null, null, hpo)
-// where 'hpo' (stands for 'has-property-observer') equals hasWatcher(wrapped) at the written time.
+// (wrapped, key, value, prevValue, hw), (wrapped, MUTATION_MARKER, this, arg, hw) or (wrapped, MUTATION_MARKER, 0, 0, hw)
+// where 'hw' is `hasWatcher(wrapped)` at the written time.
 const writtens: (Wrapped | Key | any)[] = [];
 
 const DELETE_MARKER = Symbol();
@@ -44,7 +38,7 @@ const arrayMutators = ((a) => new Set<Function>([a.shift, a.unshift, a.push, a.p
 const MUTATION_MARKER = Symbol();
 
 const readProxyOrItselfOf = <T>(v: T): T => isWrappable(v) ? wrap(v)[0] : v;
-const hasWatcher = (readProxy: Wrapped): boolean => watchHandlers ? watchHandlers.hasWatcher(readProxy) : false;
+const hasWatcher = (readProxy: Wrapped): boolean | null | undefined => watchHandlers && watchHandlers.watches(readProxy);
 
 let arrayMutatorCallDepth = 0;
 
@@ -79,16 +73,16 @@ export function cancelAutorun(fun: Observer): void {
 }
 
 export const requestFlush = (() => {
-  return decimated(function flush() {
+  return decimated(() => {
     if (!writtens.length) return;
     const observers = new Set<Observer>();
     const observerDescendants = new Set<Observer>();
 
     for (let i = 0; i < writtens.length; i += 5) {
       const wrapped = writtens[i];
-      const key = writtens[i + 1]; // or MUTATION_MARKER
-      const val = writtens[i + 2]; // or thisArg/null for MUTATION_MARKER
-      const prev = writtens[i + 3] // or argArray/null for MUTATION_MARKER
+      const key = writtens[i + 1]; // key or MUTATION_MARKER
+      const val = writtens[i + 2]; // val or (thisArg or 0) for MUTATION_MARKER
+      const prev = writtens[i + 3] // prev or (argArray or 0) for MUTATION_MARKER
       const isWatched = writtens[i + 4];
 
       // NOTE checking isWatched is important for not only performance but also right behavior especially for MUTATION_MARKER.
@@ -103,15 +97,16 @@ export const requestFlush = (() => {
           observers.add(fun);
         });
         if (watchHandlers && isWatched)
-          watchHandlers.onChange(wrapped, key, readProxyOrItselfOf(val), readProxyOrItselfOf(prev), val === DELETE_MARKER, arrayMutatorCallDepth > 0);
+          watchHandlers.set(wrapped, key, readProxyOrItselfOf(val), readProxyOrItselfOf(prev), val === DELETE_MARKER, arrayMutatorCallDepth > 0);
       } else {
+        // NOTE here `val` is a `function` being called or `0` which is the end marker of function calling.
         arrayMutatorCallDepth += (val ? 1 : -1);
-        if (watchHandlers && isWatched && val != null)
-          watchHandlers.onCall(wrapped, val, prev);
+        if (watchHandlers && isWatched && val)
+          watchHandlers.call(wrapped, val, prev);
       }
     }
     writtens.length = 0;
-    watchHandlers && watchHandlers.onFlush();
+    watchHandlers && watchHandlers.flush();
 
     observerDescendants.forEach(refTable.clear_);
     for (const observer of observers) {
@@ -128,7 +123,7 @@ export const requestFlush = (() => {
   });
 })();
 
-const rejectWithPropName = (_target: unknown, prop: PropertyKey) => throwError(`can't set/delete '${String(prop)}' without setter`);
+const rejectWithPropName = (_target: unknown, prop: PropertyKey) => throwError(`can't alter '${String(prop)}' without setter`);
 
 // Note: 'get' trap must return the original value for read-only, non-configurable data property.
 // Note: `d` is just a local variable, Written in the most mififier-friendly way...
@@ -183,7 +178,7 @@ function wrap<T extends object>(initial: T): [T, T] {
       const isWatched = hasWatcher(wrappedSelf);
       writtens.push(wrappedSelf, MUTATION_MARKER, rawTarget, argArray, isWatched);
       const ret = Reflect.apply(target as Function, thisArg, argArray);
-      writtens.push(wrappedSelf, MUTATION_MARKER, null, null, isWatched);
+      writtens.push(wrappedSelf, MUTATION_MARKER, 0, 0, isWatched);
       return ret;
     },
 
@@ -227,9 +222,9 @@ function wrap<T extends object>(initial: T): [T, T] {
 
   const ret = [readProxy, writeProxy] as [T, T];
   memoizedTable.set(initial, ret);
-  memoizedTable.set(writeProxy, ret); // Register writProxy to avoid to wrap more than once. esp. used in watchDeep().
+  memoizedTable.set(writeProxy, ret); // Register writProxy to avoid to wrap more than once.
   // memoizedTable.set(readProxy, ret); // This allows anyone to get the setter by `observe(readProxy)`.
-  memoizedTable.set(readProxy, null!);
+  memoizedTable.set(readProxy, null!); // Prevent wrapping twice.
   unwrapTable.set(readProxy, initial); // Should remove? This allows anyone to get the setter by `observe(unwrap(readProxy))` .
   unwrapTable.set(writeProxy, initial);
   return ret;

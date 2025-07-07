@@ -1,5 +1,4 @@
-import type { WatchHandlers } from "../../reactive/index.js";
-import type { Key, Wrapped } from "../../reactive/internal/reftable.js";
+import type { Key, WatchHandlers, Wrapped } from "../../reactive/types.js";
 import { type Mapset, createMapset } from "./internal/mapset.js";
 import { type Trie, createTrie } from "./internal/trie.js";
 
@@ -198,8 +197,8 @@ function notifyImpl(target: Wrapped, fun: (wid: PropWatcherId, watcher: PropWatc
 }
 
 export const watchHandlers: WatchHandlers = {
-  hasWatcher: hasPropWatcher,
-  onCall: notifyCall,
-  onChange: notifyChange,
-  onFlush: notifyChangeFinish,
+  watches: hasPropWatcher,
+  call: notifyCall,
+  set: notifyChange,
+  flush: notifyChangeFinish,
 };

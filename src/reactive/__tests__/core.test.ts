@@ -193,7 +193,7 @@ describe("microstore", () => {
   it("rejects array modification outside setter", async () => {
     const raw = [100, 20, 32, 5];
     const [store, _setStore] = observe(raw);
-    expect(() => store.sort((a, b) => a - b)).toThrow((/^can't set\/delete '\d+' without setter/));
+    expect(() => store.sort((a, b) => a - b)).toThrow((/^can't alter '\d+' without setter/));
   });
 
   it("can watch multiple stores", async () => {

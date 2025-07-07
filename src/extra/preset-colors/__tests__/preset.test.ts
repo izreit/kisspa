@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { presetColors } from "../preset/colors.js";
-import type { CSSRuleListLike } from "../sheet.js";
-import { type Upwind, createUpwind } from "../tag.js";
-import { createMockCSSGroupRuleLike } from "./mock/MockCSSGroupingRuleLike.js";
+import { createMockCSSGroupRuleLike } from "../../../upwind/__tests__/mock/MockCSSGroupingRuleLike.js";
+import type { CSSRuleListLike } from "../../../upwind/sheet.js";
+import { type Upwind, createUpwind } from "../../../upwind/tag.js";
+import { presetColors } from "../index.js";
 
 describe("tag", () => {
   const el = document.createElement("div");

@@ -1,5 +1,3 @@
-import { createEmptyObj, objForEach } from "../objutil.js";
-
 export const presetColors = (() => {
   const def = {
     // The names and values are based on Tailwind CSS v3.4.4 (ref. https://tailwindcss.com/docs/customizing-colors)
@@ -28,11 +26,12 @@ export const presetColors = (() => {
     rose: "fff1f2,ffe4e6,fecdd3,fda4af,fb7185,f43f5e,e11d48,be123c,9f1239,881337,4c0519",
   };
 
-  function objzip<T extends string, U>(xs: T[], ys: U[]): {
-    [key in T]: U;
-  } {
-    return xs.reduce((acc, x, i) => (acc[x] = ys[i], acc), createEmptyObj());
-  }
+  const createEmptyObj = () => Object.create(null);
+  const objzip =<T extends string, U>(xs: T[], ys: U[]): { [key in T]: U; } => xs.reduce((acc, x, i) => (acc[x] = ys[i], acc), createEmptyObj());
+  const objForEach = <T extends { [key: string]: any }>(o: T, f: (v: T[string & keyof T], k: string & keyof T) => void): void => {
+    for (const k of Object.keys(o))
+      f(o[k], k);
+  };
 
   const ret: { [name: string]: { [val: string]: string; }; } = createEmptyObj();
   const keys = "50,100,200,300,400,500,600,700,800,900,950".split(",");

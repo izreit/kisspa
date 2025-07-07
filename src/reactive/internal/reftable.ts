@@ -1,7 +1,4 @@
-export type Key = string | symbol | number;
-export type Target = object;
-export type Wrapped = object;
-export type Observer = () => void;
+import type { Key, Observer, Wrapped } from "../types.js";
 
 export interface RefTable {
   readonly table_: WeakMap<Wrapped, Map<Key, Set<Observer>>>;
