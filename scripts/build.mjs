@@ -6,7 +6,7 @@
  */
 
 import { execSync } from "node:child_process";
-import { copyFileSync, rmSync } from "node:fs";
+import { rmSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -48,5 +48,5 @@ minifyRawMjs("dist/extra/preset-colors/index.raw.mjs");
 minifyRawMjs("dist/extra/watch/index.raw.mjs");
 
 // build supplements
-rmSync(path("dist_supplement"), { recursive: true });
+rmSync(path("dist_supplement"), { recursive: true, force: true });
 run(`npx tsc -p ${path("tsconfig.build-supplement.json")}`);
