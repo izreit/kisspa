@@ -11,8 +11,8 @@
     "./src/html/bundle.ts",
     "./src/html/h.ts",
     "./src/html/jsx-runtime.ts",
-    "./src/reactive/cloneutil.ts",
-    "./src/upwind/preset/colors.ts"
+    "./src/extra/preset-colors/index.ts",
+    "./src/extra/watch/index.ts"
   ],
   "exclude": [
     "./src/**/*.test.ts",

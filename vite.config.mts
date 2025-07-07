@@ -1,3 +1,5 @@
+// This file is not the entry point of build scripts. See scripts/build.mjs.
+
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
@@ -21,28 +23,24 @@ const opts = parseArgs({
 const clean = !!opts.clean;
 const target = opts.target ?? "whole";
 
+function path(...segs: string[]): string {
+  return resolve(__dirname, ...segs);
+}
+
 // Instead of one integrated entry, use a seperated entry for each target
 // to make them independent each other. In other words, vite produces
 // chunk script file for the integrated big entry.
 const entryTable = {
-  reactive: { "normal/reactive/index": resolve(__dirname, "src", "reactive", "index.ts") },
-  html: { "normal/html/bundle": resolve(__dirname, "src", "html", "bundle.ts") },
-  h: { "normal/html/h": resolve(__dirname, "src", "html", "h.ts") },
-  jsx: { "normal/html/jsx-runtime": resolve(__dirname, "src", "html", "jsx-runtime.ts") },
-  whole: { "normal/upwind/bundle": resolve(__dirname, "src", "upwind", "bundle.ts") },
-  "reactive-full": { "full/reactive/index": resolve(__dirname, "src", "reactive", "index.ts") },
-  "html-full": { "full/html/bundle": resolve(__dirname, "src", "html", "bundle.ts") },
-  "whole-full": { "full/upwind/bundle": resolve(__dirname, "src", "upwind", "bundle.ts") },
-  "extra-cloneutil": { "full/reactive/cloneutil": resolve(__dirname, "src", "reactive", "cloneutil.ts") },
-  "extra-preset": {
-    "full/upwind/preset/colors": resolve(__dirname, "src", "upwind", "preset", "colors.ts")
-  },
+  reactive: { "reactive/index": path("src", "reactive", "index.ts") },
+  html: { "html/bundle": path("src", "html", "bundle.ts") },
+  h: { "html/h": path("src", "html", "h.ts") },
+  jsx: { "html/jsx-runtime": path("src", "html", "jsx-runtime.ts") },
+  whole: { "upwind/bundle": path("src", "upwind", "bundle.ts") },
+  "preset-colors": { "extra/preset-colors/index": path("src", "extra", "preset-colors", "index.ts") },
+  watch: { "extra/watch/index": path("src", "extra", "watch", "index.ts") },
 };
 
 export default defineConfig({
-  define: {
-    __DCE_DISABLE_WATCH__: !target.includes("full"),
-  },
   build: {
     emptyOutDir: clean,
     outDir: "dist",

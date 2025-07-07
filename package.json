@@ -6,9 +6,7 @@
   "scripts": {
     "prepare": "npm run build",
     "dev": "vitest",
-    "build": "npm run build:main && npm run build:suppl && node ./scripts/stat.mjs",
-    "build:main": "node ./scripts/build.mjs",
-    "build:suppl": "tsc -p ./tsconfig.build-supplement.json",
+    "build": "node ./scripts/build.mjs && node ./scripts/stat.mjs",
     "lint": "biome check",
     "test": "tsc -p ./tsconfig.build.json --noEmit && vitest run",
     "cov": "vitest run --coverage",
@@ -42,95 +40,67 @@
   },
   "exports": {
     ".": {
-      "types": "./dist/normal/upwind/bundle.d.ts",
-      "import": "./dist/normal/upwind/bundle.mjs"
+      "types": "./dist/upwind/bundle.d.ts",
+      "import": "./dist/upwind/bundle.mjs"
     },
     "./jsx-runtime": {
-      "types": "./dist/normal/html/jsx-runtime.d.ts",
-      "import": "./dist/normal/html/jsx-runtime.mjs"
+      "types": "./dist/html/jsx-runtime.d.ts",
+      "import": "./dist/html/jsx-runtime.mjs"
     },
     "./h": {
-      "types": "./dist/normal/html/h.d.ts",
-      "import": "./dist/normal/html/h.mjs"
+      "types": "./dist/html/h.d.ts",
+      "import": "./dist/html/h.mjs"
     },
     "./jsx-dev-runtime": {
-      "types": "./dist/normal/html/jsx-runtime.d.ts",
-      "import": "./dist/normal/html/jsx-runtime.mjs"
+      "types": "./dist/html/jsx-runtime.d.ts",
+      "import": "./dist/html/jsx-runtime.mjs"
     },
     "./html": {
-      "types": "./dist/normal/html/bundle.d.ts",
-      "import": "./dist/normal/html/bundle.mjs"
+      "types": "./dist/html/bundle.d.ts",
+      "import": "./dist/html/bundle.mjs"
     },
     "./html/jsx-runtime": {
-      "types": "./dist/normal/html/jsx-runtime.d.ts",
-      "import": "./dist/normal/html/jsx-runtime.mjs"
+      "types": "./dist/html/jsx-runtime.d.ts",
+      "import": "./dist/html/jsx-runtime.mjs"
     },
     "./html/jsx-dev-runtime": {
-      "types": "./dist/normal/html/jsx-runtime.d.ts",
-      "import": "./dist/normal/html/jsx-runtime.mjs"
+      "types": "./dist/html/jsx-runtime.d.ts",
+      "import": "./dist/html/jsx-runtime.mjs"
     },
     "./reactive": {
-      "types": "./dist/normal/reactive/index.d.ts",
-      "import": "./dist/normal/reactive/index.mjs"
+      "types": "./dist/reactive/index.d.ts",
+      "import": "./dist/reactive/index.mjs"
     },
-    "./full": {
-      "types": "./dist/full/upwind/bundle.d.ts",
-      "import": "./dist/full/upwind/bundle.mjs"
+    "./extra/watch": {
+      "types": "./dist/extra/watch/index.d.ts",
+      "import": "./dist/extra/watch/index.mjs"
     },
-    "./full/jsx-runtime": {
-      "types": "./dist/normal/html/jsx-runtime.d.ts",
-      "import": "./dist/normal/html/jsx-runtime.mjs"
-    },
-    "./full/jsx-dev-runtime": {
-      "types": "./dist/normal/html/jsx-runtime.d.ts",
-      "import": "./dist/normal/html/jsx-runtime.mjs"
-    },
-    "./html/full": {
-      "types": "./dist/full/html/bundle.d.ts",
-      "import": "./dist/full/html/bundle.mjs"
-    },
-    "./html/full/jsx-runtime": {
-      "types": "./dist/normal/html/jsx-runtime.d.ts",
-      "import": "./dist/normal/html/jsx-runtime.mjs"
-    },
-    "./html/full/jsx-dev-runtime": {
-      "types": "./dist/normal/html/jsx-runtime.d.ts",
-      "import": "./dist/normal/html/jsx-runtime.mjs"
-    },
-    "./reactive/full": {
-      "types": "./dist/full/reactive/index.d.ts",
-      "import": "./dist/full/reactive/index.mjs"
-    },
-    "./extra/cloneutil": {
-      "types": "./dist/full/reactive/cloneutil.d.ts",
-      "import": "./dist/full/reactive/cloneutil.mjs"
-    },
-    "./extra/preset/colors": {
-      "types": "./dist/full/upwind/preset/colors.d.ts",
-      "import": "./dist/full/upwind/preset/colors.mjs"
+    "./extra/preset-colors": {
+      "types": "./dist/extra/preset-colors/index.d.ts",
+      "import": "./dist/extra/preset-colors/index.mjs"
     },
     "./supplement": "./dist_supplement/supplement/index.js",
     "./supplement/refresh": "./dist_supplement/supplement/refresh/index.js",
     "./supplement/vite-plugin": "./dist_supplement/supplement/vite-plugin/index.js",
     "./raw": {
-      "types": "./dist/full/upwind/bundle.d.ts",
-      "import": "./dist/full/upwind/bundle.raw.mjs"
+      "types": "./dist/upwind/bundle.d.ts",
+      "import": "./dist/upwind/bundle.raw.mjs"
     },
     "./raw/h": {
-      "types": "./dist/normal/html/h.d.ts",
-      "import": "./dist/normal/html/h.raw.mjs"
+      "types": "./dist/html/h.d.ts",
+      "import": "./dist/html/h.raw.mjs"
     },
     "./raw/jsx-dev-runtime": {
-      "types": "./dist/normal/html/jsx-runtime.d.ts",
-      "import": "./dist/normal/html/jsx-runtime.raw.mjs"
+      "types": "./dist/html/jsx-runtime.d.ts",
+      "import": "./dist/html/jsx-runtime.raw.mjs"
     },
-    "./raw/extra/cloneutil": {
-      "types": "./dist/full/reactive/cloneutil.d.ts",
-      "import": "./dist/full/reactive/cloneutil.raw.mjs"
+    "./raw/extra/watch": {
+      "types": "./dist/extra/watch/index.d.ts",
+      "import": "./dist/extra/watch/index.raw.mjs"
     },
-    "./raw/extra/preset/colors": {
-      "types": "./dist/full/upwind/preset/colors.d.ts",
-      "import": "./dist/full/upwind/preset/colors.raw.mjs"
+    "./raw/extra/preset-colors": {
+      "types": "./dist/extra/preset-colors/index.d.ts",
+      "import": "./dist/extra/preset-colors/index.raw.mjs"
     },
     "./raw/supplement": "./dist_supplement/supplement/index.js",
     "./raw/supplement/refresh": "./dist_supplement/supplement/refresh/index.js",

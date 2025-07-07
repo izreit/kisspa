@@ -2,7 +2,7 @@
  * Print and save file size information.
  *
  * Usage:
- *  $ node ./scripts/stat.mjs [--target <all|normal|full>] [--out <filepath>]
+ *  $ node ./scripts/stat.mjs [--out <filepath>]
  *
  * Only works after running build.js.
  */
@@ -15,10 +15,6 @@ import { gzipSync } from "node:zlib";
 const { values: rawOptions } = parseArgs({
   args: process.args,
   options: {
-    target: {
-      type: "string", // "all" | "normal" | "full"
-      short: "t",
-    },
     out: {
       type: "string",
       short: "o",
@@ -26,11 +22,8 @@ const { values: rawOptions } = parseArgs({
   },
 });
 const options = {
-  target: (rawOptions.target != null) ? (rawOptions.target + "") : (process.env.KISSPA_BUILD ?? "all"),
   out: rawOptions.out ? (rawOptions.out + "") : null,
 };
-const targetNormal = /^all|normal$/.test(options.target);
-const targetFull = /^all|full$/.test(options.target);
 
 function measureSize(path) {
   const input = readFileSync(path);
@@ -52,34 +45,19 @@ function printSizeDescriptors(sizeDescs) {
 const hash = execSync("git rev-parse --short HEAD").toString().trim();
 console.log(`Commit ${hash}`);
 
-const allSizeDescs = [];
-
-if (targetFull) {
-  console.log("=== stats full ===");
-  const sizeDescs = [
-    "dist/full/reactive/index.mjs",
-    "dist/full/html/bundle.mjs",
-    "dist/full/upwind/bundle.mjs",
-  ].map(measureSize);
-  printSizeDescriptors(sizeDescs);
-  allSizeDescs.push(...sizeDescs);
-}
-
-if (targetNormal) {
-  console.log("=== stats normal ===");
-  const sizeDescs = [
-    "dist/normal/reactive/index.mjs",
-    "dist/normal/html/h.mjs",
-    "dist/normal/html/jsx-runtime.mjs",
-    "dist/normal/html/bundle.mjs",
-    "dist/normal/upwind/bundle.mjs",
-  ].map(measureSize);
-  printSizeDescriptors(sizeDescs);
-  allSizeDescs.push(...sizeDescs);
-}
+console.log("=== stats ===");
+const sizeDescs = [
+  "dist/reactive/index.mjs",
+  "dist/html/h.mjs",
+  "dist/html/jsx-runtime.mjs",
+  "dist/html/bundle.mjs",
+  "dist/upwind/bundle.mjs",
+  "dist/extra/watch/index.mjs",
+].map(measureSize);
+printSizeDescriptors(sizeDescs);
 
 if (options.out) {
-  const content = { hash, sizes: allSizeDescs };
+  const content = { hash, sizes: sizeDescs };
   writeFileSync(options.out, JSON.stringify(content, null, 2), "utf-8");
   console.log(`\nSaved to ${options.out}`);
 }

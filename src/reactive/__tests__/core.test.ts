@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
-import * as cloneutil from "../cloneutil.js";
-import { autorun, bindObserver, cancelAutorun, debugGetInternal, observe, unwatch, watchDeep, watchShallow, withoutObserver } from "../core.js";
-import type { Key } from "../internal/reftable.js";
+import { autorun, bindObserver, cancelAutorun, debugGetInternal, observe, withoutObserver } from "../core.js";
 import { createLogBuffer } from "./testutil.js";
 
 describe("microstore", () => {
@@ -29,10 +27,10 @@ describe("microstore", () => {
     autorun(observer);
     expect(store.foo).toBe(4);
     expect(squareFoo).toBe(16); // autorun() calls the observer func imidiately
-    expect(internal.refTable.table_.get(writeProxy)?.get("foo")?.has(observer)).toBe(true);
-    expect(internal.refTable.table_.get(writeProxy)?.get("foo")?.size).toBe(1);
-    expect(internal.refTable.reverseTable_.get(observer)?.get(writeProxy)?.has("foo")).toBe(true);
-    expect(internal.refTable.reverseTable_.get(observer)?.get(writeProxy)?.size).toBe(1);
+    expect(internal.refTable.table_.get(readProxy)?.get("foo")?.has(observer)).toBe(true);
+    expect(internal.refTable.table_.get(readProxy)?.get("foo")?.size).toBe(1);
+    expect(internal.refTable.reverseTable_.get(observer)?.get(readProxy)?.has("foo")).toBe(true);
+    expect(internal.refTable.reverseTable_.get(observer)?.get(readProxy)?.size).toBe(1);
 
     setStore(s => { s.foo *= 2; });
     expect(store.foo).toBe(8);
@@ -195,7 +193,7 @@ describe("microstore", () => {
   it("rejects array modification outside setter", async () => {
     const raw = [100, 20, 32, 5];
     const [store, _setStore] = observe(raw);
-    expect(() => store.sort((a, b) => a - b)).toThrow((/^can't set\/delete '\d+' without setter/));
+    expect(() => store.sort((a, b) => a - b)).toThrow((/^can't alter '\d+' without setter/));
   });
 
   it("can watch multiple stores", async () => {
@@ -205,22 +203,20 @@ describe("microstore", () => {
     const raw2 = { values: ["fee", "bar", "zoo", "buzz", "woohoo"] };
     const [store1, setStore1] = observe(raw1);
     const [store2, setStore2] = observe(raw2);
-    const [, writeProxy1] = internal.wrap(raw1);
-    const [, writeProxy2] = internal.wrap(raw2);
 
     let value: string | null = null;
     const observer1 = () => { value = store2.values[store1.index].slice(1) };
     autorun(observer1);
 
     expect(value).toBe("ar");
-    expect(internal.refTable.table_.get(writeProxy1)?.get("index")?.has(observer1)).toBe(true);
-    expect(internal.refTable.table_.get(writeProxy2)?.get("values")?.has(observer1)).toBe(true);
-    expect(internal.refTable.table_.get(writeProxy2.values)?.get("1")?.has(observer1)).toBe(true);
-    expect(internal.refTable.table_.get(writeProxy2.values)?.get("2")?.has(observer1)).toBe(undefined);
-    expect(internal.refTable.reverseTable_.get(observer1)?.get(writeProxy1)?.has("index")).toBe(true);
-    expect(internal.refTable.reverseTable_.get(observer1)?.get(writeProxy2)?.has("values")).toBe(true);
-    expect(internal.refTable.reverseTable_.get(observer1)?.get(writeProxy2.values)?.has("1")).toBe(true);
-    expect(internal.refTable.reverseTable_.get(observer1)?.get(writeProxy2.values)?.has("2")).toBe(false);
+    expect(internal.refTable.table_.get(store1)?.get("index")?.has(observer1)).toBe(true);
+    expect(internal.refTable.table_.get(store2)?.get("values")?.has(observer1)).toBe(true);
+    expect(internal.refTable.table_.get(store2.values)?.get("1")?.has(observer1)).toBe(true);
+    expect(internal.refTable.table_.get(store2.values)?.get("2")?.has(observer1)).toBe(undefined);
+    expect(internal.refTable.reverseTable_.get(observer1)?.get(store1)?.has("index")).toBe(true);
+    expect(internal.refTable.reverseTable_.get(observer1)?.get(store2)?.has("values")).toBe(true);
+    expect(internal.refTable.reverseTable_.get(observer1)?.get(store2.values)?.has("1")).toBe(true);
+    expect(internal.refTable.reverseTable_.get(observer1)?.get(store2.values)?.has("2")).toBe(false);
 
     setStore1(v => { v.index = 0; });
     setStore1(v => { v.index = 3; });
@@ -228,16 +224,16 @@ describe("microstore", () => {
     expect(raw1.index).toBe(3);
 
     expect(value).toBe("s4");
-    expect(internal.refTable.table_.get(writeProxy1)?.get("index")?.has(observer1)).toBe(true);
-    expect(internal.refTable.table_.get(writeProxy2)?.get("values")?.has(observer1)).toBe(true);
-    expect(internal.refTable.table_.get(writeProxy2.values)?.get("1")?.has(observer1)).toBe(undefined); // not false because .values changed
-    expect(internal.refTable.table_.get(writeProxy2.values)?.get("2")?.has(observer1)).toBe(undefined);
-    expect(internal.refTable.table_.get(writeProxy2.values)?.get("3")?.has(observer1)).toBe(true);
-    expect(internal.refTable.reverseTable_.get(observer1)?.get(writeProxy1)?.has("index")).toBe(true);
-    expect(internal.refTable.reverseTable_.get(observer1)?.get(writeProxy2)?.has("values")).toBe(true);
-    expect(internal.refTable.reverseTable_.get(observer1)?.get(writeProxy2.values)?.has("1")).toBe(false);
-    expect(internal.refTable.reverseTable_.get(observer1)?.get(writeProxy2.values)?.has("2")).toBe(false);
-    expect(internal.refTable.reverseTable_.get(observer1)?.get(writeProxy2.values)?.has("3")).toBe(true);
+    expect(internal.refTable.table_.get(store1)?.get("index")?.has(observer1)).toBe(true);
+    expect(internal.refTable.table_.get(store2)?.get("values")?.has(observer1)).toBe(true);
+    expect(internal.refTable.table_.get(store2.values)?.get("1")?.has(observer1)).toBe(undefined); // not false because .values changed
+    expect(internal.refTable.table_.get(store2.values)?.get("2")?.has(observer1)).toBe(undefined);
+    expect(internal.refTable.table_.get(store2.values)?.get("3")?.has(observer1)).toBe(true);
+    expect(internal.refTable.reverseTable_.get(observer1)?.get(store1)?.has("index")).toBe(true);
+    expect(internal.refTable.reverseTable_.get(observer1)?.get(store2)?.has("values")).toBe(true);
+    expect(internal.refTable.reverseTable_.get(observer1)?.get(store2.values)?.has("1")).toBe(false);
+    expect(internal.refTable.reverseTable_.get(observer1)?.get(store2.values)?.has("2")).toBe(false);
+    expect(internal.refTable.reverseTable_.get(observer1)?.get(store2.values)?.has("3")).toBe(true);
   });
 
   it("can alter array", async () => {
@@ -370,543 +366,6 @@ describe("microstore", () => {
     setStore1(s => { s.y = 11; s.x = 13; });
     expect(acc1).toBe(17);
     expect(acc2).toBe(18);
-  });
-
-  describe("watchDeep()", () => {
-    it("can watch nested properties", async () => {
-      const raw = {
-        values: ["fee", "glaa", "zoo"],
-        anotherValue: false,
-        yetAnother: 32,
-        a: {
-          deeply: {
-            nested: {
-              value: 4
-            }
-          }
-        }
-      };
-      const [store, setStore] = observe(raw);
-
-      let count = 0;
-      let lastPath: readonly Key[] = [];
-      let lastVal: any;
-      watchDeep(store, (path, val) => {
-        count++;
-        lastPath = path;
-        lastVal = val;
-      });
-
-      // backup
-      const [anotherStore, setAnotherStore] = observe<{ val: { nested: { value: number } } }>({
-        val: { nested: { value: 0 } }
-      });
-      setAnotherStore(a => a.val = store.a.deeply);
-
-      // check initial condition
-      expect(count).toBe(0);
-
-      // modify shallow
-      setStore(s => s.anotherValue = true);
-      expect(count).toBe(1);
-      expect(lastPath).toEqual(["anotherValue"]);
-      expect(lastVal).toBe(true);
-
-      // modify deep
-      setStore(s => s.a.deeply = { nested: { value: 25 } });
-      expect(count).toBe(2);
-      expect(lastPath).toEqual(["a", "deeply"]);
-      expect(lastVal).toEqual({ nested: { value: 25 } });
-
-      // the overwritten value is still alive and watchable
-      let oldValue = 0;
-      autorun(() => { oldValue = anotherStore.val.nested.value; });
-      expect(oldValue).toBe(4);
-      setAnotherStore(a => a.val.nested.value += 3);
-      expect(oldValue).toBe(7);
-
-      // but it does not detected by watchDeep() because it is unreachable from the watchDeep() root.
-      expect(count).toBe(2);
-
-      // while new values are watched.
-      setStore(s => s.a.deeply.nested.value = 33);
-      expect(count).toBe(3);
-      expect(lastPath).toEqual(["a", "deeply", "nested", "value"]);
-      expect(lastVal).toBe(33);
-    });
-
-    it("can watch non-root of store", async () => {
-      const raw = {
-        values: ["fee", "glaa", "zoo"],
-        anotherValue: false,
-        yetAnother: 32,
-        a: {
-          deeply: {
-            nested: {
-              value: 4
-            }
-          }
-        }
-      };
-      const [store, setStore] = observe(raw);
-
-      let count = 0;
-      let lastPath: readonly Key[] = [];
-      let lastVal: any;
-      watchDeep(store.a.deeply, (path, val) => {
-        count++;
-        lastPath = path;
-        lastVal = val;
-      });
-
-      // does not detect outside of watch target
-      setStore(s => s.anotherValue = true);
-      setStore(s => s.values.push("foo"));
-      expect(count).toBe(0);
-
-      // modify shallow
-      setStore(s => s.a.deeply.nested = { value: 1 });
-      expect(count).toBe(1);
-      expect(lastPath).toEqual(["nested"]);
-      expect(lastVal).toEqual({ value: 1 });
-
-      // detect even if the value is not changed, when the value is not notified yet
-      setStore(s => s.a.deeply.nested.value = 1);
-      expect(count).toBe(2);
-      expect(lastPath).toEqual(["nested", "value"]);
-      expect(lastVal).toBe(1);
-
-      // once notified, non-modifying assignment will not be detected
-      setStore(s => s.a.deeply.nested.value = 1);
-      expect(count).toBe(2);
-
-      // modify deep
-      setStore(s => s.a.deeply.nested.value = 10);
-      expect(count).toBe(3);
-      expect(lastPath).toEqual(["nested", "value"]);
-      expect(lastVal).toBe(10);
-    });
-
-    it("notifies multiple at once", async () => {
-      const raw = {
-        values: ["fee", "glaa", "zoo"],
-        anotherValue: false,
-        yetAnother: 32,
-        a: {
-          deeply: {
-            nested: {
-              value: 4
-            }
-          }
-        }
-      };
-      const [store, setStore] = observe(raw);
-
-      const history: { path: readonly Key[], val: any }[] = [];
-      watchDeep(store, (path, val) => {
-        history.push({ path, val });
-      });
-
-      setStore(s => s.a.deeply.nested = { value: 1 });
-      setStore(s => s.values.pop());
-      setStore(s => s.values.unshift("foo"));
-      expect(history).toEqual([
-        { path: ["a", "deeply", "nested"], val: { value: 1 } },
-        { path: ["values", "2"], val: undefined },
-        { path: ["values", "length"], val: 2 },
-        { path: ["values", "2"], val: "glaa" },
-        { path: ["values", "1"], val: "fee" },
-        { path: ["values", "0"], val: "foo" },
-        { path: ["values", "length"], val: 3 },
-      ]);
-    });
-
-    it("notifies deletion", async () => {
-      const raw = {
-        values: ["fee", "glaa", "zoo"] as (string[] | undefined),  // type annotation to delete
-        anotherValue: false,
-        yetAnother: 32,
-        a: {
-          deeply: {
-            nested: {
-              value: 4
-            }
-          }
-        }
-      };
-      const [store, setStore] = observe(raw);
-
-      const history: { path: readonly Key[], val: any }[] = [];
-      watchDeep(store, (path, val) => {
-        history.push({ path, val });
-      });
-
-      setStore(s => s.a.deeply.nested = { value: 1 });
-      // biome-ignore lint/performance/noDelete: intentional. testing delete.
-      setStore(s => { delete s.values![1]; });
-      // biome-ignore lint/performance/noDelete: intentional. testing delete.
-      setStore(s => { delete s.values; });
-      expect(history).toEqual([
-        { path: ["a", "deeply", "nested"], val: { value: 1 } },
-        { path: ["values", "1"], val: undefined },
-        { path: ["values"], val: undefined },
-      ]);
-    });
-
-    it("can be used to reactive clone", async () => {
-      const raw = {
-        table: {
-          k1: { id: 10, nameKey: "john" },
-          k2: { id: 11, nameKey: "mary" },
-          k3: { id: 12, nameKey: "chris" }
-        } as { [key: string]: { id: number, nameKey: string } },
-        arr: [
-          { v: "fee" },
-          { v: "bee", opt: true },
-        ],
-        count: 1
-      };
-      const [store, setStore] = observe(raw);
-
-      const c: typeof store = cloneutil.cloneDeep(store);
-      watchDeep(store, (path, val, deleted) => {
-        cloneutil.assign(c, path, cloneutil.cloneDeep(val), deleted);
-      });
-
-      setStore(s => {
-        s.arr.push({ v: "dee" });
-        s.table.A1 = { id: 13, nameKey: "nix" };
-        // biome-ignore lint/performance/noDelete: intentional. testing delete.
-        delete s.table.k1;
-      });
-      setStore(s => { s.count++ });
-      expect(c).toEqual(store);
-      expect(c).toEqual({
-        table: {
-          k2: { id: 11, nameKey: "mary" },
-          k3: { id: 12, nameKey: "chris" },
-          A1: { id: 13, nameKey: "nix" },
-        },
-        arr: [
-          { v: "fee" },
-          { v: "bee", opt: true },
-          { v: "dee" },
-        ],
-        count: 2
-      });
-
-      setStore(s => { s.arr.splice(1, 1); });
-      expect(c).toEqual(store);
-      expect(c).toEqual({
-        table: {
-          k2: { id: 11, nameKey: "mary" },
-          k3: { id: 12, nameKey: "chris" },
-          A1: { id: 13, nameKey: "nix" },
-        },
-        arr: [
-          { v: "fee" },
-          { v: "dee" },
-        ],
-        count: 2
-      });
-    });
-
-    it("can deal with DAG", async () => {
-      const raw1 = {
-        table: {
-          k1: { id: 10, nameStr: "john" },
-          k2: { id: 11, nameStr: "mary" },
-          k3: { id: 12, nameStr: "chris" }
-        } as { [key: string]: { id: number, nameStr: string } },
-      };
-      const raw2 = {
-        [raw1.table.k1.id]: raw1.table.k1
-      };
-
-      const [store1, setStore1] = observe(raw1);
-      const [store2, setStore2] = observe(raw2);
-      const clone1 = cloneutil.cloneDeep(store1);
-      const clone2 = cloneutil.cloneDeep(store2);
-      let count1 = 0;
-      watchDeep(store1, (path, val, deleted) => {
-        count1++;
-        cloneutil.assign(clone1, path, cloneutil.cloneDeep(val), deleted);
-      });
-      let count2 = 0;
-      watchDeep(store2, (path, val, deleted) => {
-        count2++;
-        cloneutil.assign(clone2, path, cloneutil.cloneDeep(val), deleted);
-      });
-
-      // modification of a shared value is notified to both.
-      setStore2(s => { s[10].nameStr = "DEE"; });
-      expect(clone1).toEqual(store1);
-      expect(clone2).toEqual(store2);
-      expect(count1).toBe(1);
-      expect(count2).toBe(1);
-
-      // delete is notified only store1's watcher.
-      // biome-ignore lint/performance/noDelete: intentional. testing delete.
-      setStore1(s => { delete s.table.k1; });
-      expect(clone1).toEqual(store1);
-      expect(clone2).toEqual(store2);
-      expect(count1).toBe(2);
-      expect(count2).toBe(1); // not incremented
-
-      // after deletion store1's watcher does not receive notification.
-      setStore2(s => { s[10].nameStr = "GEE"; });
-      expect(clone1).toEqual(store1);
-      expect(clone2).toEqual(store2);
-      expect(count1).toBe(2); // not incremented
-      expect(count2).toBe(2);
-    });
-
-    it("does not reproduce a fixed bug - when modify-and-restoring a value, watchDeep() ignores restoring", async () => {
-      const raw = { foo: 10 };
-      const [store, setStore] = observe(raw);
-      const clone = cloneutil.cloneDeep(store);
-      let count = 0;
-      watchDeep(store, (path, val, deleted) => {
-        count++;
-        cloneutil.assign(clone, path, cloneutil.cloneDeep(val), deleted);
-      });
-
-      setStore(s => { s.foo = 3; }); // modify a property,
-      setStore(s => { s.foo = 10; }); // and restore the original syncronously.
-      expect(clone).toEqual(store);
-      expect(count).toBe(2);
-    });
-
-    it("does not reproduce a fixed bug - notifying twice", async () => {
-      const raw = { p1: { p2: [] as any[] } };
-      const [store, setStore] = observe(raw);
-      const clone = cloneutil.cloneDeep(store);
-      let count = 0;
-      watchDeep(store, (path, val, deleted) => {
-        count++;
-        cloneutil.assign(clone, path, cloneutil.cloneDeep(val), deleted);
-      });
-
-      setStore(s => {
-        s.p1 = { p2: [] };
-        // The following had caused two effects: (a) updating the notified value (assigned above synchornously
-        // and not yet notified) and (b) pushing a notification for assignment. The property p2 had watched doubly since
-        // it watchDeep()'ed by not only (b) but also (a). Because when notified by (a), the value had already been updated.
-        s.p1.p2 = [{}];
-      });
-      expect(clone).toEqual(store);
-      expect(count).toBe(1);
-    });
-
-    it("does not reproduce a fixed bug - nested set resets writings", async () => {
-      const [store, setStore] = observe({ a: 1, b: 1 });
-
-      let ab = 1;
-      let count = 0;
-      autorun(() => {
-        ++count;
-        ab = store.a * store.b;
-      });
-      expect(count).toBe(1);
-
-      setStore(s => {
-        setStore(s => { s.b = 7; });
-        expect(ab).toBe(7); // should be 1? (by skipping flush on nested set)
-        s.a = 3;
-      });
-      expect(ab).toBe(21);
-      expect(count).toBe(3); // should be 2? (by skipping flush on nested set)
-    });
-  });
-
-  describe("unwatch() deep", () => {
-    it("stops notification ", async () => {
-      const raw = {
-        values: ["fee", "glaa", "zoo"],
-        a: {
-          nested: {
-            value: 4
-          }
-        }
-      };
-      const [store, setStore] = observe(raw);
-
-      const logs: [readonly Key[], any, boolean][] = [];
-      const wid = watchDeep(store, (path, val, deleted) => { logs.push([path, val, deleted]); });
-
-      setStore((s) => { s.a.nested.value++; });
-      setStore((s) => { s.values[0] = ""; });
-
-      expect(logs).toEqual([
-        [["a", "nested", "value"], 5, false],
-        [["values", "0"], "", false],
-      ]);
-
-      unwatch(wid);
-      setStore((s) => { s.a.nested.value++; });
-      expect(logs.length).toBe(2); // nothing notified
-    });
-  });
-
-  describe("watchDeep() with applyHandler", () => {
-    it("can intercept unshift", async () => {
-      const raw = {
-        values: ["fee", "glaa", "zoo"],
-        anotherValue: false,
-        yetAnother: 32,
-        a: {
-          deeply: {
-            nested: {
-              value: 4
-            }
-          }
-        }
-      };
-      const [store, setStore] = observe(raw);
-
-      let setCount = 0;
-      let callCount = 0;
-      const clone = cloneutil.cloneDeep(store);
-      watchDeep(store, {
-        onAssign: (path, val, deleted) => {
-          ++setCount;
-          cloneutil.assign(clone, path, cloneutil.cloneDeep(val), deleted);
-        },
-        onApply: (path, fun, args) => {
-          ++callCount;
-          cloneutil.apply(clone, path, fun, cloneutil.cloneDeep(args));
-        }
-      });
-
-      // non-array mutation is just set
-      setStore(s => { s.a.deeply.nested = { value: 10 }; });
-      expect(clone).toEqual(store);
-      expect(setCount).toBe(1);
-      expect(callCount).toBe(0);
-
-      // simple assignment to array is just set
-      setStore(s => { s.values[2] = "ZEE"; });
-      expect(clone).toEqual(store);
-      expect(setCount).toBe(2);
-      expect(callCount).toBe(0);
-
-      // index-mutation of array uses applyHandler
-      setStore(s => { s.values.unshift("GAA"); });
-      expect(clone).toEqual(store);
-      expect(setCount).toBe(2);
-      expect(callCount).toBe(1);
-    });
-
-    it("tracks indices implicitly shifted by splice()", async () => {
-      const raw = { values: [{ buf: [0] }] };
-      const [store, setStore] = observe(raw);
-
-      let setCount = 0;
-      let callCount = 0;
-      const clone = cloneutil.cloneDeep(store);
-      watchDeep(store, {
-        onAssign: (path, val, deleted) => {
-          ++setCount;
-          cloneutil.assign(clone, path, cloneutil.cloneDeep(val), deleted);
-        },
-        onApply: (path, fun, args) => {
-          ++callCount;
-          cloneutil.apply(clone, path, fun, cloneutil.cloneDeep(args));
-        }
-      });
-
-      setStore(s => s.values.splice(0, 0, { buf: [10] }));
-      expect(clone).toEqual(store);
-      expect(setCount).toBe(0);
-      expect(callCount).toBe(1);
-
-      setStore(s => s.values[1].buf.push(3));
-      expect(setCount).toBe(0);
-      expect(callCount).toBe(2);
-      expect(clone).toEqual(store);
-    });
-
-    it("does not reproduce a fixed bug - calling applyHandler for unseen value (which makes duplication)", async () => {
-      const raw = {
-        values: {
-          0: { id: 0, nums: [3] }
-        } as { [id: number]: { id: number, nums: number[] }},
-        anotherValue: false,
-        yetAnother: 32,
-      };
-      const [store, setStore] = observe(raw);
-
-      let setCount = 0;
-      let callCount = 0;
-      const clone = cloneutil.cloneDeep(store);
-      watchDeep(store, {
-        onAssign: (path, val, deleted) => {
-          ++setCount;
-          cloneutil.assign(clone, path, cloneutil.cloneDeep(val), deleted);
-        },
-        onApply: (path, fun, args) => {
-          ++callCount;
-          cloneutil.apply(clone, path, fun, cloneutil.cloneDeep(args));
-        }
-      });
-
-      setStore(s => s.values[1] = { id: 1, nums: [] as number[] }, { lazyFlush: true });
-      setStore(s => s.values[1].nums.push(5)); // this doesn't call onApply because lazyFlush makes the target value unseen for watchers.
-      expect(clone).toEqual(store);
-      expect(setCount).toBe(1);
-      expect(callCount).toBe(0);
-    });
-  });
-
-  describe("watchShallow()", () => {
-    it("detects changes of its propeties", async () => {
-      const { parentRefTable, wrap } = debugGetInternal();
-
-      const raw = {
-        values: ["fee", "glaa", "zoo"],
-        a: {
-          nested: {
-            value: 4
-          }
-        }
-      } as { [key: string]: any };
-
-      const [store, setStore] = observe(raw);
-      const [, writeProxy] = wrap(raw);
-
-      const logs: [Key, any, boolean][] = [];
-      const wid = watchShallow(store, (prop, val, deleted) => { logs.push([prop, val, deleted]); });
-      expect(parentRefTable.get(writeProxy)?.size).toBe(1);
-
-      setStore((s) => { s.a.nested.value++; }); // not detected because it is deep mod.
-      setStore((s) => { s.values[0] = ""; }); // ditto.
-      setStore((s) => { s.added = 100; }); // detected.
-
-      expect(logs).toEqual([
-        ["added", 100, false],
-      ]);
-
-      setStore((s) => { s.added -= 10; }); // modifications are also detected.
-
-      expect(logs).toEqual([
-        ["added", 100, false],
-        ["added", 90, false],
-      ]);
-
-      // biome-ignore lint/performance/noDelete: intentional. testing delete.
-      setStore((s) => { delete s.added; }); // delete
-      expect(logs).toEqual([
-        ["added", 100, false],
-        ["added", 90, false],
-        ["added", undefined, true],
-      ]);
-
-      unwatch(wid);
-      setStore((s) => { s.added = 100; });
-      expect(logs.length).toBe(3); // nothing is notified because unwatched
-
-      expect(parentRefTable.has(writeProxy)).toBe(false); // no entry remains
-    });
   });
 
   describe("bindObserver", () => {
