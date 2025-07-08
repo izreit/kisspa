@@ -1,4 +1,4 @@
-import { autorun, withoutObserver, assert } from "../../reactive/index.js";
+import { assert, autorun, withoutObserver } from "../../reactive/index.js";
 import { allocateSkeletons } from "./skeleton.js";
 import type { Backing, BackingLocation, Component, JSXNode, MountLocation, PropChildren, Refresher, ResolvedBackingLocation, SuspenseContext } from "./types.js";
 import { $noel, isJSXElement } from "./types.js";
