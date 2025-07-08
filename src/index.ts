@@ -1,3 +1,2 @@
-export * from "./html/index.js";
-export * from "./reactive/index.js";
+export * from "./index-html.js";
 export * from "./upwind/index.js";

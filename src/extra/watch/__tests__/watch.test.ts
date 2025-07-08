@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createLogBuffer } from "../../../reactive/__tests__/testutil.js";
 import { autorun, bindObserver, observe, setWatchHandlers, withoutObserver } from "../../../reactive/core.js";
-import type { Key } from "../../../reactive/internal/reftable.js";
+import type { Key } from "../../../reactive/types.js";
 import * as cloneutil from "../cloneutil.js";
 import { debugGetInternal, unwatch, watchDeep, watchHandlers, watchShallow } from "../watch.js";
 

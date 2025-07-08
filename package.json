@@ -40,8 +40,8 @@
   },
   "exports": {
     ".": {
-      "types": "./dist/upwind/bundle.d.ts",
-      "import": "./dist/upwind/bundle.mjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/entrypoint.mjs"
     },
     "./jsx-runtime": {
       "types": "./dist/html/jsx-runtime.d.ts",
@@ -56,8 +56,8 @@
       "import": "./dist/html/jsx-runtime.raw.mjs"
     },
     "./html": {
-      "types": "./dist/html/bundle.d.ts",
-      "import": "./dist/html/bundle.mjs"
+      "types": "./dist/html/index-html.d.ts",
+      "import": "./dist/html/entrypoint-html.mjs"
     },
     "./html/jsx-runtime": {
       "types": "./dist/html/jsx-runtime.d.ts",
@@ -83,8 +83,8 @@
     "./supplement/refresh": "./dist_supplement/supplement/refresh/index.js",
     "./supplement/vite-plugin": "./dist_supplement/supplement/vite-plugin/index.js",
     "./raw": {
-      "types": "./dist/upwind/bundle.d.ts",
-      "import": "./dist/upwind/bundle.raw.mjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/entrypoint.raw.mjs"
     },
     "./raw/h": {
       "types": "./dist/html/h.d.ts",
