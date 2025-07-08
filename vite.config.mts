@@ -23,38 +23,64 @@ const opts = parseArgs({
 const clean = !!opts.clean;
 const target = opts.target ?? "whole";
 
-function path(...segs: string[]): string {
-  return resolve(__dirname, ...segs);
+function path(segs: string): string {
+  return resolve(__dirname, ...segs.split("/"));
 }
 
 // Instead of one integrated entry, use a seperated entry for each target
 // to make them independent each other. In other words, vite produces
 // chunk script file for the integrated big entry.
-const entryTable = {
-  reactive: { "reactive/index": path("src", "reactive", "index.ts") },
-  html: { "html/bundle": path("src", "html", "bundle.ts") },
-  h: { "html/h": path("src", "html", "h.ts") },
-  jsx: { "html/jsx-runtime": path("src", "html", "jsx-runtime.ts") },
-  whole: { "upwind/bundle": path("src", "upwind", "bundle.ts") },
-  "preset-colors": { "extra/preset-colors/index": path("src", "extra", "preset-colors", "index.ts") },
-  watch: { "extra/watch/index": path("src", "extra", "watch", "index.ts") },
+const targetConfigTable = {
+  reactive: {
+    entry: { "reactive/index": path("src/reactive/index.ts") },
+  },
+  h: {
+    entry: { "html/h": path("src/html/h.ts") },
+  },
+  jsx: {
+    entry: { "html/jsx-runtime": path("src/html/jsx-runtime.ts") },
+  },
+  html: {
+    entry: { "entrypoint-html": path("src/index-html.ts") },
+    external: [path("src/reactive/index.ts")],
+  },
+  whole: {
+    entry: { "entrypoint": path("src/index.ts") },
+    external: [path("src/index-html.ts")],
+  },
+  "preset-colors": {
+    entry: { "extra/preset-colors/index": path("src/extra/preset-colors/index.ts") },
+  },
+  watch: {
+    entry: { "extra/watch/index": path("src/extra/watch/index.ts") },
+    external: [path("src/reactive/index.ts")],
+  },
+  "stat-html": {
+    entry: { "stat-bundle-html": path("src/stat/stat-bundle-html.ts") },
+    outDir: "stat",
+  },
+  "stat-whole": {
+    entry: { "stat-bundle": path("src/stat/stat-bundle.ts") },
+    outDir: "stat",
+  },
 };
 
 export default defineConfig({
   build: {
     emptyOutDir: clean,
-    outDir: "dist",
+    outDir: targetConfigTable[target].outDir ?? "dist",
     lib: {
-      entry: entryTable[target],
+      entry: targetConfigTable[target].entry,
       formats: ["es"],
       fileName: (_format, name) => `${name}.raw.mjs`,
     },
 
     rollupOptions: {
+      external: targetConfigTable[target].external,
       output: {
         inlineDynamicImports: true,
         minifyInternalExports: true,
-      }
+      },
     },
 
     // NOTE Vite doesn't minify ESM (.mjs, "es" output).

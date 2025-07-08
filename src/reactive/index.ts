@@ -1,3 +1,4 @@
+export { assert } from "./assert.js";
 export { autorun, bindObserver, cancelAutorun, observe, requestFlush, setWatchHandlers, unwrap, withoutObserver } from "./core.js";
 export type { StoreSetter, StoreSetterOptions } from "./core.js";
 export { decimated } from "./decimated.js";

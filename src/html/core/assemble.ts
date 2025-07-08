@@ -1,9 +1,8 @@
-import { assert } from "../../reactive/assert.js";
-import { autorun, withoutObserver } from "../../reactive/index.js";
+import { autorun, withoutObserver, assert } from "../../reactive/index.js";
 import { allocateSkeletons } from "./skeleton.js";
 import type { Backing, BackingLocation, Component, JSXNode, MountLocation, PropChildren, Refresher, ResolvedBackingLocation, SuspenseContext } from "./types.js";
 import { $noel, isJSXElement } from "./types.js";
-import { doNothing, isArray, isFunction, isNode, isPromise, isStrOrNumOrbool, isString, lastOf, mapCoerce, objEntries, pushFuncOf } from "./util.js";
+import { isArray, isFunction, isNode, isPromise, isStrOrNumOrbool, isString, lastOf, mapCoerce, objEntries, pushFuncOf } from "./util.js";
 
 export function createLocation(parent: Node, prev?: Backing | Node | null): MountLocation;
 export function createLocation(parent?: Node | null | undefined, prev?: Backing | Node | null): BackingLocation;

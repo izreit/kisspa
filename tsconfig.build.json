@@ -7,8 +7,7 @@
   "files": [
     "./vite-env.d.ts",
     "./src/index.ts",
-    "./src/upwind/bundle.ts",
-    "./src/html/bundle.ts",
+    "./src/index-html.ts",
     "./src/html/h.ts",
     "./src/html/jsx-runtime.ts",
     "./src/extra/preset-colors/index.ts",

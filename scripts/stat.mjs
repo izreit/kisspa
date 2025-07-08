@@ -50,9 +50,11 @@ const sizeDescs = [
   "dist/reactive/index.mjs",
   "dist/html/h.mjs",
   "dist/html/jsx-runtime.mjs",
-  "dist/html/bundle.mjs",
-  "dist/upwind/bundle.mjs",
+  "dist/entrypoint-html.mjs",
+  "dist/entrypoint.mjs",
   "dist/extra/watch/index.mjs",
+  "stat/stat-bundle-html.mjs",
+  "stat/stat-bundle.mjs",
 ].map(measureSize);
 printSizeDescriptors(sizeDescs);
 

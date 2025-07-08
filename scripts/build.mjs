@@ -32,21 +32,27 @@ function minifyRawMjs(src) {
 
 // build main
 run("npx vite build -- -t reactive --clean");
-run("npx vite build -- -t html");
 run("npx vite build -- -t h");
 run("npx vite build -- -t jsx");
+run("npx vite build -- -t html");
 run("npx vite build -- -t whole");
 run("npx vite build -- -t preset-colors");
 run("npx vite build -- -t watch");
 run(`npx tsc -p ${path("tsconfig.build.json")} --emitDeclarationOnly --outDir ${path("dist")}`);
 minifyRawMjs("dist/reactive/index.raw.mjs");
-minifyRawMjs("dist/html/bundle.raw.mjs");
 minifyRawMjs("dist/html/h.raw.mjs");
 minifyRawMjs("dist/html/jsx-runtime.raw.mjs");
-minifyRawMjs("dist/upwind/bundle.raw.mjs");
+minifyRawMjs("dist/entrypoint-html.raw.mjs");
+minifyRawMjs("dist/entrypoint.raw.mjs");
 minifyRawMjs("dist/extra/preset-colors/index.raw.mjs");
 minifyRawMjs("dist/extra/watch/index.raw.mjs");
 
 // build supplements
 rmSync(path("dist_supplement"), { recursive: true, force: true });
 run(`npx tsc -p ${path("tsconfig.build-supplement.json")}`);
+
+// build for stat
+run("npx vite build -- -t stat-html");
+run("npx vite build -- -t stat-whole");
+minifyRawMjs("stat/stat-bundle-html.raw.mjs");
+minifyRawMjs("stat/stat-bundle.raw.mjs");
