@@ -1,5 +1,19 @@
 # kisspa
 
+## 0.16.0
+
+### Minor Changes
+
+- 0522615: BREAKING! [extra] Rename `"kisspa/extra/preset/colors"` to `"kisspa/extra/preset-colors"`.
+- 0522615: [reactive] feat: Add internal `setWatchHandlers()` to be called from `"kisspa/extra/watch"` implicitly.
+- 0522615: BREAKING! [*] Remove the full build (`"kisspa/full"`), a barrier to writing libraries depended on kisspa. Now the watch functions are available in `"kisspa/extra/watch"`.
+
+### Patch Changes
+
+- 0b0fe9b: [html] fix: add forgotten export `"kisspa/raw/jsx-runtime"`
+- 0097870: [html] refactor: introduce `AssembleContext#disposeContext_` to gather disposers for `Node`
+- 7cbd14f: [*] refactor: Dedupe bundled scripts. Now reactive/, html/ and upwind/ are bundled separatedly to allow libraries to depend on kisspa values but not only types.
+
 ## 0.15.0
 
 ### Minor Changes
