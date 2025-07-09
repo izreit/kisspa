@@ -2,13 +2,27 @@
  * Build the library.
  *
  * Usage:
- *  $ node ./scripts/build.mjs
+ *  $ node ./scripts/build.mjs [--stat-only]
  */
 
 import { execSync } from "node:child_process";
 import { rmSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseArgs } from "node:util";
+
+const { values: rawOptions } = parseArgs({
+  options: {
+    "stat-only": {
+      type: "boolean",
+      short: "S",
+      default: false,
+    },
+  },
+});
+const options = {
+  statOnly: !!rawOptions["stat-only"],
+};
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = relative(process.cwd(), join(__dirname, ".."));
@@ -30,26 +44,28 @@ function minifyRawMjs(src) {
   run(`npx terser ${src} -c -m --mangle-props regex=/_$/ -o ${out} --toplevel`);
 }
 
-// build main
-run("npx vite build -- -t reactive --clean");
-run("npx vite build -- -t h");
-run("npx vite build -- -t jsx");
-run("npx vite build -- -t html");
-run("npx vite build -- -t whole");
-run("npx vite build -- -t preset-colors");
-run("npx vite build -- -t watch");
-run(`npx tsc -p ${path("tsconfig.build.json")} --emitDeclarationOnly --outDir ${path("dist")}`);
-minifyRawMjs("dist/reactive/index.raw.mjs");
-minifyRawMjs("dist/html/h.raw.mjs");
-minifyRawMjs("dist/html/jsx-runtime.raw.mjs");
-minifyRawMjs("dist/entrypoint-html.raw.mjs");
-minifyRawMjs("dist/entrypoint.raw.mjs");
-minifyRawMjs("dist/extra/preset-colors/index.raw.mjs");
-minifyRawMjs("dist/extra/watch/index.raw.mjs");
+if (!options.statOnly) {
+  // build main
+  run("npx vite build -- -t reactive --clean");
+  run("npx vite build -- -t h");
+  run("npx vite build -- -t jsx");
+  run("npx vite build -- -t html");
+  run("npx vite build -- -t whole");
+  run("npx vite build -- -t preset-colors");
+  run("npx vite build -- -t watch");
+  run(`npx tsc -p ${path("tsconfig.build.json")} --emitDeclarationOnly --outDir ${path("dist")}`);
+  minifyRawMjs("dist/reactive/index.raw.mjs");
+  minifyRawMjs("dist/html/h.raw.mjs");
+  minifyRawMjs("dist/html/jsx-runtime.raw.mjs");
+  minifyRawMjs("dist/entrypoint-html.raw.mjs");
+  minifyRawMjs("dist/entrypoint.raw.mjs");
+  minifyRawMjs("dist/extra/preset-colors/index.raw.mjs");
+  minifyRawMjs("dist/extra/watch/index.raw.mjs");
 
-// build supplements
-rmSync(path("dist_supplement"), { recursive: true, force: true });
-run(`npx tsc -p ${path("tsconfig.build-supplement.json")}`);
+  // build supplements
+  rmSync(path("dist_supplement"), { recursive: true, force: true });
+  run(`npx tsc -p ${path("tsconfig.build-supplement.json")}`);
+}
 
 // build for stat
 run("npx vite build -- -t stat-html");
