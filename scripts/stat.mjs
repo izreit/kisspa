@@ -2,7 +2,7 @@
  * Print and save file size information.
  *
  * Usage:
- *  $ node ./scripts/stat.mjs [--out <filepath>]
+ *  $ node ./scripts/stat.mjs [--out <filepath>] [--stat-only]
  *
  * Only works after running build.js.
  */
@@ -13,16 +13,21 @@ import { parseArgs } from "node:util";
 import { gzipSync } from "node:zlib";
 
 const { values: rawOptions } = parseArgs({
-  args: process.args,
   options: {
     out: {
       type: "string",
       short: "o",
     },
+    "stat-only": {
+      type: "boolean",
+      short: "S",
+      default: false,
+    },
   },
 });
 const options = {
   out: rawOptions.out ? (rawOptions.out + "") : null,
+  statOnly: !!rawOptions["stat-only"],
 };
 
 function measureSize(path) {
@@ -42,20 +47,25 @@ function printSizeDescriptors(sizeDescs) {
   }
 }
 
-const hash = execSync("git rev-parse --short HEAD").toString().trim();
-console.log(`Commit ${hash}`);
-
-console.log("=== stats ===");
-const sizeDescs = [
+const targettFilesBase = [
   "dist/reactive/index.mjs",
   "dist/html/h.mjs",
   "dist/html/jsx-runtime.mjs",
   "dist/entrypoint-html.mjs",
   "dist/entrypoint.mjs",
   "dist/extra/watch/index.mjs",
+];
+const targetFilesStat = [
   "stat/stat-bundle-html.mjs",
   "stat/stat-bundle.mjs",
-].map(measureSize);
+];
+
+const hash = execSync("git rev-parse --short HEAD").toString().trim();
+console.log(`Commit ${hash}`);
+
+console.log("=== stats ===");
+const targetFiles = options.statOnly ? targetFilesStat : [...targettFilesBase, ...targetFilesStat];
+const sizeDescs = targetFiles.map(measureSize);
 printSizeDescriptors(sizeDescs);
 
 if (options.out) {
