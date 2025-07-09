@@ -1,11 +1,10 @@
-import type { Key, WatchHandlers, Wrapped } from "../../reactive/types.js";
+import { setWatchHandlers } from "../../reactive/index.js";
+import type { Key, Wrapped } from "../../reactive/types.js";
 import { type Mapset, createMapset } from "./internal/mapset.js";
 import { type Trie, createTrie } from "./internal/trie.js";
 
-// To avoid depending on the main lib (out of supplement/ dir), copied from reactive/core.ts
-function isWrappable(v: any): v is object {
-  return (typeof v === "object" && v) || typeof v === "function";
-}
+// To avoid depending on an internal function of the main lib, copied from reactive/core.ts
+const isWrappable = (v: any): v is object => (typeof v === "object" && v) || typeof v === "function";
 
 declare const PropWatcherIdSymbol: unique symbol;
 export type PropWatcherId = { id: number; [PropWatcherIdSymbol]: never };
@@ -79,6 +78,14 @@ function unregisterParentRefs(wid: PropWatcherId, parent: object, prop: Key, chi
 let nextWatcherId = 0;
 
 function watchImpl<T extends object>(target: T, opts: PropWatcherEntry): PropWatcherId {
+  if (nextWatcherId === 0) {
+    setWatchHandlers({
+      watches: hasPropWatcher,
+      call: notifyCall,
+      set: notifyChange,
+      flush: notifyChangeFinish,
+    });
+  }
   const wid = { id: nextWatcherId++ } as PropWatcherId; // should be the only place to cast to PropWatcherId
   propWatcherTable.set(wid, opts);
   registerParentRef(wid, DUMMY_ROOT, DUMMY_SYMBOL, target, 0, opts.deep);
@@ -113,6 +120,7 @@ function hasPropWatcher(target: Wrapped): boolean {
 }
 
 const trieRoot = createTrie<Key>();
+const flushingWatchers: Set<PropWatcherId> = new Set();
 
 function getPathTrie(wid: PropWatcherId, target: Wrapped): Trie<Key> | null | undefined {
   const pref = parentRefTable.get(target)?.get(wid);
@@ -136,8 +144,6 @@ function getPathTrie(wid: PropWatcherId, target: Wrapped): Trie<Key> | null | un
 
   return getPathTrie(wid, pref.minParent_!)?.childFor_(pref.minKey_!);
 }
-
-const flushingWatchers: Set<PropWatcherId> = new Set();
 
 function notifyChangeFinish(): void {
   for (const wid of flushingWatchers)
@@ -195,10 +201,3 @@ function notifyImpl(target: Wrapped, fun: (wid: PropWatcherId, watcher: PropWatc
       parentRefTable.delete(target);
   }
 }
-
-export const watchHandlers: WatchHandlers = {
-  watches: hasPropWatcher,
-  call: notifyCall,
-  set: notifyChange,
-  flush: notifyChangeFinish,
-};

@@ -1,18 +1,11 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { createLogBuffer } from "../../../reactive/__tests__/testutil.js";
-import { autorun, bindObserver, observe, setWatchHandlers, withoutObserver } from "../../../reactive/core.js";
+import { autorun, bindObserver, observe, withoutObserver } from "../../../reactive/core.js";
 import type { Key } from "../../../reactive/types.js";
 import * as cloneutil from "../cloneutil.js";
-import { debugGetInternal, unwatch, watchDeep, watchHandlers, watchShallow } from "../watch.js";
+import { debugGetInternal, unwatch, watchDeep, watchShallow } from "../watch.js";
 
 describe("watch", () => {
-  beforeAll(() => {
-    setWatchHandlers(watchHandlers);
-  });
-  afterAll(() => {
-    setWatchHandlers(null);
-  })
-
   describe("watchDeep()", () => {
     it("can watch nested properties", async () => {
       const raw = {
