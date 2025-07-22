@@ -11,7 +11,11 @@ export {
   onMount,
   onCleanup,
 } from "./core/assemble.js";
-export type { ComponentMethods } from "./core/assemble.js";
+export type {
+  AssembleContext,
+  ComponentMethods,
+  SpecialComponent
+} from "./core/assemble.js";
 export { deprop } from "./core/helpers.js";
 export type { Prop } from "./core/helpers.js";
 export { attach, createRoot } from "./core/root.js";
