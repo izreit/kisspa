@@ -110,8 +110,5 @@
     "./raw/supplement": "./dist_supplement/supplement/index.js",
     "./raw/supplement/refresh": "./dist_supplement/supplement/refresh/index.js",
     "./raw/supplement/vite-plugin": "./dist_supplement/supplement/vite-plugin/index.js"
-  },
-  "engines": {
-    "node": ">=18.0.0"
   }
 }
