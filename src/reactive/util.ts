@@ -1,20 +1,20 @@
-import { autorun, bindObserver, cancelAutorun, observe } from "./core.js";
+import { bindObserver, cancelEffect, createEffect, createStore } from "./core.js";
 import { decimated } from "./decimated.js";
 
-export interface AutorunDecimatedResult {
+export interface CreateDecimatedEffectResult {
   fun: () => Promise<void>;
   cancel: () => void;
 }
 
-export function autorunDecimated(f: () => void): AutorunDecimatedResult {
+export function createDecimatedEffect(f: () => void): CreateDecimatedEffectResult {
   function recursiveHack() { ret(); }
   const ret = decimated(bindObserver(f, recursiveHack));
-  autorun(recursiveHack);
+  createEffect(recursiveHack);
   return {
     fun: ret,
     cancel: () => {
       ret.dispose();
-      cancelAutorun(recursiveHack);
+      cancelEffect(recursiveHack);
     }
   };
 }
@@ -25,7 +25,7 @@ export function watchProbe<T>(
   cond: (current: T, prevous: T) => boolean = shallowNotEqual
 ): () => void {
   let prev: T | undefined;
-  return autorun(() => {
+  return createEffect(() => {
     const cur = probe();
 
     // Update `prev' before calling fun() because fun() may reach here recursively by modifying other values.
@@ -39,14 +39,14 @@ export function watchProbe<T>(
   });
 }
 
-export function signal<T>(val: T): [() => T, (v: T) => void] {
-  const [store, set] = observe({ v: val });
+export function createSignal<T>(val: T): [() => T, (v: T) => void] {
+  const [store, set] = createStore({ v: val });
   return [() => store.v, v => set(s => { s.v = v; })];
 }
 
 export function memoize<T>(f: () => T): () => T {
-  const [sig, set] = signal<T>(null!);
-  autorun(() => set(f()), sig);
+  const [sig, set] = createSignal<T>(null!);
+  createEffect(() => set(f()), sig);
   return sig;
 }
 

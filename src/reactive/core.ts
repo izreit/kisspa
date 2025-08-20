@@ -65,7 +65,7 @@ function collectObserverDescendants(fun: Observer, acc: Set<Observer>): void {
   }
 }
 
-export function cancelAutorun(fun: Observer): void {
+export function cancelEffect(fun: Observer): void {
   const cos = new Set<Observer>();
   collectObserverDescendants(fun, cos);
   cos.forEach(refTable.clear_);
@@ -139,7 +139,7 @@ function addRef(readProxy: Wrapped, prop: Key, val: unknown) {
   }
 }
 
-export function observe<T extends object>(initial: T): [T, StoreSetter<T>] {
+export function createStore<T extends object>(initial: T): [T, StoreSetter<T>] {
   const [readProxy, writeProxy] = wrap(initial);
   const setter = (writer: (val: T) => void, opts: StoreSetterOptions = {}): void => {
     try {
@@ -223,9 +223,9 @@ function wrap<T extends object>(initial: T): [T, T] {
   const ret = [readProxy, writeProxy] as [T, T];
   memoizedTable.set(initial, ret);
   memoizedTable.set(writeProxy, ret); // Register writProxy to avoid to wrap more than once.
-  // memoizedTable.set(readProxy, ret); // This allows anyone to get the setter by `observe(readProxy)`.
+  // memoizedTable.set(readProxy, ret); // This allows anyone to get the setter by `createStore(readProxy)`.
   memoizedTable.set(readProxy, null!); // Prevent wrapping twice.
-  unwrapTable.set(readProxy, initial); // Should remove? This allows anyone to get the setter by `observe(unwrap(readProxy))` .
+  unwrapTable.set(readProxy, initial); // Should remove? This allows anyone to get the setter by `createStore(unwrap(readProxy))` .
   unwrapTable.set(writeProxy, initial);
   return ret;
 }
@@ -241,12 +241,12 @@ function autorunImpl<T>(fun: () => T, observer: (() => void) | null | undefined)
   return activeObserverStack.callWith_(fun, observer);
 }
 
-const releaser = new FinalizationRegistry(cancelAutorun);
+const releaser = new FinalizationRegistry(cancelEffect);
 
-export function autorun(fun: () => void, owner?: object): () => void {
+export function createEffect(fun: () => void, owner?: object): () => void {
   autorunImpl(fun, fun);
   owner && releaser.register(owner, fun);
-  return () => cancelAutorun(fun);
+  return () => cancelEffect(fun);
 }
 
 function bindObserverImpl<A extends [...any], R>(fun: (...args: A) => R, observer: (() => void) | null | undefined): (...args: A) => R {

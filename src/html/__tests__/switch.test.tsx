@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { observe } from "../../reactive/index.js";
+import { createStore } from "../../reactive/index.js";
 import { h } from "../h.js";
 import { Match, type Root, Switch, createRoot } from "../index.js";
 
@@ -16,7 +16,7 @@ describe("Switch", () => {
   });
 
   it("selects Match", async () => {
-    const [store, setStore] = observe({ x: 4 as number | string});
+    const [store, setStore] = createStore({ x: 4 as number | string});
     root.attach(
       <Switch>
         <Match when={() => typeof store.x === "number" && 0 <= store.x && store.x < 10}>
@@ -35,7 +35,7 @@ describe("Switch", () => {
   });
 
   it("prefers preceded Match", async () => {
-    const [store, setStore] = observe({ x: 4 as number | string});
+    const [store, setStore] = createStore({ x: 4 as number | string});
     root.attach(
       <Switch>
         <Match when={() => typeof store.x === "number" && 0 <= store.x && store.x < 10}>
@@ -57,7 +57,7 @@ describe("Switch", () => {
   });
 
   it("can provide type guard", async () => {
-    const [store, setStore] = observe({ x: 4 as number | string});
+    const [store, setStore] = createStore({ x: 4 as number | string});
     root.attach(
       <Switch>
         <Match when={() => (typeof store.x === "number" && 0 <= store.x && store.x < 10) && store.x} capture>{x => (
@@ -80,7 +80,7 @@ describe("Switch", () => {
   });
 
   it("fallbacks to the condition-less Match", async () => {
-    const [store, setStore] = observe({ x: 4 as number | string});
+    const [store, setStore] = createStore({ x: 4 as number | string});
     root.attach(
       <Switch>
         <Match when={() => (typeof store.x === "number" && 0 <= store.x && store.x < 10) && store.x} capture>{x => (

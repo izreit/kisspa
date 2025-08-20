@@ -1,7 +1,7 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createLogBuffer } from "../../../html/__tests__/testutil.js";
 import { Fragment, h } from "../../../html/h.js";
-import { type Prop, type Refresher, type Root, createRoot, deprop, observe, onCleanup, onMount, setRefresher, } from "../../../index.js";
+import { type Prop, type Refresher, type Root, createRoot, createStore, deprop, onCleanup, onMount, setRefresher, } from "../../../index.js";
 import { createRefresher } from "../refresher.js";
 
 describe("Refresher", () => {
@@ -22,7 +22,7 @@ describe("Refresher", () => {
   });
 
   it("refreshes a component", async () => {
-    const [store, setStore] = observe({ v: 1 });
+    const [store, setStore] = createStore({ v: 1 });
 
     let Foo = (props: { val: Prop<number> }) => {
       return <i>{props.val}</i>;
@@ -48,7 +48,7 @@ describe("Refresher", () => {
   });
 
   it("refreshes a component with onMount(), onCleanup()", async () => {
-    const [store, setStore] = observe({ v: 1 });
+    const [store, setStore] = createStore({ v: 1 });
     const { log, reap } = createLogBuffer();
 
     let Foo = (props: { val: Prop<number> }) => {

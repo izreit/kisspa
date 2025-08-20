@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { observe, signal } from "../../reactive/index.js";
+import { createSignal, createStore } from "../../reactive/index.js";
 import { h } from "../h.js";
 import { type JSXNode, Portal, PortalDest, type Root, Show, createRoot } from "../index.js";
 
@@ -26,7 +26,7 @@ describe("Portal", () => {
       );
     }
 
-    const [store, setStore] = observe({ x: 10 });
+    const [store, setStore] = createStore({ x: 10 });
     const outerDest = document.createElement("p");
     root.attach(<main><Comp0 x={() => store.x} /></main>);
     expect(elem.innerHTML).toBe("<main><section></section></main>");
@@ -49,7 +49,7 @@ describe("Portal", () => {
       );
     }
 
-    const [store, setStore] = observe({ x: 10 });
+    const [store, setStore] = createStore({ x: 10 });
     root.attach(
       <main>
         <Comp0 x={() => store.x} />
@@ -67,8 +67,8 @@ describe("Portal", () => {
   it("can be hidden by Show", async () => {
     const key = Symbol("portalKey");
 
-    const [showFrom, setShowFrom] = signal(true);
-    const [showDest, setShowDest] = signal(true);
+    const [showFrom, setShowFrom] = createSignal(true);
+    const [showDest, setShowDest] = createSignal(true);
 
     function Comp0(props: { x: () => number }): JSXNode {
       return (

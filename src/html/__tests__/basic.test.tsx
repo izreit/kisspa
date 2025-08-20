@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { autorun, observe, signal } from "../../reactive/index.js";
+import { createEffect, createSignal, createStore } from "../../reactive/index.js";
 import { Fragment, h } from "../h.js";
 import { type JSX, type JSXNode, type JSXNodeAsync, type JSXNodeAsyncValue, type PropChildren, type Root, Show, Suspense, createRef, createRoot, onCleanup, onMount, useComponentMethods } from "../index.js";
 import { createLogBuffer, createSeparatedPromise } from "./testutil.js";
@@ -18,7 +18,7 @@ describe("basic", () => {
 
   it("can have static/dynamic attrs", async () => {
     const ref = createRef<HTMLButtonElement>();
-    const [store, setStore] = observe({ padding: 0 });
+    const [store, setStore] = createStore({ padding: 0 });
 
     function handleClick() {
       setStore(s => s.padding++);
@@ -52,7 +52,7 @@ describe("basic", () => {
 
   it("can add event listeners with options - signal", async () => {
     const ref = createRef<HTMLButtonElement>();
-    const [store, setStore] = observe({ val: 0 });
+    const [store, setStore] = createStore({ val: 0 });
     const ac = new AbortController();
 
     function handleClick() {
@@ -113,7 +113,7 @@ describe("basic", () => {
 
   it("can set/remove attrs", async () => {
     const ref = createRef<HTMLButtonElement>();
-    const [className, setClassName] = signal<string | undefined>("foo");
+    const [className, setClassName] = createSignal<string | undefined>("foo");
 
     await root.attach(
       <button type="button" ref={ref} class={className} />
@@ -129,7 +129,7 @@ describe("basic", () => {
 
   it("takes care of non-reflecting attributes", async () => {
     const ref = createRef<HTMLInputElement>();
-    const [val, setVal] = signal("initial");
+    const [val, setVal] = createSignal("initial");
 
     await root.attach(
       <input type="text" ref={ref} value={val} />
@@ -146,7 +146,7 @@ describe("basic", () => {
 
   it("can toggle attrs", async () => {
     const ref = createRef<HTMLButtonElement>();
-    const [allowFullscreen, setAllowFullscreen] = signal<boolean | undefined>(true);
+    const [allowFullscreen, setAllowFullscreen] = createSignal<boolean | undefined>(true);
 
     await root.attach(
       <button type="button" ref={ref} allowFullScreen={allowFullscreen} />
@@ -202,7 +202,7 @@ describe("basic", () => {
     function Comp(props: CompProps): JSX.Element {
       return <p>{ props.jsxattr }</p>;
     }
-    const [store, setStore] = observe({ show: true });
+    const [store, setStore] = createStore({ show: true });
     await root.attach(
       <Comp jsxattr={() => store.show ? <span>foo</span> : <i/>} />
     );
@@ -216,7 +216,7 @@ describe("basic", () => {
       const { FixtureComponent } = await import("./fixtures/FixtureComponent");
       return <FixtureComponent value={props.x} />
     }
-    const [sig, setSig] = signal(10);
+    const [sig, setSig] = createSignal(10);
     await root.attach(<Foo x={sig} />);
     expect(elem.innerHTML).toBe("<div>10</div>");
     setSig(30);
@@ -240,7 +240,7 @@ describe("basic", () => {
 
             promise.then(() => {
               log("onmount-async");
-              onCleanup(autorun(() => log(`autorun ${props.x()}`)));
+              onCleanup(createEffect(() => log(`autorun ${props.x()}`)));
               onCleanup(() => log("oncleanup-async"));
             });
           });
@@ -250,7 +250,7 @@ describe("basic", () => {
 
         return <p ref={(ref) => {refp = ref}}>{ props.x }</p>;
       }
-      const [store, setStore] = observe({ value: 10 });
+      const [store, setStore] = createStore({ value: 10 });
 
       await root.attach(
         <Comp x={() => store.value} />
@@ -297,7 +297,7 @@ describe("basic", () => {
         return <p>{ props.x }</p>;
       }
 
-      const [store, _setStore] = observe({ value: 10 });
+      const [store, _setStore] = createStore({ value: 10 });
       await root.attach(
         <Comp x={() => store.value} />
       );
@@ -329,7 +329,7 @@ describe("basic", () => {
         return <p>{ props.x }</p>;
       }
 
-      const [store, _setStore] = observe({ value: 10 });
+      const [store, _setStore] = createStore({ value: 10 });
       const promiseAttach = root.attach(
         <div><Comp x={() => store.value} /></div>
       );
@@ -374,7 +374,7 @@ describe("basic", () => {
         );
       }
 
-      const [store, _setStore] = observe({ value: 10 });
+      const [store, _setStore] = createStore({ value: 10 });
       const attachPromise = root.attach(<Root />);
 
       expect(reap()).toEqual([]);
@@ -396,7 +396,7 @@ describe("basic", () => {
 
     it("doesn't reproduce a bug in commit aacfaee (regression)", async () => {
       const { log, reap } = createLogBuffer();
-      const [store, setStore] = observe({ x: 10 });
+      const [store, setStore] = createStore({ x: 10 });
 
       function Comp0(_props: {}): JSXNode {
         return <b>{() => store.x}</b>;
@@ -425,7 +425,7 @@ describe("basic", () => {
 
     it("doen't call neither onMount nor onCleanup handlers until the promise is settled", async () => {
       const { log, reap } = createLogBuffer();
-      const [showing, setShowing] = signal(true);
+      const [showing, setShowing] = createSignal(true);
 
       async function Comp(): JSXNodeAsync {
         onMount(() => log("mount"));

@@ -1,4 +1,4 @@
-import { autorun, signal, withoutObserver } from "../../reactive/index.js";
+import { createEffect, createSignal, withoutObserver } from "../../reactive/index.js";
 import { type AssembleContext, assemble, createBackingCommon, createSpecial } from "../core/assemble.js";
 import { deprop } from "../core/helpers.js";
 import type { Backing, JSXNode, MountLocation } from "../core/types.js";
@@ -25,7 +25,7 @@ export const For = createSpecial(function For<E>(actx: AssembleContext, props: F
   let backings: Backing[] = [];
   let backingTable: Map<any, Backing> = new Map();
 
-  base.addDisposer_(autorun(() => {
+  base.addDisposer_(createEffect(() => {
     const nextTable: Map<any, Backing> = new Map();
     const nextBackings: Backing[] = [];
     const es = deprop(each);
@@ -38,7 +38,7 @@ export const For = createSpecial(function For<E>(actx: AssembleContext, props: F
           ixTable.get(b!)![1](i); // update index
           backingTable.delete(k);
         } else {
-          const ixSignal = signal(i);
+          const ixSignal = createSignal(i);
           b = assemble(actx, withoutObserver(() => fun(e as E, ixSignal[0])));
           ixTable.set(b, ixSignal);
         }

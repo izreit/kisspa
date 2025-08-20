@@ -1,4 +1,4 @@
-import { autorun, signal, watchProbe } from "../../reactive/index.js";
+import { createEffect, createSignal, watchProbe } from "../../reactive/index.js";
 import { type AssembleContext, assemble, callAll, createSpecial, createTransparentBacking } from "../core/assemble.js";
 import type { Backing, PropChildren } from "../core/types.js";
 import { mapCoerce } from "../core/util.js";
@@ -10,7 +10,7 @@ interface SwitchContextValue {
 
 export function createSwitchContextValue(): SwitchContextValue {
   const stricterIsTruthy = (v: unknown) => v != null && v !== false;
-  const [activeIndex, setActiveIndex] = signal<number>(-1);
+  const [activeIndex, setActiveIndex] = createSignal<number>(-1);
   const stats: unknown[] = [];
   const judges: ((v: unknown) => unknown)[] = [];
   const disposers: (() => void)[] = [];
@@ -18,12 +18,12 @@ export function createSwitchContextValue(): SwitchContextValue {
   return {
     register_(cond, strict) {
       const idx = stats.push(false) - 1;
-      const [capturedValue, setCapturedValue] = signal<unknown>(null);
+      const [capturedValue, setCapturedValue] = createSignal<unknown>(null);
       const judge = strict ? stricterIsTruthy : Boolean;
       judges[idx] = judge;
       disposers.push(
         watchProbe(cond, setCapturedValue, judge),
-        autorun(() => {
+        createEffect(() => {
           stats[idx] = cond();
           setActiveIndex(stats.findIndex((v, i) => judges[i](v)));
         })

@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { observe } from "../../reactive/index.js";
+import { createStore } from "../../reactive/index.js";
 import { Fragment, h } from "../h.js";
 import { type Root, createRoot } from "../index.js";
 
@@ -26,7 +26,7 @@ describe("Fragment", () => {
   });
 
   it("can be nested", () => {
-    const [store, _setStore] = observe({ foo: 0 });
+    const [store, _setStore] = createStore({ foo: 0 });
     root.attach(
       <>
         <span>Foo</span>
