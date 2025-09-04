@@ -1,5 +1,15 @@
 # kisspa
 
+## 0.17.0
+
+### Minor Changes
+
+- e2da216: BREAKING! [reactive] feat: Overhaul names (renamed `autorun()` to `createEffect()`, `observe()` to `createStore()`, `signal()` to `createSignal()`, `cancelAutorun()` to `cancelEffect()`)
+
+### Patch Changes
+
+- 1dc5047: [*] fix: Fix broken exports
+
 ## 0.16.0
 
 ### Minor Changes
