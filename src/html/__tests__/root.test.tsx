@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { signal } from "../../reactive/index.js";
+import { createSignal } from "../../reactive/index.js";
 import { h } from "../h.js";
 import { type JSXNode, type PropRef, type Root, attach, createRef, createRoot } from "../index.js";
 
@@ -28,7 +28,7 @@ describe("root", () => {
     });
 
     it("tracks a dynamic text", async () => {
-      const [label, setLabel] = signal("sig");
+      const [label, setLabel] = createSignal("sig");
       root.attach(<span>Foo {label}</span>);
       expect(elem.innerHTML).toBe("<span>Foo sig</span>");
       setLabel("dyn");

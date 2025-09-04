@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { observe } from "../../reactive/index.js";
+import { createStore } from "../../reactive/index.js";
 import { h } from "../h.js";
 import { type JSXNode, type JSXNodeAsync, type Prop, type Root, Suspense, createRoot, onCleanup, onMount } from "../index.js";
 import { createLogBuffer, createSeparatedPromise } from "./testutil.js";
@@ -21,7 +21,7 @@ describe("Suspense", () => {
       return <p>(Async) {new Promise(resolve => setTimeout(resolve, 1)).then(() => props.val)}</p>;
     }
 
-    const [store, setStore] = observe({ foo: 0 });
+    const [store, setStore] = createStore({ foo: 0 });
     const promiseAttach = root.attach(
       <div>
         (Sync)
@@ -45,7 +45,7 @@ describe("Suspense", () => {
       return <p>(Async) {() => props.val}</p>;
     }
 
-    const [store, setStore] = observe({ foo: 0 });
+    const [store, setStore] = createStore({ foo: 0 });
     const promiseAttach = root.attach(
       <div>
         (Sync)
@@ -69,7 +69,7 @@ describe("Suspense", () => {
       return <p>(Async) {new Promise(resolve => setTimeout(resolve, 1)).then(() => props.val)}</p>;
     }
 
-    const [store, setStore] = observe({ foo: 0 });
+    const [store, setStore] = createStore({ foo: 0 });
     const promiseAttach = root.attach(
       <div>
         (Sync)
@@ -92,7 +92,7 @@ describe("Suspense", () => {
       return <p>(Async) {() => props.val}</p>;
     }
 
-    const [store, setStore] = observe({ foo: 0 });
+    const [store, setStore] = createStore({ foo: 0 });
     const promiseAttach = root.attach(
       <div>
         (Sync)
@@ -115,7 +115,7 @@ describe("Suspense", () => {
       throw new Error("intentional");
     }
 
-    const [store, _setStore] = observe({ foo: 0 });
+    const [store, _setStore] = createStore({ foo: 0 });
     const promiseAttach = root.attach(
       <div>
         (Sync)
@@ -136,7 +136,7 @@ describe("Suspense", () => {
       return <div>{() => Promise.reject<string>(new Error("intentional"))}</div>;
     }
 
-    const [store, _setStore] = observe({ foo: 0 });
+    const [store, _setStore] = createStore({ foo: 0 });
     const promiseAttach = root.attach(
       <div>
         (Sync)
@@ -157,7 +157,7 @@ describe("Suspense", () => {
       throw new Error("intentional");
     }
 
-    const [store, _setStore] = observe({ foo: 0 });
+    const [store, _setStore] = createStore({ foo: 0 });
     const promiseAttach = root.attach(
       <div>
         (Sync)
@@ -179,7 +179,7 @@ describe("Suspense", () => {
       throw new Error("intentional");
     }
 
-    const [store, _setStore] = observe({ foo: 0 });
+    const [store, _setStore] = createStore({ foo: 0 });
     const promiseAttach = root.attach(
       <div>
         (Sync)
@@ -199,7 +199,7 @@ describe("Suspense", () => {
   });
 
   it("is OK if no promise", async () => {
-    const [store, _setStore] = observe({ foo: 0 });
+    const [store, _setStore] = createStore({ foo: 0 });
     const promiseAttach = root.attach(
       <div>
         (Sync)

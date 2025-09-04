@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { autorun, bindObserver, cancelAutorun, debugGetInternal, observe, withoutObserver } from "../core.js";
+import { bindObserver, cancelEffect, createEffect, createStore, debugGetInternal, withoutObserver } from "../core.js";
 import { createLogBuffer } from "./testutil.js";
 
 describe("microstore", () => {
   it("can be read/modified", () => {
-    const [store, setStore] = observe({ foo: 4 });
+    const [store, setStore] = createStore({ foo: 4 });
     expect(store.foo).toBe(4);
     setStore(s => { s.foo *= 2 });
     expect(store.foo).toBe(8);
@@ -14,7 +14,7 @@ describe("microstore", () => {
     const internal = debugGetInternal();
 
     const raw = { foo: 4 };
-    const [store, setStore] = observe(raw);
+    const [store, setStore] = createStore(raw);
     const [readProxy, writeProxy] = internal.wrap(raw);
     expect(readProxy).toBe(store);
 
@@ -24,7 +24,7 @@ describe("microstore", () => {
 
     let squareFoo = 0;
     const observer = () => { squareFoo = store.foo ** 2; };
-    autorun(observer);
+    createEffect(observer);
     expect(store.foo).toBe(4);
     expect(squareFoo).toBe(16); // autorun() calls the observer func imidiately
     expect(internal.refTable.table_.get(readProxy)?.get("foo")?.has(observer)).toBe(true);
@@ -43,10 +43,10 @@ describe("microstore", () => {
 
   it("can watch array", async () => {
     const raw = [100, 20, 32, 5];
-    const [store, setStore] = observe(raw);
+    const [store, setStore] = createStore(raw);
 
     let val = 0;
-    autorun(() => { val = store[0]; });
+    createEffect(() => { val = store[0]; });
     expect(store[0]).toBe(100);
 
     setStore(v => { v.shift(); v.push(77); });
@@ -75,11 +75,11 @@ describe("microstore", () => {
         "ccc": { givenName: "Paul", values: [-5, -8] },
       }
     };
-    const [store, setStore] = observe(raw);
+    const [store, setStore] = createStore(raw);
 
     let callCount = 0;
     let lastValue: number = Infinity;
-    autorun(() => {
+    createEffect(() => {
       callCount++;
       const a = store.table[store.activeId].values;
       lastValue = a[a.length - 1];
@@ -105,19 +105,19 @@ describe("microstore", () => {
   });
 
   it("can be untracked", async () => {
-    const [store, setStore] = observe({ count: 0 });
+    const [store, setStore] = createStore({ count: 0 });
 
     let countClone0 = 0;
     let countClone1 = 0;
     const copyCount0 = () => { countClone0 = store.count; }
-    autorun(copyCount0);
-    autorun(() => { countClone1 = store.count; });
+    createEffect(copyCount0);
+    createEffect(() => { countClone1 = store.count; });
 
     setStore(s => { s.count += 42 });
     expect(countClone0).toBe(42);
     expect(countClone1).toBe(42);
 
-    cancelAutorun(copyCount0);
+    cancelEffect(copyCount0);
     setStore(s => { s.count -= 10 });
     expect(countClone0).toBe(42); // now it has never been updated
     expect(countClone1).toBe(32);
@@ -130,7 +130,7 @@ describe("microstore", () => {
       { firstName: "tom", age: 32 },
       { firstName: "chris", age: 29 },
     ];
-    const [store, setStore] = observe(raw);
+    const [store, setStore] = createStore(raw);
 
     let observerChrisCount = 0;
     let ageOfChris: number | null = null;
@@ -146,8 +146,8 @@ describe("microstore", () => {
       ageOfSecond = store[1]?.age ?? -1;
     };
 
-    autorun(observerChris);
-    autorun(observerSecond);
+    createEffect(observerChris);
+    createEffect(observerSecond);
     expect(observerChrisCount).toBe(1);
     expect(observerSecondCount).toBe(1);
 
@@ -173,10 +173,10 @@ describe("microstore", () => {
 
   it("can suppress synchronous flush", async () => {
     const raw = { values: ["fee", "bar", "zoo", "buzz", "woohoo"] };
-    const [store, setStore] = observe(raw);
+    const [store, setStore] = createStore(raw);
 
     let caps = "";
-    autorun(() => { caps = store.values.map(s => s[0]).join(""); });
+    createEffect(() => { caps = store.values.map(s => s[0]).join(""); });
     expect(caps).toBe("fbzbw");
 
     setStore(s => { s.values[2] = "BOO"; }, { lazyFlush: true });
@@ -192,7 +192,7 @@ describe("microstore", () => {
 
   it("rejects array modification outside setter", async () => {
     const raw = [100, 20, 32, 5];
-    const [store, _setStore] = observe(raw);
+    const [store, _setStore] = createStore(raw);
     expect(() => store.sort((a, b) => a - b)).toThrow((/^can't alter '\d+' without setter/));
   });
 
@@ -201,12 +201,12 @@ describe("microstore", () => {
 
     const raw1 = { index: 1 };
     const raw2 = { values: ["fee", "bar", "zoo", "buzz", "woohoo"] };
-    const [store1, setStore1] = observe(raw1);
-    const [store2, setStore2] = observe(raw2);
+    const [store1, setStore1] = createStore(raw1);
+    const [store2, setStore2] = createStore(raw2);
 
     let value: string | null = null;
     const observer1 = () => { value = store2.values[store1.index].slice(1) };
-    autorun(observer1);
+    createEffect(observer1);
 
     expect(value).toBe("ar");
     expect(internal.refTable.table_.get(store1)?.get("index")?.has(observer1)).toBe(true);
@@ -238,11 +238,11 @@ describe("microstore", () => {
 
   it("can alter array", async () => {
     const raw = { values: ["fee", "bar", "zoo", "buzz", "woohoo"] };
-    const [store, setStore] = observe(raw);
+    const [store, setStore] = createStore(raw);
 
     let value: string | null = null;
     const observer = () => { value = store.values[store.values.length - 1].slice(1) };
-    autorun(observer);
+    createEffect(observer);
     expect(value).toBe("oohoo");
 
     setStore(v => { v.values = v.values.map((s, i) => s.toUpperCase() + ":" + i); });
@@ -253,10 +253,10 @@ describe("microstore", () => {
 
   it("can detect delete", async () => {
     const raw = { values: ["fee", "bar", "zoo", "buzz", "woohoo"] };
-    const [store, setStore] = observe(raw);
+    const [store, setStore] = createStore(raw);
 
     let val = "";
-    autorun(() => { val = store.values[1]; });
+    createEffect(() => { val = store.values[1]; });
 
     // biome-ignore lint/performance/noDelete: intentional. testing delete.
     setStore(v => { delete v.values[1]; });
@@ -269,12 +269,12 @@ describe("microstore", () => {
       last: "initial",
       values: ["fee", "bar", "zoo", "buzz", "woohoo"]
     };
-    const [store, setStore] = observe(raw);
+    const [store, setStore] = createStore(raw);
 
     let val = "";
-    autorun(() => { val = store.last + store.last; });
+    createEffect(() => { val = store.last + store.last; });
     expect(val).toBe("initialinitial");
-    autorun(() => {
+    createEffect(() => {
       setStore(v => v.last = store.values[store.values.length - 1]);
     });
     expect(val).toBe("woohoowoohoo");
@@ -288,11 +288,11 @@ describe("microstore", () => {
     const raw = {
       values: ["fee", "glaa", "zoo"]
     };
-    const [store, setStore] = observe(raw);
+    const [store, setStore] = createStore(raw);
 
     let count = 0;
     let joined = "";
-    autorun(() => {
+    createEffect(() => {
       count++;
       joined = store.values.join(",");
     });
@@ -313,14 +313,14 @@ describe("microstore", () => {
   });
 
   it("cancels nested autorun() when the parent is reevaluated.", async () => {
-    const [store1, setStore1] = observe({ x: 1 });
-    const [store2, setStore2] = observe({ y: 2 });
+    const [store1, setStore1] = createStore({ x: 1 });
+    const [store2, setStore2] = createStore({ y: 2 });
 
     let acc1 = 0;
     let acc2 = 0;
-    autorun(() => {
+    createEffect(() => {
       acc1 += store1.x;
-      autorun(() => {
+      createEffect(() => {
         acc2 += store2.y;
       });
     });
@@ -344,13 +344,13 @@ describe("microstore", () => {
   });
 
   it("cancels nested autorun() even if they are fired synchronously", async () => {
-    const [store1, setStore1] = observe({ x: 1, y: 2 });
+    const [store1, setStore1] = createStore({ x: 1, y: 2 });
 
     let acc1 = 0;
     let acc2 = 0;
-    autorun(() => {
+    createEffect(() => {
       acc1 += store1.x;
-      autorun(() => {
+      createEffect(() => {
         acc2 += store1.y;
       });
     });
@@ -370,14 +370,14 @@ describe("microstore", () => {
 
   describe("bindObserver", () => {
     it("binds a function to the surrounding autorun", async () => {
-      const [store, setStore] = observe({ a: { nested: { value: 4 } } });
+      const [store, setStore] = createStore({ a: { nested: { value: 4 } } });
 
       const results: number[] = [];
-      autorun(() => {
+      createEffect(() => {
         Promise.resolve().then(bindObserver(() => { results.push(store.a.nested.value); }));
       });
       const controlGroup: number[] = []; // without bindObserver()
-      autorun(() => {
+      createEffect(() => {
         Promise.resolve().then(() => { controlGroup.push(store.a.nested.value); });
       });
 
@@ -392,7 +392,7 @@ describe("microstore", () => {
     });
 
     it("can be used outside of autorun if an observer is given", async () => {
-      const [store, setStore] = observe({ a: { nested: { value: 4 } } });
+      const [store, setStore] = createStore({ a: { nested: { value: 4 } } });
 
       const results: number[] = [];
       const f = () => {
@@ -405,7 +405,7 @@ describe("microstore", () => {
         f();
       }
 
-      autorun(doSomething);
+      createEffect(doSomething);
 
       await Promise.resolve();
       expect(results).toEqual([4]); // by the first time execution
@@ -418,12 +418,12 @@ describe("microstore", () => {
 
   describe("withoutObserver", () => {
     it("prevents observer reset by parent", async () => {
-      const [store, setStore] = observe({ a: 4, b: 0 });
+      const [store, setStore] = createStore({ a: 4, b: 0 });
       const logger = createLogBuffer();
 
-      const clear = autorun(() => {
+      const clear = createEffect(() => {
         logger.log("o" + store.b);
-        autorun(() => logger.log("i" + store.a));
+        createEffect(() => logger.log("i" + store.a));
       });
 
       // --- The control group ---
@@ -446,10 +446,10 @@ describe("microstore", () => {
       });
 
       // --- The test target ---
-      autorun(() => {
+      createEffect(() => {
         logger.log("o" + store.b);
         withoutObserver(() => {
-          autorun(() => logger.log("i" + store.a));
+          createEffect(() => logger.log("i" + store.a));
         });
       });
 

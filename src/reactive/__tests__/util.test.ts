@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { autorun, observe } from "../core.js";
-import { autorunDecimated, memoize, signal, watchProbe } from "../util.js";
+import { createEffect, createStore } from "../core.js";
+import { createDecimatedEffect, createSignal, memoize, watchProbe } from "../util.js";
 import { createLogBuffer } from "./testutil.js";
 
 describe("util", () => {
-  describe("autorunDecimated", () => {
+  describe("createDecimatedEffect", () => {
     it("decimates function call", async () => {
-      const [store, setStore] = observe({ a: { nested: { value: 4 } } });
+      const [store, setStore] = createStore({ a: { nested: { value: 4 } } });
 
       const results: number[] = [];
-      const { fun: f, cancel } = autorunDecimated(() => {
+      const { fun: f, cancel } = createDecimatedEffect(() => {
         results.push(store.a.nested.value);
       });
 
@@ -35,7 +35,7 @@ describe("util", () => {
       const raw = {
         values: ["fee", "glaa", "zoo"]
       };
-      const [store, setStore] = observe(raw);
+      const [store, setStore] = createStore(raw);
 
       let count = 0;
       let history: [string, string | undefined] | null = null;
@@ -72,7 +72,7 @@ describe("util", () => {
         values: ["fee", "glaa", "zoo"],
         foo: 3,
       };
-      const [store, setStore] = observe(raw);
+      const [store, setStore] = createStore(raw);
 
       let count = 0;
       const history: ([[string, number], [string, number] | undefined])[] = [];
@@ -105,7 +105,7 @@ describe("util", () => {
       const raw = {
         values: ["fee", "glaa", "zoo"]
       };
-      const [store, setStore] = observe(raw);
+      const [store, setStore] = createStore(raw);
 
       let count = 0;
       let history: [string, string | undefined] | null = null;
@@ -136,8 +136,8 @@ describe("util", () => {
   describe("memoize", () => {
     it("caches the value", () => {
       const { log, reap } = createLogBuffer();
-      const [sigA, setSigA] = signal(1);
-      const [sigB, setSigB] = signal(1);
+      const [sigA, setSigA] = createSignal(1);
+      const [sigB, setSigB] = createSignal(1);
 
       const memoizedSigAx3 = memoize(() => {
         log(`A:${sigA()}`);
@@ -152,8 +152,8 @@ describe("util", () => {
         "A:1",
       ]);
 
-      autorun(() => log(`r1:${memoizedSigAx3()}`));
-      autorun(() => log(`r2:${memoizedSigAx3()} ${unmemoizedSigAx5()}`));
+      createEffect(() => log(`r1:${memoizedSigAx3()}`));
+      createEffect(() => log(`r2:${memoizedSigAx3()} ${unmemoizedSigAx5()}`));
       expect(reap()).toEqual([
         "r1:3",
         "B:1",

@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { observe } from "../../reactive/index.js";
+import { createStore } from "../../reactive/index.js";
 import { h } from "../h.js";
 import { type JSX, type JSXNode, type JSXNodeAsync, type Prop, type Root, Suspense, createContext, createRoot, deprop, useContext } from "../index.js";
 
@@ -18,7 +18,7 @@ describe("createContext()", () => {
   it("provides context", async () => {
     type TestContextValue = { x: () => number; };
     const TestContext = createContext<TestContextValue>({ x: () => 0 });
-    const [store, setStore] = observe({ x: 10 });
+    const [store, setStore] = createStore({ x: 10 });
 
     function Comp0(_props: {}): JSXNode {
       const ctx = useContext(TestContext);
@@ -41,7 +41,7 @@ describe("createContext()", () => {
   it("provides the initial value if Provider isn't used", async () => {
     type TestContextValue = { x: () => number; };
     const TestContext = createContext<TestContextValue>({ x: () => 0 });
-    const [store, setStore] = observe({ x: 10 });
+    const [store, setStore] = createStore({ x: 10 });
 
     function Comp0(_props: {}): JSXNode {
       const ctx = useContext(TestContext);
@@ -66,7 +66,7 @@ describe("createContext()", () => {
   it("can be used even in synchronous part of async functions", async () => {
     type TestContextValue = { x: () => number; };
     const TestContext = createContext<TestContextValue>({ x: () => 0 });
-    const [store, setStore] = observe({ x: 10 });
+    const [store, setStore] = createStore({ x: 10 });
 
     async function Comp0(_props: {}): JSXNodeAsync {
       const ctx = useContext(TestContext);
@@ -94,7 +94,7 @@ describe("createContext()", () => {
   it("can be used even in asyncrounously rendered", async () => {
     type TestContextValue = { x: () => number; };
     const TestContext = createContext<TestContextValue>({ x: () => 0 });
-    const [store, setStore] = observe({ x: 10 });
+    const [store, setStore] = createStore({ x: 10 });
 
     function Comp(_props: {}): JSX.Element {
       const ctx = useContext(TestContext);
@@ -126,7 +126,7 @@ describe("createContext()", () => {
   it("can be used even in suspensed and asyncrounously rendered", async () => {
     type TestContextValue = { x: () => number; };
     const TestContext = createContext<TestContextValue>({ x: () => 0 });
-    const [store, setStore] = observe({ x: 10 });
+    const [store, setStore] = createStore({ x: 10 });
 
     function Comp(_props: {}): JSX.Element {
       const ctx = useContext(TestContext);
@@ -162,7 +162,7 @@ describe("createContext()", () => {
   it("can use multiple contexts", async () => {
     const ctx1 = createContext({ x: () => 0 as number });
     const ctx2 = createContext({ y: "foo" });
-    const [store, setStore] = observe({ x: 10 });
+    const [store, setStore] = createStore({ x: 10 });
 
     function Comp12(props: { val: Prop<number> }) {
       const c1 = useContext(ctx1);

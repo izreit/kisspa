@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { observe } from "../../reactive/index.js";
+import { createStore } from "../../reactive/index.js";
 import { h } from "../h.js";
 import { Dynamic, type Root, createRoot } from "../index.js";
 
@@ -23,7 +23,7 @@ describe("Dynamic", () => {
       return <span>CompB {() => props.x + 100}</span>;
     }
 
-    const [store, setStore] = observe({ selector: 0, val: 0});
+    const [store, setStore] = createStore({ selector: 0, val: 0});
     root.attach(
       <Dynamic
         component={() => store.selector % 2 === 0 ? CompA : CompB}

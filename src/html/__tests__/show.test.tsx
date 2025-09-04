@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { observe } from "../../reactive/index.js";
+import { createStore } from "../../reactive/index.js";
 import { h } from "../h.js";
 import { type Root, Show, createRef, createRoot } from "../index.js";
 
@@ -17,7 +17,7 @@ describe("Show", () => {
 
   it("can be toggled", async () => {
     const ref = createRef<HTMLElement>();
-    const [store, setStore] = observe({ foo: 0 });
+    const [store, setStore] = createStore({ foo: 0 });
 
     await root.attach(
       <div>
@@ -39,7 +39,7 @@ describe("Show", () => {
   });
 
   it("shows fallback if given", () => {
-    const [store, setStore] = observe({ foo: 0 });
+    const [store, setStore] = createStore({ foo: 0 });
     root.attach(
       <div>
         <Show
@@ -60,7 +60,7 @@ describe("Show", () => {
   });
 
   it("propagates type guard when capture", () => {
-    const [store, setStore] = observe({ foo: 0 as number | string });
+    const [store, setStore] = createStore({ foo: 0 as number | string });
     root.attach(
       <div>
         <Show
@@ -84,7 +84,7 @@ describe("Show", () => {
 
   describe("regression", () => {
     it("diposes function backing when hidden", async () => {
-      const [store, setStore] = observe({ x: 0 });
+      const [store, setStore] = createStore({ x: 0 });
 
       await root.attach(
         <Show when={() => (store.x % 4) === 0}>

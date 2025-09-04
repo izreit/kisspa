@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { observe } from "../../reactive/index.js";
+import { createStore } from "../../reactive/index.js";
 import { h } from "../h.js";
 import { For, type Root, createRoot } from "../index.js";
 import { createLogBuffer } from "./testutil.js";
@@ -17,7 +17,7 @@ describe("For", () => {
   });
 
   it("renders array", () => {
-    const [store, setStore] = observe({
+    const [store, setStore] = createStore({
       peoples: [
         { name: "john", age: 50 },
         { name: "jay", age: 30 },
@@ -49,7 +49,7 @@ describe("For", () => {
   });
 
   it("reflects array sorting", () => {
-    const [store, setStore] = observe({
+    const [store, setStore] = createStore({
       peoples: [
         { name: "john", age: 50 },
         { name: "jay", age: 30 },
@@ -76,7 +76,7 @@ describe("For", () => {
   });
 
   it("reflects array deletion", () => {
-    const [store, setStore] = observe({
+    const [store, setStore] = createStore({
       peoples: [
         { name: "john", age: 50 },
         { name: "jay", age: 30 },
@@ -103,7 +103,7 @@ describe("For", () => {
   });
 
   it("reflects array removed", () => {
-    const [store, setStore] = observe({
+    const [store, setStore] = createStore({
       peoples: [
         { name: "john", age: 50 },
         { name: "jay", age: 30 },
@@ -130,7 +130,7 @@ describe("For", () => {
 
   it("provides indices for callback", () => {
     const { log, reap: reapLog } = createLogBuffer();
-    const [store, setStore] = observe({
+    const [store, setStore] = createStore({
       peoples: [
         { name: "john", age: 50 },
         { name: "jay", age: 30 },
@@ -168,7 +168,7 @@ describe("For", () => {
   });
 
   it("accepts static array", () => {
-    const [store, setStore] = observe({
+    const [store, setStore] = createStore({
       peoples: [
         { name: "john", age: 50 },
         { name: "jay", age: 30 },

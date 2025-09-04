@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createLogBuffer } from "../../../reactive/__tests__/testutil.js";
-import { autorun, bindObserver, observe, withoutObserver } from "../../../reactive/core.js";
+import { bindObserver, createEffect, createStore, withoutObserver } from "../../../reactive/core.js";
 import type { Key } from "../../../reactive/types.js";
 import * as cloneutil from "../cloneutil.js";
 import { debugGetInternal, unwatch, watchDeep, watchShallow } from "../watch.js";
@@ -20,7 +20,7 @@ describe("watch", () => {
           }
         }
       };
-      const [store, setStore] = observe(raw);
+      const [store, setStore] = createStore(raw);
 
       let count = 0;
       let lastPath: readonly Key[] = [];
@@ -32,7 +32,7 @@ describe("watch", () => {
       });
 
       // backup
-      const [anotherStore, setAnotherStore] = observe<{ val: { nested: { value: number } } }>({
+      const [anotherStore, setAnotherStore] = createStore<{ val: { nested: { value: number } } }>({
         val: { nested: { value: 0 } }
       });
       setAnotherStore(a => a.val = store.a.deeply);
@@ -54,7 +54,7 @@ describe("watch", () => {
 
       // the overwritten value is still alive and watchable
       let oldValue = 0;
-      autorun(() => { oldValue = anotherStore.val.nested.value; });
+      createEffect(() => { oldValue = anotherStore.val.nested.value; });
       expect(oldValue).toBe(4);
       setAnotherStore(a => a.val.nested.value += 3);
       expect(oldValue).toBe(7);
@@ -82,7 +82,7 @@ describe("watch", () => {
           }
         }
       };
-      const [store, setStore] = observe(raw);
+      const [store, setStore] = createStore(raw);
 
       let count = 0;
       let lastPath: readonly Key[] = [];
@@ -134,7 +134,7 @@ describe("watch", () => {
           }
         }
       };
-      const [store, setStore] = observe(raw);
+      const [store, setStore] = createStore(raw);
 
       const history: { path: readonly Key[], val: any }[] = [];
       watchDeep(store, (path, val) => {
@@ -168,7 +168,7 @@ describe("watch", () => {
           }
         }
       };
-      const [store, setStore] = observe(raw);
+      const [store, setStore] = createStore(raw);
 
       const history: { path: readonly Key[], val: any }[] = [];
       watchDeep(store, (path, val) => {
@@ -200,7 +200,7 @@ describe("watch", () => {
         ],
         count: 1
       };
-      const [store, setStore] = observe(raw);
+      const [store, setStore] = createStore(raw);
 
       const c: typeof store = cloneutil.cloneDeep(store);
       watchDeep(store, (path, val, deleted) => {
@@ -257,8 +257,8 @@ describe("watch", () => {
         [raw1.table.k1.id]: raw1.table.k1
       };
 
-      const [store1, setStore1] = observe(raw1);
-      const [store2, setStore2] = observe(raw2);
+      const [store1, setStore1] = createStore(raw1);
+      const [store2, setStore2] = createStore(raw2);
       const clone1 = cloneutil.cloneDeep(store1);
       const clone2 = cloneutil.cloneDeep(store2);
       let count1 = 0;
@@ -297,7 +297,7 @@ describe("watch", () => {
 
     it("does not reproduce a fixed bug - when modify-and-restoring a value, watchDeep() ignores restoring", async () => {
       const raw = { foo: 10 };
-      const [store, setStore] = observe(raw);
+      const [store, setStore] = createStore(raw);
       const clone = cloneutil.cloneDeep(store);
       let count = 0;
       watchDeep(store, (path, val, deleted) => {
@@ -313,7 +313,7 @@ describe("watch", () => {
 
     it("does not reproduce a fixed bug - notifying twice", async () => {
       const raw = { p1: { p2: [] as any[] } };
-      const [store, setStore] = observe(raw);
+      const [store, setStore] = createStore(raw);
       const clone = cloneutil.cloneDeep(store);
       let count = 0;
       watchDeep(store, (path, val, deleted) => {
@@ -333,11 +333,11 @@ describe("watch", () => {
     });
 
     it("does not reproduce a fixed bug - nested set resets writings", async () => {
-      const [store, setStore] = observe({ a: 1, b: 1 });
+      const [store, setStore] = createStore({ a: 1, b: 1 });
 
       let ab = 1;
       let count = 0;
-      autorun(() => {
+      createEffect(() => {
         ++count;
         ab = store.a * store.b;
       });
@@ -363,7 +363,7 @@ describe("watch", () => {
           }
         }
       };
-      const [store, setStore] = observe(raw);
+      const [store, setStore] = createStore(raw);
 
       const logs: [readonly Key[], any, boolean][] = [];
       const wid = watchDeep(store, (path, val, deleted) => { logs.push([path, val, deleted]); });
@@ -396,7 +396,7 @@ describe("watch", () => {
           }
         }
       };
-      const [store, setStore] = observe(raw);
+      const [store, setStore] = createStore(raw);
 
       let setCount = 0;
       let callCount = 0;
@@ -433,7 +433,7 @@ describe("watch", () => {
 
     it("tracks indices implicitly shifted by splice()", async () => {
       const raw = { values: [{ buf: [0] }] };
-      const [store, setStore] = observe(raw);
+      const [store, setStore] = createStore(raw);
 
       let setCount = 0;
       let callCount = 0;
@@ -468,7 +468,7 @@ describe("watch", () => {
         anotherValue: false,
         yetAnother: 32,
       };
-      const [store, setStore] = observe(raw);
+      const [store, setStore] = createStore(raw);
 
       let setCount = 0;
       let callCount = 0;
@@ -505,7 +505,7 @@ describe("watch", () => {
         }
       } as { [key: string]: any };
 
-      const [store, setStore] = observe(raw);
+      const [store, setStore] = createStore(raw);
 
       const logs: [Key, any, boolean][] = [];
       const wid = watchShallow(store, (prop, val, deleted) => { logs.push([prop, val, deleted]); });
@@ -544,14 +544,14 @@ describe("watch", () => {
 
   describe("bindObserver", () => {
     it("binds a function to the surrounding autorun", async () => {
-      const [store, setStore] = observe({ a: { nested: { value: 4 } } });
+      const [store, setStore] = createStore({ a: { nested: { value: 4 } } });
 
       const results: number[] = [];
-      autorun(() => {
+      createEffect(() => {
         Promise.resolve().then(bindObserver(() => { results.push(store.a.nested.value); }));
       });
       const controlGroup: number[] = []; // without bindObserver()
-      autorun(() => {
+      createEffect(() => {
         Promise.resolve().then(() => { controlGroup.push(store.a.nested.value); });
       });
 
@@ -566,7 +566,7 @@ describe("watch", () => {
     });
 
     it("can be used outside of autorun if an observer is given", async () => {
-      const [store, setStore] = observe({ a: { nested: { value: 4 } } });
+      const [store, setStore] = createStore({ a: { nested: { value: 4 } } });
 
       const results: number[] = [];
       const f = () => {
@@ -579,7 +579,7 @@ describe("watch", () => {
         f();
       }
 
-      autorun(doSomething);
+      createEffect(doSomething);
 
       await Promise.resolve();
       expect(results).toEqual([4]); // by the first time execution
@@ -592,12 +592,12 @@ describe("watch", () => {
 
   describe("withoutObserver", () => {
     it("prevents observer reset by parent", async () => {
-      const [store, setStore] = observe({ a: 4, b: 0 });
+      const [store, setStore] = createStore({ a: 4, b: 0 });
       const logger = createLogBuffer();
 
-      const clear = autorun(() => {
+      const clear = createEffect(() => {
         logger.log("o" + store.b);
-        autorun(() => logger.log("i" + store.a));
+        createEffect(() => logger.log("i" + store.a));
       });
 
       // --- The control group ---
@@ -620,10 +620,10 @@ describe("watch", () => {
       });
 
       // --- The test target ---
-      autorun(() => {
+      createEffect(() => {
         logger.log("o" + store.b);
         withoutObserver(() => {
-          autorun(() => logger.log("i" + store.a));
+          createEffect(() => logger.log("i" + store.a));
         });
       });
 

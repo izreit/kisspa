@@ -1,4 +1,4 @@
-import { assert, autorun, withoutObserver } from "../../reactive/index.js";
+import { assert, createEffect, withoutObserver } from "../../reactive/index.js";
 import { allocateSkeletons } from "./skeleton.js";
 import type { Backing, BackingLocation, Component, JSXNode, MountLocation, PropChildren, Refresher, ResolvedBackingLocation, SuspenseContext } from "./types.js";
 import { $noel, isJSXElement } from "./types.js";
@@ -131,7 +131,7 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: MountLocation
 
   if (isFunction(jnode)) {
     const b = createTransparentBacking("Fun", loc);
-    b.addDisposer_(autorun(() => {
+    b.addDisposer_(createEffect(() => {
       b.resetMount_([assemble(actx, jnode())]);
     }));
     return b;
@@ -168,13 +168,13 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: MountLocation
       } else if (isStrOrNumOrbool(v)) {
         assignAttribute(el as HTMLElement, k, v);
       } else if (isFunction(v)) {
-        addDisposer(autorun(() => { assignAttribute(el as HTMLElement, k, v()); }));
+        addDisposer(createEffect(() => { assignAttribute(el as HTMLElement, k, v()); }));
       } else if (typeof v === "object" && v) {
         for (const [vk, vv] of objEntries(v)) {
           if (isStrOrNumOrbool(vv)) {
             (el as any)[k][vk] = vv;
           } else if (isFunction(vv)) {
-            addDisposer(autorun(() => { (el as any)[k][vk] = vv(); }));
+            addDisposer(createEffect(() => { (el as any)[k][vk] = vv(); }));
           }
         }
       }
