@@ -41,72 +41,54 @@
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/entrypoint.mjs"
+      "types": "./dist/raw/index.d.ts",
+      "import": "./dist/bundle/index.mjs"
     },
     "./jsx-runtime": {
-      "types": "./dist/html/jsx-runtime.d.ts",
-      "import": "./dist/html/jsx-runtime.mjs"
+      "types": "./dist/raw/html/jsx-runtime.d.ts",
+      "import": "./dist/bundle/jsx-runtime.mjs"
     },
     "./h": {
-      "types": "./dist/html/h.d.ts",
-      "import": "./dist/html/h.mjs"
+      "types": "./dist/raw/html/h.d.ts",
+      "import": "./dist/bundle/h.mjs"
     },
     "./jsx-dev-runtime": {
-      "types": "./dist/html/jsx-runtime.d.ts",
-      "import": "./dist/html/jsx-runtime.raw.mjs"
+      "types": "./dist/raw/html/jsx-runtime.d.ts",
+      "import": "./dist/raw/html/jsx-runtime.js"
     },
     "./html": {
-      "types": "./dist/html/index-html.d.ts",
-      "import": "./dist/html/entrypoint-html.mjs"
+      "types": "./dist/raw/index-html.d.ts",
+      "import": "./dist/bundle/index-html.mjs"
     },
     "./html/jsx-runtime": {
-      "types": "./dist/html/jsx-runtime.d.ts",
-      "import": "./dist/html/jsx-runtime.mjs"
+      "types": "./dist/raw/html/jsx-runtime.d.ts",
+      "import": "./dist/bundle/jsx-runtime.mjs"
     },
     "./html/jsx-dev-runtime": {
-      "types": "./dist/html/jsx-runtime.d.ts",
-      "import": "./dist/html/jsx-runtime.raw.mjs"
+      "types": "./dist/raw/html/jsx-runtime.d.ts",
+      "import": "./dist/raw/html/jsx-runtime.js"
     },
     "./reactive": {
-      "types": "./dist/reactive/index.d.ts",
-      "import": "./dist/reactive/index.mjs"
+      "types": "./dist/raw/reactive/index.d.ts",
+      "import": "./dist/bundle/index-reactive.mjs"
     },
     "./extra/watch": {
-      "types": "./dist/extra/watch/index.d.ts",
-      "import": "./dist/extra/watch/index.mjs"
+      "types": "./dist/raw/extra/watch/index.d.ts",
+      "import": "./dist/bundle/extra/watch/index.mjs"
     },
     "./extra/preset-colors": {
-      "types": "./dist/extra/preset-colors/index.d.ts",
-      "import": "./dist/extra/preset-colors/index.mjs"
+      "types": "./dist/raw/extra/preset-colors/index.d.ts",
+      "import": "./dist/bundle/extra/preset-colors/index.mjs"
     },
     "./supplement": "./dist_supplement/supplement/index.js",
     "./supplement/refresh": "./dist_supplement/supplement/refresh/index.js",
     "./supplement/vite-plugin": "./dist_supplement/supplement/vite-plugin/index.js",
-    "./raw": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/entrypoint.raw.mjs"
-    },
-    "./raw/h": {
-      "types": "./dist/html/h.d.ts",
-      "import": "./dist/html/h.raw.mjs"
-    },
-    "./raw/jsx-runtime": {
-      "types": "./dist/html/jsx-runtime.d.ts",
-      "import": "./dist/html/jsx-runtime.raw.mjs"
-    },
-    "./raw/jsx-dev-runtime": {
-      "types": "./dist/html/jsx-runtime.d.ts",
-      "import": "./dist/html/jsx-runtime.raw.mjs"
-    },
-    "./raw/extra/watch": {
-      "types": "./dist/extra/watch/index.d.ts",
-      "import": "./dist/extra/watch/index.raw.mjs"
-    },
-    "./raw/extra/preset-colors": {
-      "types": "./dist/extra/preset-colors/index.d.ts",
-      "import": "./dist/extra/preset-colors/index.raw.mjs"
-    },
+    "./raw": "./dist/raw/index.js",
+    "./raw/h": "./dist/raw/html/h.mjs",
+    "./raw/jsx-runtime": "./dist/raw/html/jsx-runtime.js",
+    "./raw/jsx-dev-runtime": "./dist/raw/html/jsx-runtime.js",
+    "./raw/extra/watch": "./dist/raw/extra/watch/index.js",
+    "./raw/extra/preset-colors": "./dist/raw/extra/preset-colors/index.js",
     "./raw/supplement": "./dist_supplement/supplement/index.js",
     "./raw/supplement/refresh": "./dist_supplement/supplement/refresh/index.js",
     "./raw/supplement/vite-plugin": "./dist_supplement/supplement/vite-plugin/index.js"

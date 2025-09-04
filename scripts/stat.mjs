@@ -2,7 +2,7 @@
  * Print and save file size information.
  *
  * Usage:
- *  $ node ./scripts/stat.mjs [--out <filepath>] [--stat-only]
+ *  $ node ./scripts/stat.mjs [--out <filepath>]
  *
  * Only works after running build.js.
  */
@@ -18,16 +18,10 @@ const { values: rawOptions } = parseArgs({
       type: "string",
       short: "o",
     },
-    "stat-only": {
-      type: "boolean",
-      short: "S",
-      default: false,
-    },
   },
 });
 const options = {
   out: rawOptions.out ? (rawOptions.out + "") : null,
-  statOnly: !!rawOptions["stat-only"],
 };
 
 function measureSize(path) {
@@ -37,7 +31,7 @@ function measureSize(path) {
 }
 
 function asKB(n) {
-  return `${(n / 1024).toFixed(2)} kB`;
+  return `${(n / 1000).toFixed(2)} kB`;
 }
 
 function printSizeDescriptors(sizeDescs) {
@@ -47,15 +41,7 @@ function printSizeDescriptors(sizeDescs) {
   }
 }
 
-const targettFilesBase = [
-  "dist/reactive/index.mjs",
-  "dist/html/h.mjs",
-  "dist/html/jsx-runtime.mjs",
-  "dist/entrypoint-html.mjs",
-  "dist/entrypoint.mjs",
-  "dist/extra/watch/index.mjs",
-];
-const targetFilesStat = [
+const targetFiles = [
   "stat/stat-bundle-html.mjs",
   "stat/stat-bundle.mjs",
 ];
@@ -64,7 +50,6 @@ const hash = execSync("git rev-parse --short HEAD").toString().trim();
 console.log(`Commit ${hash}`);
 
 console.log("=== stats ===");
-const targetFiles = options.statOnly ? targetFilesStat : [...targettFilesBase, ...targetFilesStat];
 const sizeDescs = targetFiles.map(measureSize);
 printSizeDescriptors(sizeDescs);
 
