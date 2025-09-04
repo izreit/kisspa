@@ -66,7 +66,7 @@ if (positionals.length === 1) {
 }
 
 function asKB(n) {
-  return `${(n / 1024).toFixed(2)} kB`;
+  return `${(n / 1000).toFixed(2)} kB`;
 }
 
 function asDiff(value, base) {
