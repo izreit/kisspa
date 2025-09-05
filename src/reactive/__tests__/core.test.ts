@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { bindObserver, cancelEffect, createEffect, createStore, debugGetInternal, withoutObserver } from "../core.js";
 import { createLogBuffer } from "./testutil.js";
 
-describe("microstore", () => {
+describe("createStore", () => {
   it("can be read/modified", () => {
     const [store, setStore] = createStore({ foo: 4 });
     expect(store.foo).toBe(4);
@@ -26,7 +26,7 @@ describe("microstore", () => {
     const observer = () => { squareFoo = store.foo ** 2; };
     createEffect(observer);
     expect(store.foo).toBe(4);
-    expect(squareFoo).toBe(16); // autorun() calls the observer func imidiately
+    expect(squareFoo).toBe(16); // createEffect() calls the observer func imidiately
     expect(internal.refTable.table_.get(readProxy)?.get("foo")?.has(observer)).toBe(true);
     expect(internal.refTable.table_.get(readProxy)?.get("foo")?.size).toBe(1);
     expect(internal.refTable.reverseTable_.get(observer)?.get(readProxy)?.has("foo")).toBe(true);
@@ -180,7 +180,7 @@ describe("microstore", () => {
     expect(caps).toBe("fbzbw");
 
     setStore(s => { s.values[2] = "BOO"; }, { lazyFlush: true });
-    expect(caps).toBe("fbzbw"); // for lazyFlush, related autorun's will not be invoked synchronously.
+    expect(caps).toBe("fbzbw"); // for lazyFlush, related effects will not be invoked synchronously.
     await Promise.resolve();
     expect(caps).toBe("fbBbw"); // updated after async gap.
 
@@ -312,7 +312,7 @@ describe("microstore", () => {
     expect(joined).toBe("fee,BAR,zoo");
   });
 
-  it("cancels nested autorun() when the parent is reevaluated.", async () => {
+  it("cancels nested createEffect() when the parent is reevaluated.", async () => {
     const [store1, setStore1] = createStore({ x: 1 });
     const [store2, setStore2] = createStore({ y: 2 });
 
@@ -327,15 +327,15 @@ describe("microstore", () => {
     expect(acc1).toBe(1);
     expect(acc2).toBe(2);
 
-    // store2 affects inside autorun() only
+    // store2 affects inside effect only
     setStore2(s => { s.y = 3 });
     expect(acc1).toBe(1); // unchanged
     expect(acc2).toBe(5); // changed
 
-    // store1 cancels nested autorun()
+    // store1 cancels nested effect
     setStore1(s => { s.x = 5; });
     expect(acc1).toBe(6);
-    expect(acc2).toBe(8); // += 3 once by new autorun() call
+    expect(acc2).toBe(8); // += 3 once by new createEffect() call
 
     // so changing store2 causes += 7 just once.
     setStore2(s => { s.y = 7; });
@@ -343,7 +343,7 @@ describe("microstore", () => {
     expect(acc2).toBe(15);
   });
 
-  it("cancels nested autorun() even if they are fired synchronously", async () => {
+  it("cancels nested createEffect() even if they are fired synchronously", async () => {
     const [store1, setStore1] = createStore({ x: 1, y: 2 });
 
     let acc1 = 0;
@@ -357,19 +357,19 @@ describe("microstore", () => {
     expect(acc1).toBe(1);
     expect(acc2).toBe(2);
 
-    // modify x and then y, to fire outer autorun() first.
+    // modify x and then y, to fire outer effect first.
     setStore1(s => { s.x = 3; s.y = 5; });
     expect(acc1).toBe(4);
     expect(acc2).toBe(7);
 
-    // modify y and then x, to fire inner autorun() first.
+    // modify y and then x, to fire inner effect first.
     setStore1(s => { s.y = 11; s.x = 13; });
     expect(acc1).toBe(17);
     expect(acc2).toBe(18);
   });
 
   describe("bindObserver", () => {
-    it("binds a function to the surrounding autorun", async () => {
+    it("binds a function to the surrounding effect", async () => {
       const [store, setStore] = createStore({ a: { nested: { value: 4 } } });
 
       const results: number[] = [];
@@ -391,7 +391,7 @@ describe("microstore", () => {
       expect(controlGroup).toEqual([4]); // not changed (unwantedly)
     });
 
-    it("can be used outside of autorun if an observer is given", async () => {
+    it("can be used outside of createEffect() if an observer is given", async () => {
       const [store, setStore] = createStore({ a: { nested: { value: 4 } } });
 
       const results: number[] = [];
@@ -430,12 +430,12 @@ describe("microstore", () => {
       expect(logger.reap()).toEqual(["o0", "i4"]);
       setStore(s => s.a++);
       expect(logger.reap()).toEqual(["i5"]);
-      // kick both autorun,
+      // kick both effects,
       setStore(s => {
         s.a++;
         s.b++;
       });
-      // but only outer autorun was run again: "i5" is appeared once because internal autorun() are reset.
+      // but only outer effect was run again: "i5" is appeared once because internal createEffect() are reset.
       expect(logger.reap()).toEqual(["o1", "i6"]);
 
       // --- reset ---
@@ -456,12 +456,12 @@ describe("microstore", () => {
       expect(logger.reap()).toEqual(["o0", "i4"]);
       setStore(s => s.a++);
       expect(logger.reap()).toEqual(["i5"]);
-      // kick both autorun,
+      // kick both effects,
       setStore(s => {
         s.a++;
         s.b++;
       });
-      // then the inner autorun ran twice because the outer duplicates the inner.
+      // then the inner effect ran twice because the outer duplicates the inner.
       expect(logger.reap()).toEqual(["i6", "o1", "i6"]);
     });
   });

@@ -240,7 +240,7 @@ describe("basic", () => {
 
             promise.then(() => {
               log("onmount-async");
-              onCleanup(createEffect(() => log(`autorun ${props.x()}`)));
+              onCleanup(createEffect(() => log(`effect ${props.x()}`)));
               onCleanup(() => log("oncleanup-async"));
             });
           });
@@ -264,12 +264,12 @@ describe("basic", () => {
       await promise.resolve();
       expect(reap()).toEqual([
         "onmount-async",
-        "autorun 10",
+        "effect 10",
       ]);
 
       setStore(s => s.value++);
       expect(reap()).toEqual([
-        "autorun 11",
+        "effect 11",
       ]);
 
       root.detach();
@@ -279,7 +279,7 @@ describe("basic", () => {
       ]);
 
       setStore(s => s.value++);
-      expect(reap()).toEqual([]); // already detached: no autorun() run.
+      expect(reap()).toEqual([]); // already detached: no effect run.
     });
 
     it("can be called twice", async () => {

@@ -29,8 +29,8 @@ export function watchProbe<T>(
     const cur = probe();
 
     // Update `prev' before calling fun() because fun() may reach here recursively by modifying other values.
-    // This is not the essential solution for recursive call of autorun() (since not all values cannot be
-    // comapred by the === operator). Users may need to wrap fun() by decimated().
+    // This is not the essential solution for recursive call of createEffect() (since not all values cannot
+    // be comapred by the === operator). Users may need to wrap fun() by decimated().
     const p = prev;
     prev = cur;
 

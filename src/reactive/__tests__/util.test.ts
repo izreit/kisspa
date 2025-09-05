@@ -21,7 +21,7 @@ describe("util", () => {
 
       setStore(m => { m.a.nested.value += 10; });
       await Promise.resolve(); // Ugh! wait for the promise resolution of decimated()
-      expect(results).toEqual([4, 14]); // autorun still works
+      expect(results).toEqual([4, 14]); // effect still works
 
       cancel();
       setStore(m => { m.a.nested.value += 10; });
