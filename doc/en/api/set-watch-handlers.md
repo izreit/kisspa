@@ -12,7 +12,7 @@ setWatchHandlers(handlers);
 ## Parameters
 
 |Name|Type|Description|
-|:---:|:---:|:---|
+|:---|:---|:---|
 |`handlers`|`WatchHandlers \| null`|recerivers for mutation callbacks.|
 
 ## Return value

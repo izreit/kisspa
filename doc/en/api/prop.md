@@ -1,4 +1,4 @@
-# Prop<T>
+# Prop\<T>
 
 Utility type that accepts either a literal value or a getter function returning that value.
 

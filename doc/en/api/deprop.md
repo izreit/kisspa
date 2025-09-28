@@ -11,14 +11,12 @@ const value = deprop(prop);
 ### Parameters
 
 |Name|Type|Description|
-|:---:|:---:|:---|
+|:---|:---|:---|
 |`prop`|`Prop<T>`|Prop value to unwrap. May be `null`/`undefined`.|
 
 ### Return value
 
-|Type|Description|
-|:---:|:---|
-|`T`|Underlying value of the prop. Functions are invoked, other values are returned as-is.|
+Underlying value of the prop. Functions are invoked, other values are returned as-is.
 
 ## Description
 

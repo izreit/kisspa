@@ -1,4 +1,4 @@
-# watchProbe<T>()
+# watchProbe\<T>()
 
 Watches the result of a probe function.
 Calls a callback when it changes.
@@ -12,7 +12,7 @@ watchProbe(probe, callback[, cond]);
 ## Parameters
 
 |Name|Type|Description|
-|:---:|:---:|:---|
+|:---|:---|:---|
 |`probe`|`() => T`|reads reactive values and returns a value to watch.|
 |`callback`|`(current: T, previous: T \| undefined) => void`|called on change.|
 |`cond`|`(current: T, previous: T) => boolean` (optional)|change detector.|

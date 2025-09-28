@@ -11,7 +11,7 @@ cancelEffect(fun);
 ### Parameters
 
 |Name|Type|Description|
-|:---:|:---:|:---|
+|:---|:---|:---|
 |`fun`|`() => void`|the effect function originally passed to `createEffect()`.|
 
 ### Return value

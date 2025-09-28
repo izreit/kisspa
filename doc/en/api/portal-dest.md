@@ -1,4 +1,4 @@
-# <PortalDest />
+# \<PortalDest />
 
 Declare a logical destination for [`<Portal />`](./portal.md) components that target a string or symbol key.
 
@@ -11,7 +11,7 @@ Declare a logical destination for [`<Portal />`](./portal.md) components that ta
 ### Props
 
 |Name|Type|Description|
-|:---:|:---:|:---|
+|:---|:---|:---|
 |`from`|`string \| symbol`|Shared identifier that matches the `to` prop of `<Portal />`.|
 
 ## Description

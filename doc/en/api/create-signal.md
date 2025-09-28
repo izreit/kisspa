@@ -1,4 +1,4 @@
-# createSignal<T>()
+# createSignal\<T>()
 
 ## Abstract
 
@@ -11,7 +11,7 @@ const [get, set] = createSignal(initial);
 ```
 
 |Name|Type|Description|
-|:---:|:---:|:---|
+|:---|:---|:---|
 |`initial`|`any` (`T`)|initial value|
 
 ## Return value

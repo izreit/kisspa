@@ -1,4 +1,4 @@
-# createStore<T>()
+# createStore\<T>()
 
 Create a store (a reactive object).
 Returns a read-only view and a setter for batched writes.
@@ -12,7 +12,7 @@ const [store, setStore] = createStore(initial);
 ### Parameters
 
 |Name|Type|Description|
-|:---:|:---:|:---|
+|:---|:---|:---|
 |`initial`|`object` (`T`)|value to be observed.|
 
 ### Return value

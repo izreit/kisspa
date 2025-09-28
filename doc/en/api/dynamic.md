@@ -1,4 +1,4 @@
-# <Dynamic />
+# \<Dynamic />
 
 Render a component chosen at runtime with reactive props.
 
@@ -11,7 +11,7 @@ Render a component chosen at runtime with reactive props.
 ### Props
 
 |Name|Type|Description|
-|:---:|:---:|:---|
+|:---|:---|:---|
 |`component`|`() => Component<T>`|Accessor that returns the component to render.|
 |`props`|`() => T`|Accessor that produces the props object passed to the selected component.|
 

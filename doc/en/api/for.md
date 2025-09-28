@@ -1,4 +1,4 @@
-# <For />
+# \<For />
 
 Render a collection by mapping each item to JSX with fine-grained reactivity.
 
@@ -11,7 +11,7 @@ Render a collection by mapping each item to JSX with fine-grained reactivity.
 ### Props
 
 |Name|Type|Description|
-|:---:|:---:|:---|
+|:---|:---|:---|
 |`each`|`E[] \| () => E[]`|Array of items or accessor returning one. Reactive sources trigger diffs.|
 |`key`|`(item: E, index: number) => unknown` (optional)|Identifier used to preserve DOM nodes across reorders. Defaults to the item itself.|
 |`children`|`(item: E, index: () => number) => JSXNode`|Render function. The reactive `index` accessor reflects the item’s current position.|

@@ -1,4 +1,4 @@
-# <Suspense />
+# \<Suspense />
 
 Coordinate async rendering by showing fallback content until all tracked promises settle.
 
@@ -13,7 +13,7 @@ Coordinate async rendering by showing fallback content until all tracked promise
 ### Props
 
 |Name|Type|Description|
-|:---:|:---:|:---|
+|:---|:---|:---|
 |`fallback`|`JSXNode` (optional)|Content displayed while pending promises resolve.|
 |`errorFallback`|`JSXNode \| ((error: unknown, reset: () => void) => JSXNode)` (optional)|Content shown when a child throws/rejects. Function form receives the error and a `reset` callback to retry.|
 |`children`|`PropChildren` (optional)|Async-aware content. It may include promises or async components.|

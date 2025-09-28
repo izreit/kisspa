@@ -1,4 +1,4 @@
-# <Portal />
+# \<Portal />
 
 Render children into another DOM location without leaving the current component tree.
 
@@ -11,7 +11,7 @@ Render children into another DOM location without leaving the current component 
 ### Props
 
 |Name|Type|Description|
-|:---:|:---:|:---|
+|:---|:---|:---|
 |`to`|`string \| symbol \| Node`|Portal destination. Use a key for a logical target or provide a concrete DOM node.|
 |`children`|`PropChildren` (optional)|Content to render at the destination.|
 

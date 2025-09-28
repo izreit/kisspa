@@ -12,7 +12,7 @@ const memoizedFun = memoize(compute);
 ### Parameters
 
 |Name|Type|Description|
-|:---:|:---:|:---|
+|:---|:---|:---|
 |`compute`|`() => T`|function that reads reactive values.|
 
 ### Return value

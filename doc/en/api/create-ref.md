@@ -1,4 +1,4 @@
-# createRef<T>()
+# createRef\<T>()
 
 Create a mutable ref object for capturing DOM nodes or component instances.
 
@@ -14,9 +14,7 @@ None.
 
 ### Return value
 
-|Type|Description|
-|:---:|:---|
-|[`Ref<T>`](./ref.md)|Object whose `.value` property tracks the latest assigned value.|
+Object whose `.value` property tracks the latest assigned value.
 
 ## Description
 

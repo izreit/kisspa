@@ -11,12 +11,12 @@ onCleanup(handler);
 ### Parameters
 
 |Name|Type|Description|
-|:---:|:---:|:---|
+|:---|:---|:---|
 |`handler`|`() => void`|Callback invoked in reverse registration order when the component detaches.|
 
 ### Return value
 
-`void`.
+None.
 
 ## Description
 

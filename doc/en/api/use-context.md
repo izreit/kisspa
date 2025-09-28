@@ -13,14 +13,12 @@ const value = useContext(Context);
 ### Parameters
 
 |Name|Type|Description|
-|:---:|:---:|:---|
+|:---|:---|:---|
 |`Context`|`Context<T>`|Context object previously created by `createContext()`.|
 
 ### Return value
 
-|Type|Description|
-|:---:|:---|
-|`T`|Context value supplied by the nearest provider, or the context’s initial value when no provider is present.|
+Context value supplied by the nearest provider, or the context’s initial value when no provider is present.
 
 ## Description
 
@@ -50,4 +48,4 @@ function Timestamp(props: { value: Date }) {
 ## Related
 
 - [`createContext()`](./create-context.md)
-- [`Suspense`](./suspense.md)
+- [`<Suspense />`](./suspense.md)

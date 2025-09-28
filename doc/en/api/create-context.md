@@ -1,4 +1,4 @@
-# createContext<T>()
+# createContext\<T>()
 
 Define a context with an initial value and a provider component.
 
@@ -11,8 +11,8 @@ const MyContext = createContext(initialValue);
 ### Parameters
 
 |Name|Type|Description|
-|:---:|:---:|:---|
-|`initialValue`|`T` (`any`)|Default value returned when no provider is found.|
+|:---|:---|:---|
+|`initialValue`|`any` (`T`)|Default value returned when no provider is found.|
 
 ### Return value
 

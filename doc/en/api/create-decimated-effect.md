@@ -12,7 +12,7 @@ const { fun, cancel } = createDecimatedEffect(fun);
 ### Parameters
 
 |Name|Type|Description|
-|:---:|:---:|:---|
+|:---|:---|:---|
 |`fun`|`() => void`|reactive function to run|
 
 ### Return value

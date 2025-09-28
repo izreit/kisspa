@@ -11,7 +11,7 @@ const raw = unwrap(value);
 ## Parameters
 
 |Name|Type|Description|
-|:---:|:---:|:---|
+|:---|:---|:---|
 |`value`|`object`|store, read proxy returned from `createStore()`.|
 
 ## Return value

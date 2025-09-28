@@ -11,12 +11,12 @@ onMount(handler);
 ### Parameters
 
 |Name|Type|Description|
-|:---:|:---:|:---|
+|:---|:---|:---|
 |`handler`|`() => void`|Callback invoked once, after the component is attached to the DOM and ready.|
 
 ### Return value
 
-`void`.
+None.
 
 ## Description
 
@@ -55,4 +55,4 @@ function AutoFocusInput() {
 
 - [`useComponentMethods()`](./use-component-methods.md)
 - [`onCleanup()`](./on-cleanup.md)
-- [`Suspense`](./suspense.md)
+- [`<Suspense />`](./suspense.md)

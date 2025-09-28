@@ -5,14 +5,13 @@ Make a given function an effect.
 ## Syntax
 
 ```ts
-createEffect(fun);
-createEffect(fun, owner);
+createEffect(fun[, owner]);
 ```
 
 ### Parameters
 
 |Name|Type|Description|
-|:---:|:---:|:---|
+|:---|:---|:---|
 |`fun`|`() => void`|function that reads store values.|
 |`owner`|`object` (optional)|if provided, GC can auto-cancel the effect.|
 

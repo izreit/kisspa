@@ -1,4 +1,4 @@
-# withoutObserver<T>()
+# withoutObserver()
 
 Executes a function without tracking any reactive dependencies.
 
@@ -11,8 +11,8 @@ withoutObserver(fun);
 ## Parameters
 
 |Name|Type|Description|
-|:---:|:---:|:---|
-|`fun`|`() => T`|function to run outside of any observer.|
+|:---|:---|:---|
+|`fun`|`() => any`|function to run outside of any observer.|
 
 ## Return value
 

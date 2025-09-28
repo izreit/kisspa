@@ -1,4 +1,4 @@
-# <Show />
+# \<Show />
 
 Conditionally render content with optional fallbacks and captured values.
 
@@ -13,7 +13,7 @@ Conditionally render content with optional fallbacks and captured values.
 ### Props
 
 |Name|Type|Description|
-|:---:|:---:|:---|
+|:---|:---|:---|
 |`when`|`() => boolean` (default) or `() => T \| false \| null \| undefined` when `capture`|Reactive condition. With `capture`, it also provides the truthy value.|
 |`capture`|`true` (optional)|Enable capturing of non-boolean truthy values and pass them to `children` as an accessor.|
 |`fallback`|`JSXNode` (optional)|Content rendered when `when()` is falsey.|

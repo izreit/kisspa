@@ -5,13 +5,13 @@ Create a reusable root controller that manages a JSX tree inside a specific DOM 
 ## Syntax
 
 ```ts
-const root = createRoot(parent, prev?);
+const root = createRoot(parent[, prev]);
 ```
 
 ### Parameters
 
 |Name|Type|Description|
-|:---:|:---:|:---|
+|:---|:---|:---|
 |`parent`|`Element`|DOM element that hosts the rendered tree.|
 |`prev`|`Node \| null`|Optional sibling to insert after. Defaults to the first child position.|
 

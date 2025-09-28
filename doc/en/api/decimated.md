@@ -16,7 +16,7 @@ d.dispose();         // disable further runs
 ### Parameters
 
 |Name|Type|Description|
-|:---:|:---:|:---|
+|:---|:---|:---|
 |`fun`|`() => void`|function to eventually execute.|
 
 ### Return value

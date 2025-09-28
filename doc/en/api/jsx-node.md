@@ -24,5 +24,5 @@ For async components, use `Promise<JSXNode>` or `JSXNodeAsync`.
 ## Related
 
 - [`PropChildren`](./prop-children.md)
-- [`Suspense`](./suspense.md)
-- [`Show`](./show.md)
+- [`<Suspense />`](./suspense.md)
+- [`<Show />`](./show.md)
