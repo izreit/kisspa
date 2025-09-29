@@ -20,13 +20,14 @@ None.
 
 ## Description
 
-Use this to queue work that must happen after the DOM is in place - such as measuring layout, focusing an element, or wiring imperative APIs.
-The callback runs after the component successfully mounts, including after any surrounding [`Suspense`](./suspense.md) has resolved.
+Use this to queue work that must happen after the DOM is in place (e.g. measuring layout, focusing an element, or wiring imperative APIs).
 Can be called only in components.
 
-Nested calls are allowed; handlers registered inside other `onMount` handlers run later in the same cycle.
+The callback runs after the component successfully mounts, including after any surrounding [`<Suspense />`](./suspense.md) has resolved.
+Callbacks are not invoked if the component never finishes mounting (for example, if it is removed before awaiting promises inside JSX).
+Combine `onMount` with [`onCleanup()`](./on-cleanup.md) to mirror the setup/teardown lifecycle.
 
-Handlers are not invoked if the component never finishes mounting (for example, if it is removed before awaiting promises). Combine `onMount` with [`onCleanup()`](./on-cleanup.md) to mirror the setup/teardown lifecycle.
+Nested calls are allowed; handlers registered inside other `onMount` handlers run later in the same cycle.
 
 `onMount()` is a shorthand for `useComponentMethods().onMount(handler)`.
 In async components, `onMount()` must be called synchronously (i.e. before any `await`).

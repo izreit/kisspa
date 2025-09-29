@@ -18,7 +18,9 @@ Object whose `.value` property tracks the latest assigned value.
 
 ## Description
 
-`createRef()` produces a [`Ref`](./ref.md) initialized with `null`. When you pass the ref to the `ref` attribute of an element or component, Kisspa assigns the underlying value during mount to its `.value`. The `.value` property always reflects the most recent assignment, making refs ergonomic to use in imperative code or lifecycle handlers.
+`createRef()` produces a [`Ref`](./ref.md) initialized with `null`.
+
+When you pass the ref to the `ref` attribute of an JSX element, Kisspa assigns the underlying value (DOM element) during mount to its `.value`.
 The `.value` property will be `null` on cleanup.
 
 Refs integrate with the lifecycle helpers: they receive their mounting value before `onMount()` handlers run and are cleared before `onCleanup()` handlers execute.

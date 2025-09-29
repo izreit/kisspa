@@ -1,7 +1,7 @@
 # memoize()
 
 Creates a signal that recomputes a value when its dependencies change.
-Caches the latest result.
+It caches the latest result.
 
 ## Syntax
 

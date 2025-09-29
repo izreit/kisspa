@@ -2,6 +2,8 @@
 
 Create a configurable Upwind instance that compiles utility declarations into scoped CSS classes.
 
+This is an **advanced feature**: typically you only need to use `$`, the preconfigured Upwind instance.
+
 ## Syntax
 
 ```ts

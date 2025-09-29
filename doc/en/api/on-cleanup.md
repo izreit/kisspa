@@ -20,7 +20,7 @@ None.
 
 ## Description
 
-Register a teardown callback, called when the component is disposed - either because the tree was replaced, the enclosing [`Show`](./show.md)/[`Switch`](./switch.md) hid it, or the root was detached.
+Register a teardown callback, called when the component is disposed (e.g. the tree was replaced, the enclosing [`Show`](./show.md)/[`Switch`](./switch.md) hid it, or the root was detached).
 Can be called only in components.
 
 Handlers execute only if the component previously mounted. For example, ignored when async setup never resolves.

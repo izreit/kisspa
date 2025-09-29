@@ -56,7 +56,7 @@ Any number of the following:
 ### Return value
 
 A function `() => string` that yields the generated class list.
-Can be passed to `class` attribute of JSX.
+Can be passed to `class` attribute of JSX like the following.
 
 ```tsx
 <button class={$("padding:1rem background:red")}>

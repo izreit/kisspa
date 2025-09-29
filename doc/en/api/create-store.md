@@ -30,8 +30,11 @@ A pair, `[store, setStore]`.
 
 Reads from `store` track dependencies for `createEffect()`.
 
-Use `setStore(writer, opts)` to mutate the write-proxy.
-By default changes flush immediately, or pass `{ lazyFlush: true }` to defer.
+Use `setStore(writer)` to mutate the store.
+`writer` must be a function that takes the write-proxy as the only argument.
+Mutations made on the write-proxy are reflected to the store and causes related effects to be re-run.
+
+By default changes in `setStore()` flush immediately, or pass `{ lazyFlush: true }` as the second argument to defer.
 
 ## Signatures
 

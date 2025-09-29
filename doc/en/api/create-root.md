@@ -1,6 +1,6 @@
 # createRoot()
 
-Create a reusable root controller that manages a JSX tree inside a specific DOM container.
+Create a root controller that manages a JSX tree inside a specific DOM element.
 
 ## Syntax
 
@@ -30,6 +30,7 @@ interface Root {
 ## Description
 
 `createRoot()` sets up the machinery that renders JSX into `parent`.
+
 The returned `Root` lets you attach new trees, dispose the current tree, and await active suspense work.
 The root tracks a dedicated suspense context so that `root.flush()` resolves when the current async work (triggered by components or promises) finishes.
 

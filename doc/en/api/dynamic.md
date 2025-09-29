@@ -21,7 +21,6 @@ Render a component chosen at runtime with reactive props.
 Whenever either accessor changes, Kisspa reassembles the child component with the new inputs.
 This makes it ideal for routing, feature switches, or component registries where the concrete implementation varies over time.
 
-The component and props accessors are invoked within the current assemble context, so they can subscribe to signals or stores.
 `<Dynamic />` preserves the subtree's lifecycle: the previously rendered component is disposed (running its [`onCleanup()`](./on-cleanup.md) handlers) before the replacement mounts.
 
 ## Examples

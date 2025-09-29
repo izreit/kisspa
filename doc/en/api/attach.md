@@ -12,9 +12,9 @@ attach(node, parent[, prev]);
 
 |Name|Type|Description|
 |:---|:---|:---|
-|`node`|`JSXNode`|Tree to render. Accepts plain values, JSX elements, functions, components, or promises resolved to them.|
+|`node`|`JSXNode`|Tree to render. Accepts JSX elements, components, or promises resolved to them.|
 |`parent`|`Element`|Container that receives the rendered output.|
-|`prev`|`Node \| null`|Optional sibling to insert after. Defaults to the start of `parent`'s children.|
+|`prev`|`Node \| null` (optional)|sibling to insert after. Defaults to the start of `parent`'s children.|
 
 ### Return value
 
@@ -23,13 +23,11 @@ See [`createRoot()`](./create-root.md) for detail.
 
 ## Description
 
-Mount a JSX tree into an existing DOM node.
-
 `attach()` is a wrapper around `createRoot()`.
 It creates a fresh root bound to `parent`, renders `node`, and returns that root so you can drive later updates.
 
 `attach()` starts rendering immediately but does not wait for asynchronous work.
-If you need to wait settlement of async components, promises, or [`Suspense`](./suspense.md) inside JSX, consider to use `createRoot()`.
+If you need to wait settlement of async components, promises, or [`<Suspense />`](./suspense.md) inside JSX, use `createRoot()`.
 
 Pass `prev` to control the insertion point within `parent`.
 When specified, the rendered output lands immediately after `prev`; otherwise it appears as the first child.

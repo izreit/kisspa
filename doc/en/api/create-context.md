@@ -1,6 +1,6 @@
 # createContext\<T>()
 
-Define a context with an initial value and a provider component.
+Define a context with an initial value.
 
 ## Syntax
 
@@ -18,13 +18,13 @@ const MyContext = createContext(initialValue);
 
 A newly created `Context`, used with [`useContext()`](./use-context.md) to read values.
 
-Use `<Context.Provider />` to supply a value for descendants.
+Use `<Context.Provider />` to supply a value for descendants in JSX tree.
 
 ## Description
 
 `createContext()` creates a new context object.
 Use the provided `Provider` component to supply a new value for descendants.
-The value provided by the provider is available even inside async components, promises, and [`Suspense`](./suspense.md) boundaries.
+The value given by the provider is available even inside async components, promises, and [`Suspense`](./suspense.md) boundaries.
 
 If a component reads the context without any surrounding provider, `useContext()` falls back to the `initialValue` supplied here.
 
