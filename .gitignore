@@ -8,6 +8,3 @@ node_modules
 /lib/
 /coverage/
 /stat/
-
-# temporarily ignore while experimenting locally on doc/
-/doc/
