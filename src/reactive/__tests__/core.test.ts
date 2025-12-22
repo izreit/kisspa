@@ -258,7 +258,6 @@ describe("createStore", () => {
     let val = "";
     createEffect(() => { val = store.values[1]; });
 
-    // biome-ignore lint/performance/noDelete: intentional. testing delete.
     setStore(v => { delete v.values[1]; });
 
     expect(val).toBe(undefined);

@@ -1,22 +1,21 @@
 import type { JSXInternal } from "./core/jsx.js";
 
+export type { ComponentMethods } from "./core/assemble.js";
 export {
   assemble,
   assignLocation,
   createSpecial,
   getRefresher,
+  onCleanup,
+  onMount,
   resolveLocation,
   setRefresher,
   useComponentMethods,
-  onMount,
-  onCleanup,
 } from "./core/assemble.js";
-export type { ComponentMethods } from "./core/assemble.js";
-export { deprop } from "./core/helpers.js";
 export type { Prop } from "./core/helpers.js";
-export { attach, createRoot } from "./core/root.js";
+export { deprop } from "./core/helpers.js";
 export type { Root } from "./core/root.js";
-export { createRef } from "./core/types.js";
+export { attach, createRoot } from "./core/root.js";
 export type {
   Accessor,
   Attributes,
@@ -34,8 +33,9 @@ export type {
   Ref,
   Refresher,
 } from "./core/types.js";
-export { createContext, useContext } from "./special/context.js";
+export { createRef } from "./core/types.js";
 export type { Context, ContextProviderProps } from "./special/context.js";
+export { createContext, useContext } from "./special/context.js";
 export { Dynamic } from "./special/dynamic.js";
 export { For } from "./special/for.js";
 export { Portal, PortalDest } from "./special/portal.js";

@@ -1,7 +1,8 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createStore } from "../../reactive/index.js";
+// biome-ignore lint/correctness/noUnusedImports: needed for JSX
 import { h } from "../h.js";
-import { type JSXNode, type JSXNodeAsync, type Prop, type Root, Suspense, createRoot, onCleanup, onMount } from "../index.js";
+import { createRoot, type JSXNode, type JSXNodeAsync, onCleanup, onMount, type Prop, type Root, Suspense } from "../index.js";
 import { createLogBuffer, createSeparatedPromise } from "./testutil.js";
 
 describe("Suspense", () => {

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { defaultConditions, defaultProperties } from "../default.js";
 import type { CSSRuleListLike } from "../sheet.js";
-import { type Upwind, createUpwind } from "../tag.js";
+import { createUpwind, type Upwind } from "../tag.js";
 import { createMockCSSGroupRuleLike } from "./mock/MockCSSGroupingRuleLike.js";
 
 describe("default", () => {
@@ -17,7 +17,6 @@ describe("default", () => {
   function run(...args: (string | Upwind.ExtendedDOMCSSProperties)[]): { classes: string[], rule: CSSRuleListLike } {
     el.className = $(...args)();
     const classes: string[] = [];
-    // biome-ignore lint/complexity/noForEach: classList cannot be iterated?
     el.classList.forEach(c => classes.push(c));
     return { classes, rule: sheet.cssRules };
   }

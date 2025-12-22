@@ -1,7 +1,8 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createLogBuffer } from "../../../html/__tests__/testutil.js";
+// biome-ignore lint/correctness/noUnusedImports: needed for JSX
 import { Fragment, h } from "../../../html/h.js";
-import { type Prop, type Refresher, type Root, createRoot, createStore, deprop, onCleanup, onMount, setRefresher, } from "../../../index.js";
+import { createRoot, createStore, deprop, onCleanup, onMount, type Prop, type Refresher, type Root, setRefresher, } from "../../../index.js";
 import { createRefresher } from "../refresher.js";
 
 describe("Refresher", () => {

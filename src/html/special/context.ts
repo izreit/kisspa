@@ -1,4 +1,4 @@
-import { type AssembleContext, type TransparentBacking, assemble, createSpecial, createTransparentBacking, useAssembleContext } from "../core/assemble.js";
+import { type AssembleContext, assemble, createSpecial, createTransparentBacking, type TransparentBacking, useAssembleContext } from "../core/assemble.js";
 import type { Component, PropChildren } from "../core/types.js";
 import { mapCoerce } from "../core/util.js";
 

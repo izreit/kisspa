@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { type RootSheet, createRootSheet } from "../sheet.js";
-import { type MockCSSGroupingRuleLike, createMockCSSGroupRuleLike } from "./mock/MockCSSGroupingRuleLike.js";
+import { createRootSheet, type RootSheet } from "../sheet.js";
+import { createMockCSSGroupRuleLike, type MockCSSGroupingRuleLike } from "./mock/MockCSSGroupingRuleLike.js";
 
 describe("Sheet", () => {
   let styleSheetMock: MockCSSGroupingRuleLike;

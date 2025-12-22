@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { createTransparentBacking } from "../../../html/core/assemble.js";
 import type { Backing } from "../../../html/core/types.js";
+// biome-ignore lint/correctness/noUnusedImports: needed for JSX
 import { h } from "../../../html/h.js";
-import { type ProxyBacking, createRefresher } from "../refresher.js";
+import { createRefresher, type ProxyBacking } from "../refresher.js";
 
 function createCreateMockBacking(): (name: string) => Backing {
   let count = 0;
