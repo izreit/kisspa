@@ -112,15 +112,15 @@ function parseMod(src: string, ix: number): ParseResult<Mod> | null {
   const begin = ix;
   let target: Mod["target"];
 
-  const mMod = matchRe(src, ix, /:*[^/_:\s\(\)]+/y);
+  const mMod = matchRe(src, ix, /:*[^/_:\s()]+/y);
   if (!mMod) return mMod;
   ix = mMod.end_;
   const modKey = mMod.val_[0];
 
   if (src[ix] === "_") {
-    const mTargetName = matchRe(src, ix + 1, /[^/:\s~\+>]+/y); // +1 for "_"
+    const mTargetName = matchRe(src, ix + 1, /[^/:\s~+>]+/y); // +1 for "_"
     if (mTargetName) {
-      const mRel = matchRe(src, mTargetName.end_, /[~\+>]?/y)!;
+      const mRel = matchRe(src, mTargetName.end_, /[~+>]?/y)!;
       ix = mRel.end_;
       target = { name: mTargetName.val_[0], rel: mRel.val_[0] || null };
     }
@@ -132,7 +132,7 @@ function parseMod(src: string, ix: number): ParseResult<Mod> | null {
 // NAME := '-'* head=FRAG tail={'-' f=FRAG}*
 // FRAG := '[^-\s:\.]+'
 function parseName(src: string, ix: number): ParseResult<string> | null {
-  const re = /(?:[^\s:\.\(\)])+/y;
+  const re = /(?:[^\s:.()])+/y;
   const begin = ix;
   const m = matchRe(src, ix, re);
   if (!m) return m;
@@ -170,7 +170,7 @@ function parseVal(src: string, ix: number): ParseResult<string[]> | null {
 // QUOTED := '\'' v='(\\\'|[^\'])*' '\''
 function parseValSegment(src: string, ix: number): ParseResult<string> | null {
   const begin = ix;
-  const mn = matchRe(src, ix, /(?!')(?:\\_|[^\s_\}])+/y);
+  const mn = matchRe(src, ix, /(?!')(?:\\_|[^\s_}])+/y);
   if (mn)
     return { val_: mn.val_[0].replace(/\\_/g, "_"), begin_: begin, end_: mn.end_  };
   const mq = matchRe(src, ix, /'((?:\\'|[^'])*)'/y);

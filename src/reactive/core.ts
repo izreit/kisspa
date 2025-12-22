@@ -1,7 +1,7 @@
 import { throwError } from "./assert.js";
 import { decimated } from "./decimated.js";
 import { createRefTable } from "./internal/reftable.js";
-import { type ScopedStack, createScopedStack } from "./internal/stack.js";
+import { createScopedStack, type ScopedStack } from "./internal/stack.js";
 import type { Key, Observer, Target, WatchHandlers, Wrapped } from "./types.js";
 
 export interface StoreSetterOptions {

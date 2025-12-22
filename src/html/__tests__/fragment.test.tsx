@@ -1,7 +1,8 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createStore } from "../../reactive/index.js";
+// biome-ignore lint/correctness/noUnusedImports: needed for JSX
 import { Fragment, h } from "../h.js";
-import { type Root, createRoot } from "../index.js";
+import { createRoot, type Root } from "../index.js";
 
 describe("Fragment", () => {
   let elem: HTMLElement;
@@ -27,6 +28,7 @@ describe("Fragment", () => {
 
   it("can be nested", () => {
     const [store, _setStore] = createStore({ foo: 0 });
+    // biome-ignore-start lint/complexity/noUselessFragments: to test Fragment itself
     root.attach(
       <>
         <span>Foo</span>
@@ -38,6 +40,7 @@ describe("Fragment", () => {
         </div>
       </>
     );
+    // biome-ignore-end lint/complexity/noUselessFragments: to test Fragment itself
     expect(elem.innerHTML).toBe("<span>Foo</span><div>0<p>Zoo</p></div>");
   });
 });

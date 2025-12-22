@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type Prop, deprop } from "../index.js";
+import { deprop, type Prop } from "../index.js";
 
 describe("helpers", () => {
   describe("deprop", () => {

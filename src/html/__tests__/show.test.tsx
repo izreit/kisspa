@@ -1,7 +1,8 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createStore } from "../../reactive/index.js";
+// biome-ignore lint/correctness/noUnusedImports: needed for JSX
 import { h } from "../h.js";
-import { type Root, Show, createRef, createRoot } from "../index.js";
+import { createRef, createRoot, type Root, Show } from "../index.js";
 
 describe("Show", () => {
   let elem: HTMLElement;

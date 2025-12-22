@@ -3,7 +3,7 @@ import type { JSXInternal } from "../html/core/jsx.js";
 import { isFunction, isString, mapCoerce } from "../html/core/util.js";
 import { createEmptyObj, objForEach, objKeys } from "./objutil.js";
 import { type Mod, parse, rawParseMods, rawParseVal } from "./parse.js";
-import { type CSSGroupingRuleLike, type Sheet, createRootSheet } from "./sheet.js";
+import { type CSSGroupingRuleLike, createRootSheet, type Sheet } from "./sheet.js";
 
 // Utility convert to kebab-case from lowerCamelCase (e.g. "background-image" from "backgroundImage")
 type Kebab<S extends string> =
@@ -191,7 +191,7 @@ function replaceValue(val: string[], config: Upwind.Config): void {
     if (reNum.test(v)) {
       val[i] = num(parseFloat(v));
     } else if (colorRe && (m = v.match(colorRe))) {
-      const alpha = m[3] ? Math.ceil(255 * parseInt(m[3]) / 100).toString(16) : "";
+      const alpha = m[3] ? Math.ceil(255 * parseInt(m[3], 10) / 100).toString(16) : "";
       const colorTable = color[m[1]];
       val[i] = `${colorTable && colorTable[m[2]]}${alpha}`;
     }

@@ -1,7 +1,7 @@
 import { setWatchHandlers } from "../../reactive/index.js";
 import type { Key, Wrapped } from "../../reactive/types.js";
-import { type Mapset, createMapset } from "./internal/mapset.js";
-import { type Trie, createTrie } from "./internal/trie.js";
+import { createMapset, type Mapset } from "./internal/mapset.js";
+import { createTrie, type Trie } from "./internal/trie.js";
 
 // To avoid depending on an internal function of the main lib, copied from reactive/core.ts
 const isWrappable = (v: any): v is object => (typeof v === "object" && v) || typeof v === "function";

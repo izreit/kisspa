@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createLogBuffer } from "../../../reactive/__tests__/testutil.js";
-import { bindObserver, createEffect, createStore, withoutObserver } from "../../../reactive/core.js";
+import { createEffect, createStore } from "../../../reactive/core.js";
 import type { Key } from "../../../reactive/types.js";
 import * as cloneutil from "../cloneutil.js";
 import { debugGetInternal, unwatch, watchDeep, watchShallow } from "../watch.js";
@@ -176,9 +175,7 @@ describe("watch", () => {
       });
 
       setStore(s => s.a.deeply.nested = { value: 1 });
-      // biome-ignore lint/performance/noDelete: intentional. testing delete.
       setStore(s => { delete s.values![1]; });
-      // biome-ignore lint/performance/noDelete: intentional. testing delete.
       setStore(s => { delete s.values; });
       expect(history).toEqual([
         { path: ["a", "deeply", "nested"], val: { value: 1 } },
@@ -210,7 +207,6 @@ describe("watch", () => {
       setStore(s => {
         s.arr.push({ v: "dee" });
         s.table.A1 = { id: 13, nameKey: "nix" };
-        // biome-ignore lint/performance/noDelete: intentional. testing delete.
         delete s.table.k1;
       });
       setStore(s => { s.count++ });
@@ -280,7 +276,6 @@ describe("watch", () => {
       expect(count2).toBe(1);
 
       // delete is notified only store1's watcher.
-      // biome-ignore lint/performance/noDelete: intentional. testing delete.
       setStore1(s => { delete s.table.k1; });
       expect(clone1).toEqual(store1);
       expect(clone2).toEqual(store2);
@@ -526,7 +521,6 @@ describe("watch", () => {
         ["added", 90, false],
       ]);
 
-      // biome-ignore lint/performance/noDelete: intentional. testing delete.
       setStore((s) => { delete s.added; }); // delete
       expect(logs).toEqual([
         ["added", 100, false],

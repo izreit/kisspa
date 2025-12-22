@@ -1,7 +1,8 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createStore } from "../../reactive/index.js";
+// biome-ignore lint/correctness/noUnusedImports: needed for JSX
 import { h } from "../h.js";
-import { For, type Root, createRoot } from "../index.js";
+import { createRoot, For, type Root } from "../index.js";
 import { createLogBuffer } from "./testutil.js";
 
 describe("For", () => {
@@ -92,7 +93,6 @@ describe("For", () => {
     );
 
     setStore(s => {
-      // biome-ignore lint/performance/noDelete: intentional. testing delete.
       delete s.peoples[1];
     });
     expect(elem.innerHTML).toBe([

@@ -1,7 +1,8 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createStore } from "../../reactive/index.js";
+// biome-ignore lint/correctness/noUnusedImports: needed for JSX
 import { h } from "../h.js";
-import { type JSX, type JSXNode, type JSXNodeAsync, type Prop, type Root, Suspense, createContext, createRoot, deprop, useContext } from "../index.js";
+import { createContext, createRoot, deprop, type JSX, type JSXNode, type JSXNodeAsync, type Prop, type Root, Suspense, useContext } from "../index.js";
 
 describe("createContext()", () => {
   let elem: HTMLElement;

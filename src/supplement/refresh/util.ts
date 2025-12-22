@@ -1,7 +1,7 @@
 export function nameCandidatesOf(basename: string): string[] {
   let base = basename
     .replace(/^\d*/, "") // remove prefix 0-9
-    .replace(/[^A-Za-z0-9_$\-]/g, "") // remove invalid chars except "-"
+    .replace(/[^A-Za-z0-9_$-]/g, "") // remove invalid chars except "-"
     .replace(/-([a-z]?)/g, (_, c) => c.toUpperCase()) // remove "-" and capitalize the next
   base = base.charAt(0).toUpperCase() + base.slice(1);
 

@@ -1,7 +1,8 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createSignal } from "../../reactive/index.js";
+// biome-ignore lint/correctness/noUnusedImports: needed for JSX
 import { h } from "../h.js";
-import { type JSXNode, type PropRef, type Root, attach, createRef, createRoot } from "../index.js";
+import { attach, createRef, createRoot, type JSXNode, type PropRef, type Root } from "../index.js";
 
 describe("root", () => {
   describe("createRoot()", () => {

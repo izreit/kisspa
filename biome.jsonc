@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.3.8/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -18,9 +18,13 @@
         "useOptionalChain": "off",
         // Not for footprint: to allow `Function` as type, inevitable for this library to handle
         // untyped functions in so many places, such as Proxy traps or inside JSX.
-        "noBannedTypes": "off"
+        "noBannedTypes": "off",
+        // Disabled for footprint. To omit `return` in short but multiple expression functions.
+        "noCommaOperator": "off"
       },
       "suspicious": {
+        // Disabled for footprint.
+        "useIterableCallbackReturn": "off",
         // Disabled for footprint.
         "noAssignInExpressions": "off",
         // Disabled for footprint. We 'break' if-statements when it's shorter.
@@ -31,8 +35,6 @@
       "style": {
         // Disabled for footprint. (e.g. ("foo " + x) is shorter than (`foo ${x}`))
         "useTemplate": "off",
-        // Disabled for footprint. To omit `return` in short but multiple expression functions.
-        "noCommaOperator": "off",
         // Disabled for footprint.
         "noParameterAssign": "off",
         // Disabled for footprint. Prefer Infinity than Number.POSITIVE_INFINITY.
@@ -44,7 +46,7 @@
   },
   "overrides": [
     {
-      "include": ["tsconfig.*.json"],
+      "includes": ["**/tsconfig.*.json"],
       "json": {
         "parser": {
           "allowComments": true,

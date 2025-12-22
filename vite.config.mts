@@ -3,7 +3,7 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
-import { defineConfig } from "vite";
+import { defineConfig, type UserConfig } from "vite";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -27,10 +27,16 @@ function path(segs: string): string {
   return resolve(__dirname, ...segs.split("/"));
 }
 
+interface TargetConfig {
+  entry: Exclude<NonNullable<UserConfig["build"]>["lib"], false | undefined>["entry"];
+  outDir?: NonNullable<UserConfig["build"]>["outDir"];
+  external?: NonNullable<NonNullable<UserConfig["build"]>["rollupOptions"]>["external"];
+}
+
 // Instead of one integrated entry, use a seperated entry for each target
 // to make them independent each other. In other words, vite produces
 // chunk script file for the integrated big entry.
-const targetConfigTable = {
+const targetConfigTable: { [key: string]: TargetConfig } = {
   reactive: {
     entry: { "reactive/index": path("src/reactive/index.ts") },
   },
@@ -65,18 +71,22 @@ const targetConfigTable = {
   },
 };
 
+const targetConfig = targetConfigTable[target];
+if (!targetConfig)
+  throw new Error(`unknown target: ${target}`);
+
 export default defineConfig({
   build: {
     emptyOutDir: clean,
-    outDir: targetConfigTable[target].outDir ?? "dist",
+    outDir: targetConfig.outDir ?? "dist",
     lib: {
-      entry: targetConfigTable[target].entry,
+      entry: targetConfig.entry,
       formats: ["es"],
       fileName: (_format, name) => `${name}.raw.mjs`,
     },
 
     rollupOptions: {
-      external: targetConfigTable[target].external,
+      external: targetConfig.external,
       output: {
         inlineDynamicImports: true,
         minifyInternalExports: true,
