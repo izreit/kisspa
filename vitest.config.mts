@@ -7,7 +7,7 @@ export default defineConfig({
       reporter: "html-spa",
       include: ["src/**/*"],
     },
-    workspace: [
+    projects: [
       {
         extends: true,
         test: {
