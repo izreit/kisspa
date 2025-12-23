@@ -35,7 +35,7 @@ export const For = createSpecial(function For<E>(actx: AssembleContext, props: F
         const k = key ? key(e, i) : e;
         let b = backingTable.get(k);
         if (b) {
-          ixTable.get(b!)![1](i); // update index
+          ixTable.get(b)![1](i); // update index
           backingTable.delete(k);
         } else {
           const ixSignal = createSignal(i);
