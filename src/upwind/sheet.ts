@@ -29,7 +29,7 @@ export function createRootSheet(target: CSSGroupingRuleLike): RootSheet {
       addRule_: childRuleText => rule.insertRule(childRuleText, rule.cssRules.length - childSheetsCount),
       sheetFor_(name) {
         const childRules = rule.cssRules;
-        const targetPrio = table[name]!.prio_; // if no table[name], it means a logic error and we should throw immediately.
+        const { prio_: targetPrio, initial_: targetInitial } = table[name]!; // if no table[name], it means a logic error and we should throw immediately.
         let i = childRules.length - 1;
         for (; i >= 0; --i) {
           const childRule = childRules[i];
@@ -40,7 +40,7 @@ export function createRootSheet(target: CSSGroupingRuleLike): RootSheet {
           if (targetPrio > prio)
             break;
         }
-        const inserted = rule.cssRules[rule.insertRule(table[name]!.initial_, i + 1)]! as CSSGroupingRuleLike;
+        const inserted = rule.cssRules[rule.insertRule(targetInitial, i + 1)]! as CSSGroupingRuleLike;
         const ret = createChildSheet(inserted);
         ruleToSheetTable.set(inserted, [targetPrio, ret]);
         ++childSheetsCount;
