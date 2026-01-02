@@ -1,10 +1,8 @@
 # Components and JSX Primitives
 
-## Components are functions
-
 In Kisspa, a component is a plain function that returns JSX.
 JSX is the HTML-like syntax inside JavaScript; Kisspa turns it into real DOM nodes.
-Components run once for each instance in JSX to build the tree, and fine-grained reactivity updates only the parts of the DOM that depend on reactive reads.
+As components, functions run once for each instance in JSX to build the tree, and fine-grained reactivity updates only the parts of the DOM that depend on reactive reads.
 
 ```tsx
 // Props for a reusable button component.
@@ -41,7 +39,7 @@ import { attach, type PropChildren } from "kisspa";
 // Props for a card layout component.
 type CardProps = {
   title: string;
-  children?: PropChildren; // Use PropChildren as the type for children.
+  children?: PropChildren; // type PropChildren is explained later.
 };
 
 function Card(props: CardProps) {

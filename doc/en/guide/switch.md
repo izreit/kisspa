@@ -1,7 +1,5 @@
 # Conditional Rendering: Switch and Match
 
-## Switch for multiple branches
-
 `<Switch />` renders the first matching `<Match />` and disposes the rest.
 Use a final `<Match>` without a `when` prop as the default case.
 

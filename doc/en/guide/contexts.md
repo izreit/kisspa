@@ -1,9 +1,13 @@
 # Contexts: createContext()
 
-## A theme context
-
 Contexts let you pass values through the tree without threading props.
 If the value is reactive, all consumers update automatically.
+
+`createContext()` creates a context with the initial value, and the returned object
+includes a `<Context.Provider />` component to supply a value for descendants.
+`useContext()` reads the nearest provided value (or falls back to the initial value).
+
+It is especially useful for site-wide configuration like color theme or language of the Web site.
 
 ```tsx
 import { createContext, createSignal, type PropChildren, useContext } from "kisspa";

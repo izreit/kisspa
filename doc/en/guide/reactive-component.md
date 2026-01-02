@@ -1,11 +1,10 @@
 # Reactive Components: Props and Children
 
-When you build reusable components, aim to keep them reactive without forcing every caller to use signals or stores.
-Kisspa provides helper types and utilities to accept both dynamic accessors and static values.
+Kisspa provides helper types and utilities to write your components.
 
-## Accept reactive props (and static values)
+## Prop and deprop()
 
-For reactive behavior, a prop should accept a function that returns the value to display.
+For reactive behavior, a prop should accept a function that returns the value to be used.
 At the same time, it should also accept a plain value so callers can pass static data.
 
 Use the `Prop<T>` type to allow both.
@@ -37,7 +36,7 @@ function PriceTag(props: PriceTagProps) {
 `deprop()` unwraps the value by calling the function or returning the literal.
 Call `deprop()` inside reactive accessors or JSX so changes propagate correctly.
 
-## Children props and PropChildren
+## PropChildren
 
 Components can accept JSX children, as well as strings and numbers (they are valid JSX nodes).
 Use `PropChildren` to type the `children` prop.

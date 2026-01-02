@@ -6,7 +6,7 @@ Utility-first CSS means you compose styles from tiny, single-purpose utilities i
 Unlike Tailwind (a well-known utility-first CSS library), the syntax stays close to neutral CSS (`property:value`)
 so you can reuse familiar CSS knowledge and keep the intent readable without memorizing a large custom DSL.
 
-## The $() helper
+## $()
 
 `$()` compiles utility-like declarations into class names.
 It returns a function, so pass it directly to `class` attribute of DOM elements.

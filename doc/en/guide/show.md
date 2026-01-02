@@ -1,7 +1,5 @@
 # Conditional Rendering: Show
 
-## Show for simple branches
-
 Use `<Show />` when you need a single conditional branch and an optional fallback.
 
 ```tsx

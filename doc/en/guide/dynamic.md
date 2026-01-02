@@ -1,7 +1,5 @@
 # Dynamic Components: Dynamic
 
-## Switching components at runtime
-
 `<Dynamic />` lets you choose which component to render based on reactive state.
 Both `component` and `props` are accessors, so updates are tracked automatically.
 

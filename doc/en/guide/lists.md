@@ -1,7 +1,5 @@
 # Lists: For
 
-## Rendering a list
-
 `<For />` maps array items to JSX and only updates the rows that changed.
 `each` receives the array (or an accessor returning one), and `children` is a function that renders each item.
 `key` is optional but recommended when items have unique identifiers and can reorder or be removed.

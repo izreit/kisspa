@@ -1,7 +1,5 @@
 # Async Components: Suspense and Promise
 
-## Suspense around async components
-
 `<Suspense />` tracks promises created while rendering its children.
 While pending, it renders the fallback; when resolved, it swaps to the real content.
 
@@ -50,11 +48,6 @@ function UserCard(props: { id: () => string }) {
   );
 }
 ```
-
-## Lazy components with import()
-
-You can lazily import a component and return the promise inside `<Suspense />`.
-This keeps the bundle smaller until the user reaches that branch.
 
 ## Gotcha: wrap async branches
 
