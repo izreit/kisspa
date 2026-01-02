@@ -22,7 +22,9 @@ Render a collection by mapping each item to JSX with fine-grained reactivity.
 When an item moves, existing DOM nodes are repositioned instead of remounted.
 The `index` accessor you receive stays live - when an item shifts, reading `index()` yields the updated position without re-running your render function.
 
-If `each` is a plain array, `<For />` still reacts to structural changes because it inspects the mutated array each time reactive parents update. Use the optional `key` prop when items may reorder or be removed; otherwise identical objects are differentiated by reference equality.
+If `each` is a plain array, `<For />` still reacts to structural changes because it inspects the mutated array each time reactive parents update.
+
+The `key` prop is optional but recommended when items have unique identifiers and may reorder or be removed; otherwise objects are distinguished by reference equality.
 
 ## Examples
 

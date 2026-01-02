@@ -74,7 +74,7 @@ describe("Show", () => {
         </Show>
       </div>
     );
-    expect(elem.innerHTML).toBe("<div><p>Foo 0</p></div>");
+    expect(elem.innerHTML).toBe("<div><p>Foo 0</p></div>"); // assert that 0 is true-ish if `capture`.
 
     setStore(s => s.foo = "pee");
     expect(elem.innerHTML).toBe("<div><span>Bar</span></div>");
