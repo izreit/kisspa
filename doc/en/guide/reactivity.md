@@ -100,6 +100,9 @@ console.log(message());
 setMessage("Saved");
 ```
 
+`createSignal()` is the most compact way to track a single reactive value, and the getter
+must be called inside JSX or effects to keep updates reactive.
+
 ## Gotcha: updates are explicit
 
 Reactive values only track dependencies when properties are read.
@@ -113,4 +116,4 @@ If you destructure or read outside the JSX/effect context, the update will not b
 ## Previous / Next
 
 - Previous: [Components and JSX Primitives](./components.md).
-- Next: [Conditional Rendering: Show, Switch, Match](./conditional.md).
+- Next: [Reactive Components: Props and Children](./reactive-component.md).

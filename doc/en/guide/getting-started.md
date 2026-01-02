@@ -14,6 +14,8 @@ Install the package into your project.
 npm i kisspa
 ```
 
+This adds Kisspa to your project dependencies.
+
 ## 2) Configure TypeScript
 
 Tell TypeScript to compile JSX against Kisspa's runtime. JSX is a syntax that lets you write HTML-like tags in JavaScript; the compiler turns those tags into Kisspa runtime calls.
@@ -27,6 +29,8 @@ Tell TypeScript to compile JSX against Kisspa's runtime. JSX is a syntax that le
   }
 }
 ```
+
+These options tell TypeScript to emit JSX using Kisspa's runtime functions.
 
 ## 3) Configure Vite
 
@@ -42,6 +46,8 @@ export default defineConfig({
   }
 });
 ```
+
+This keeps Vite's JSX transform aligned with TypeScript so the runtime matches.
 
 ## 4) Hello world
 
@@ -63,6 +69,8 @@ Create a root element and point Vite at your entry file.
   </body>
 </html>
 ```
+
+The `<div id="app"></div>` element is the mount target for `attach()`.
 
 Now add a component that shows a counter and mounts it into the page. A component is a function that returns JSX.
 
