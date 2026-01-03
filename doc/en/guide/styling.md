@@ -101,5 +101,5 @@ If you need a static class, call the accessor once or combine it with static cla
 
 ## Previous / Next
 
-- Previous: [Dynamic Components: Dynamic](./dynamic.md).
+- Previous: [Dynamic Components](./dynamic.md).
 - Next: [Wrapping up: Build a Todo App](./tutorial-todo.md).

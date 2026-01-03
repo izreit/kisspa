@@ -1,4 +1,4 @@
-# Async Components: Suspense and Promise
+# Async Components
 
 `<Suspense />` tracks promises created while rendering its children.
 While pending, it renders the fallback; when resolved, it swaps to the real content.
@@ -61,5 +61,5 @@ Always place async reads inside a suspense boundary.
 
 ## Previous / Next
 
-- Previous: [Contexts: createContext()](./contexts.md).
-- Next: [Dynamic Components: Dynamic](./dynamic.md).
+- Previous: [Contexts](./contexts.md).
+- Next: [Dynamic Components](./dynamic.md).

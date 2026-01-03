@@ -1,4 +1,4 @@
-# Reactive Components: Props and Children
+# Reactive Component Utilities
 
 Kisspa provides helper types and utilities to write your components.
 
@@ -38,7 +38,8 @@ Call `deprop()` inside reactive accessors or JSX so changes propagate correctly.
 
 ## PropChildren
 
-Components can accept JSX children, as well as strings and numbers (they are valid JSX nodes).
+Components can receive JSX children, written inside the start and end tags of the component.
+Children may have various types such as JSX elements, strings or numbers.
 Use `PropChildren` to type the `children` prop.
 
 ```tsx

@@ -1,4 +1,4 @@
-# Overview
+# Overview: why Kisspa
 
 Kisspa is a JavaScript UI framework built for SPA developers who want the freedom of JSX
 without the overhead of heavy toolchains.

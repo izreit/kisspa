@@ -79,4 +79,4 @@ You can use the returned hooks later in async code, but the hook acquisition its
 ## Previous / Next
 
 - Previous: [Portals: Portal and PortalDest](./portals.md).
-- Next: [Contexts: createContext()](./contexts.md).
+- Next: [Contexts](./contexts.md).

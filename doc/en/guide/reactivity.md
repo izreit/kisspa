@@ -146,4 +146,4 @@ Solid is a more sophisticated solution, but we prefer a simple, explicit rule an
 ## Previous / Next
 
 - Previous: [Components and JSX Primitives](./components.md).
-- Next: [Reactive Components: Props and Children](./reactive-component.md).
+- Next: [Reactive Component Utilities](./reactive-component.md).

@@ -65,6 +65,37 @@ The `capture` option also helps TypeScript: without `capture`, you often need an
 `when` should be a function, not a pre-evaluated boolean.
 If you pass `when={loading()}`, it only evaluates once and never updates.
 
+## Limitation: use <Show /> instead of if
+
+Kisspa keeps components fast by assuming every component always returns the same JSX shape. Multiple `return`s in `if` or `switch` blocks violate that assumption because the tree differs between renders.
+
+```tsx
+// NG (even if `signedIn` is static (non-reactive))
+function WelcomeMessage(props: { signedIn: boolean }) {
+  if (props.signedIn) {
+    return <p>Welcome back!</p>;
+  }
+
+  return <button>Sign in</button>;
+}
+```
+
+The above component returns different roots depending on `signedIn`, so Kisspa cannot reuse the cached structure.
+Instead, keep a single `return` and branch inside JSX with `<Show />` (or `<Switch />`).
+
+```tsx
+import { Show } from "kisspa";
+
+// OK
+function WelcomeMessage(props: { signedIn: boolean }) {
+  return (
+    <Show when={() => props.signedIn} fallback={<button>Sign in</button>}>
+      <p>Welcome back!</p>
+    </Show>
+  );
+}
+```
+
 ## Related APIs
 
 - [`<Show />`](../api/show.md)
@@ -72,5 +103,5 @@ If you pass `when={loading()}`, it only evaluates once and never updates.
 
 ## Previous / Next
 
-- Previous: [Reactive Components: Props and Children](./reactive-component.md).
+- Previous: [Reactive Component Utilities](./reactive-component.md).
 - Next: [Conditional Rendering: Switch and Match](./switch.md).

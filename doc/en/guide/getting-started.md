@@ -131,8 +131,6 @@ Add finally a minimal `index.html` next to `vite.config.ts`:
 
 The `<div id="app"></div>` element is the mount target for `attach()`.
 
-Now add a component that shows a counter and mounts it into the page. A component is a function that returns JSX.
-
 ## 6) Run the project
 
 ```bash
@@ -141,11 +139,7 @@ npm run dev -- --open
 
 Clicking the button increments the signal and the text updates because the JSX reads the signal getter directly.
 
-## Gotcha: JSX runtime must match
-
-If `jsxImportSource` is missing or mismatched between TypeScript and Vite, JSX compiles to the wrong runtime and nothing renders.
-
 ## Previous / Next
 
-- Previous: [Why Kisspa — Make SPA Simple Again](./why-kisspa.md).
-- Next: [Components and JSX Primitives](./components.md).
+- Previous: [Overview: why Kisspa](./why-kisspa.md).
+- Next: [Components and JSX](./components.md).

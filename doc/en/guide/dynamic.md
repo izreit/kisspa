@@ -1,4 +1,4 @@
-# Dynamic Components: Dynamic
+# Dynamic Components
 
 `<Dynamic />` lets you choose which component to render based on reactive state.
 Both `component` and `props` are accessors, so updates are tracked automatically.
@@ -56,5 +56,5 @@ If you pass the component directly, `<Dynamic />` cannot react to changes.
 
 ## Previous / Next
 
-- Previous: [Async Components: Suspense and Promise](./async.md).
+- Previous: [Async Components](./async.md).
 - Next: [Styling with Upwind](./styling.md).

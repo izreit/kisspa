@@ -1,4 +1,4 @@
-# Contexts: createContext()
+# Contexts
 
 Contexts let you pass values through the tree without threading props.
 If the value is reactive, all consumers update automatically.
@@ -62,4 +62,4 @@ Use signals or store accessors inside the context value so consumers react to ch
 ## Previous / Next
 
 - Previous: [DOM Access and Lifecycle](./dom-and-lifecycle.md).
-- Next: [Async Components: Suspense and Promise](./async.md).
+- Next: [Async Components](./async.md).

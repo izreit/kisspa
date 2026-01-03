@@ -1,4 +1,4 @@
-# Components and JSX Primitives
+# Components and JSX
 
 In Kisspa, a component is a plain function that returns JSX.
 JSX is the HTML-like syntax inside JavaScript; Kisspa turns it into real DOM nodes.
@@ -72,7 +72,8 @@ function App() {
 attach(<App />, document.getElementById("app")!);
 ```
 
-The `Card` component lays out a title and body, while `App` composes it with a paragraph and the `Button` you saw earlier. Mounting `App` with `attach` reuses the entry-point pattern from the previous page.
+The `Card` component lays out a title and body, while `App` composes it with a paragraph and the `Button` you saw earlier.
+Mounting `App` with `attach` reuses the entry-point pattern from the previous page.
 
 ## Events and attributes
 
