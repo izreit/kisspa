@@ -288,4 +288,4 @@ attach(<App />, document.getElementById("app")!);
 ## Previous / Next
 
 - Previous: [Styling with Upwind](./styling.md).
-- Return to top: [Guide Index](./README.md).
+- Next: [Addendum](./addendum.md).

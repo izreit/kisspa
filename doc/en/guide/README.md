@@ -18,3 +18,4 @@ Read it in order for a gradual ramp-up.
 13. [Dynamic Components: Dynamic](./dynamic.md)
 14. [Styling with Upwind](./styling.md)
 15. [Wrapping up: Build a Todo App](./tutorial-todo.md)
+16. [Addendum](./addendum.md)

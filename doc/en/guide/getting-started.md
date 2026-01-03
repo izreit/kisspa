@@ -36,12 +36,18 @@ Tell TypeScript to compile JSX against Kisspa's runtime. JSX is a syntax that le
 ## 3) Configure Vite
 
 Match Vite's JSX runtime to the same setting so both compilers agree.
+Optionally, add the Kisspa Vite plugin (from `kisspa/supplement/vite-plugin`) for HMR support.
 
 `vite.config.ts`
 ```ts
 import { defineConfig } from "vite";
+import kisspa from "kisspa/supplement/vite-plugin";
 
 export default defineConfig({
+  plugins: [
+    // Optional: only needed for HMR.
+    kisspa()
+  ],
   esbuild: {
     jsxImportSource: "kisspa"
   }
@@ -49,6 +55,9 @@ export default defineConfig({
 ```
 
 This keeps Vite's JSX transform aligned with TypeScript so the runtime matches.
+The plugin provides simplified HMR support. See [Addendum][addendum] for detail.
+
+[addendum]: ../guide/addendum.md
 
 ## 4) Hello world
 
