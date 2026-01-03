@@ -2,25 +2,43 @@
 
 This guide walks you through wiring Kisspa into a small Vite setup and rendering a tiny counter component.
 
-## Prerequisites
+## 1) Initialize
 
-You need Node.js with npm, and a fresh Vite project (or any ESM-based toolchain).
-
-## 1) Install
-
-Install the package into your project.
+Create the project folder and install the package into your project.
 
 ```bash
-npm i kisspa
+mkdir kisspa-demo
+cd kisspa-demo
+npm init -y
+npm install kisspa
+npm install -D typescript vite
 ```
 
-This adds Kisspa to your project dependencies.
+`npm init -y` writes a bare package manifest.
+Kisspa ships ESM modules, so the default TypeScript + Vite toolchain works without extra plugins.
 
-## 2) Configure TypeScript
+## 2) Define scripts in `package.json`
 
-Tell TypeScript to compile JSX against Kisspa's runtime. JSX is a syntax that lets you write HTML-like tags in JavaScript; the compiler turns those tags into Kisspa runtime calls.
+Edit the generated `package.json` so Vite can power the dev server and build step.
+Add `"scripts"` properties and set `"type"` as following.
 
-`tsconfig.json`
+```jsonc
+{
+  // ...
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  // ...
+}
+```
+
+## 3) Configure TypeScript
+
+Create `tsconfig.json` with Kisspa’s JSX runtime settings.
+
 ```json
 {
   "compilerOptions": {
@@ -28,25 +46,29 @@ Tell TypeScript to compile JSX against Kisspa's runtime. JSX is a syntax that le
     "moduleResolution": "bundler",
     "lib": ["DOM", "ES2020"],
     "jsx": "react-jsx",
-    "jsxImportSource": "kisspa"
-  }
+    "jsxImportSource": "kisspa",
+    "strict": true,
+    "types": ["vite/client"]
+  },
+  "include": ["src"]
 }
 ```
 
-## 3) Configure Vite
+Tell TypeScript to compile JSX against Kisspa's runtime. JSX is a syntax that lets you write HTML-like tags in JavaScript; the compiler turns those tags into Kisspa runtime calls.
 
-Match Vite's JSX runtime to the same setting so both compilers agree.
-Optionally, add the Kisspa Vite plugin (from `kisspa/supplement/vite-plugin`) for HMR support.
+`jsxImportSource` points TypeScript at Kisspa’s JSX helpers. Vite uses the same option next.
 
-`vite.config.ts`
+## 4) Configure Vite
+
+Create `vite.config.ts` in the project root.
+
 ```ts
 import { defineConfig } from "vite";
 import kisspa from "kisspa/supplement/vite-plugin";
 
 export default defineConfig({
   plugins: [
-    // Optional: only needed for HMR.
-    kisspa()
+    kisspa() // Optional: only needed for HMR.
   ],
   esbuild: {
     jsxImportSource: "kisspa"
@@ -54,37 +76,17 @@ export default defineConfig({
 });
 ```
 
+Match Vite's JSX runtime to the same setting so both compilers agree.
 This keeps Vite's JSX transform aligned with TypeScript so the runtime matches.
+
+Optionally, add the Kisspa Vite plugin (from `kisspa/supplement/vite-plugin`) for HMR support.
 The plugin provides simplified HMR support. See [Addendum][addendum] for detail.
 
 [addendum]: ../guide/addendum.md
 
-## 4) Hello world
+## 5) Hello world
 
-Create a root element and point Vite at your entry file.
-
-`index.html`
-
-```html
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Kisspa App</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/main.tsx"></script>
-  </body>
-</html>
-```
-
-The `<div id="app"></div>` element is the mount target for `attach()`.
-
-Now add a component that shows a counter and mounts it into the page. A component is a function that returns JSX.
-
-`main.tsx`
+Create `src/main.tsx` and mount your first component.
 
 ```tsx
 import { attach, createSignal } from "kisspa";
@@ -108,6 +110,33 @@ function App() {
 }
 
 attach(<App />, document.getElementById("app")!);
+```
+
+Add finally a minimal `index.html` next to `vite.config.ts`:
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kisspa App</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="src/main.tsx"></script>
+  </body>
+</html>
+```
+
+The `<div id="app"></div>` element is the mount target for `attach()`.
+
+Now add a component that shows a counter and mounts it into the page. A component is a function that returns JSX.
+
+## 6) Run the project
+
+```bash
+npm run dev -- --open
 ```
 
 Clicking the button increments the signal and the text updates because the JSX reads the signal getter directly.

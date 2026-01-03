@@ -2,7 +2,9 @@
 
 In Kisspa, a component is a plain function that returns JSX.
 JSX is the HTML-like syntax inside JavaScript; Kisspa turns it into real DOM nodes.
-Component functions run once per JSX instance to build the tree, and fine-grained reactivity updates only the parts of the DOM that depend on reactive reads.
+
+For example, the following `Button` is a component that renders a native `<button>`
+element with a label and an optional click handler.
 
 ```tsx
 // Props for a reusable button component.
@@ -20,11 +22,18 @@ function Button(props: ButtonProps) {
 }
 
 // Now you can use `Button` in JSX like:
-//   <Button label="Show a message" onClick={() => { alert("Hello!"); }} />
+// <Button label="Show a message" onClick={() => { alert("Hello!"); }} />
 ```
 
-`Button` renders a native `<button>` element with a label and an optional click handler.
-If you omit `onClick`, it behaves like a normal button with no handler attached.
+As shown in the above example, JSX looks similar to HTML but follows a few JavaScript-friendly rules.
+
+- Attributes and event handlers are camelCase (`className`, `onClick`).
+- You can embed arbitrary JavaScript values or expressions inside `{}`.
+- Components must return a single parent node (or a fragment `<>...</>`).
+- Every tag must be explicitly closed (`<input />`).
+
+Component functions run once per JSX instance to build the tree,
+and fine-grained reactivity updates only the parts of the DOM that depend on reactive reads.
 
 ## Props and children
 
