@@ -1,6 +1,6 @@
 # DOM Access and Lifecycle
 
-`onMount()` registers a callback runs after the component enters the DOM, and `onCleanup()` for when the component is disposed.
+`onMount()` registers a callback that runs after the component enters the DOM; use `onCleanup()` when the component is disposed.
 Use them for imperative setup (timers, observers, subscriptions) and cleanup.
 When you need direct access to a DOM node, pass a ref created by `createRef()` to the `ref` attribute.
 
@@ -43,8 +43,8 @@ function SizeReporter() {
 
 ## Component methods for advanced lifecycles
 
-If you need lifecycle hooks inside an async timing (after `await` or inside a promise callback),
-the global `onMount()` and `onCleanup()` are not available there (they cause error).
+If you need lifecycle hooks inside async code (after `await` or inside a promise callback),
+the global `onMount()` and `onCleanup()` are not available there (they cause an error).
 `useComponentMethods()` gives you `onMount()` and `onCleanup()` that you can call later.
 
 ```tsx

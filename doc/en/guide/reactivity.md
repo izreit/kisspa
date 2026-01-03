@@ -1,7 +1,7 @@
 # Reactivity Basics: Store and functions
 
-The states of an application can be represented as one or more stores.
-Stores can be created by `createStore()` in Kisspa.
+The state of an application can be represented by one or more stores.
+Stores can be created with `createStore()` in Kisspa.
 
 `createStore()` returns a read proxy and a setter for an object you can update in place.
 Reads are tracked when you access properties on the proxy.
@@ -94,7 +94,7 @@ The effect runs immediately, prints the current message, and runs again after th
 ## Signals for single values
 
 When you only need one reactive value, `createSignal()` keeps the state compact and direct.
-`createSignal()` returns a pair of the accessor function and setter function.
+`createSignal()` returns a pair of an accessor function and a setter function.
 
 ```tsx
 import { createSignal } from "kisspa";
@@ -136,7 +136,7 @@ The pattern of embedding functions in JSX is inspired by Solid, where accessors 
 Kisspa follows the same idea of tracking reads at the point of use, but keeps the surface smaller and more explicit:
 no implicit code injected at build time. Updates are tied to functions you pass to JSX.
 
-Solid is a more sophisticated solution, but we prefer simple, explicit rule and minimal build complexity.
+Solid is a more sophisticated solution, but we prefer a simple, explicit rule and minimal build complexity.
 
 ## Related APIs
 

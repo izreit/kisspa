@@ -7,7 +7,7 @@ If the value is reactive, all consumers update automatically.
 includes a `<Context.Provider />` component to supply a value for descendants.
 `useContext()` reads the nearest provided value (or falls back to the initial value).
 
-It is especially useful for site-wide configuration like color theme or language of the Web site.
+It is especially useful for site-wide configuration such as a color theme or site language.
 
 ```tsx
 import { createContext, createSignal, type PropChildren, useContext } from "kisspa";

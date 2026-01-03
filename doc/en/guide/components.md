@@ -2,7 +2,7 @@
 
 In Kisspa, a component is a plain function that returns JSX.
 JSX is the HTML-like syntax inside JavaScript; Kisspa turns it into real DOM nodes.
-As components, functions run once for each instance in JSX to build the tree, and fine-grained reactivity updates only the parts of the DOM that depend on reactive reads.
+Component functions run once per JSX instance to build the tree, and fine-grained reactivity updates only the parts of the DOM that depend on reactive reads.
 
 ```tsx
 // Props for a reusable button component.
@@ -31,7 +31,7 @@ If you omit `onClick`, it behaves like a normal button with no handler attached.
 Props are the inputs you pass to a component, similar to function arguments.
 In JSX, attributes like `title="Inbox"` become fields on the `props` object.
 
-A special prop named `children` receives the child nodes of a compoonent in JSX.
+A special prop named `children` receives the child nodes of a component in JSX.
 
 ```tsx
 import { attach, type PropChildren } from "kisspa";

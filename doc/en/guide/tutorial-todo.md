@@ -69,7 +69,7 @@ Checkpoint: typing and pressing Add updates the store.
 
 ## Step 3: Render the list
 
-Use `<Show />` for empty state and `<For />` for the list.
+Use `<Show />` for the empty state and `<For />` for the list.
 
 ```tsx
 import { For, Show } from "kisspa";
@@ -130,7 +130,7 @@ if (saved) {
   });
 }
 
-// Save to localStorage each time store.todos changed
+// Save to localStorage each time store.todos changes
 createEffect(() => {
   localStorage.setItem("kisspa-todos", JSON.stringify(store.todos));
 });

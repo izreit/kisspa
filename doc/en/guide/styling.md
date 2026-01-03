@@ -9,7 +9,7 @@ so you can reuse familiar CSS knowledge and keep the intent readable without mem
 ## $()
 
 `$()` compiles utility-like declarations into class names.
-It returns a function, so pass it directly to `class` attribute of DOM elements.
+It returns a function, so pass it directly to the `class` attribute of DOM elements.
 
 Each string argument is a list of `property:value` declarations separated by spaces.
 Use `_` to represent spaces inside values, and prefix modifiers with `/` for responsive or state variants.
@@ -90,7 +90,7 @@ The default `$()` instance already includes common breakpoints and shorthand pro
 
 ## Gotcha: $() returns an accessor
 
-`$()` returns `() => string`, so pass it to `class` prop in JSX, not `className` of DOM elements or a plain string.
+`$()` returns `() => string`, so pass it to `class` prop in JSX, not `className` on DOM elements or a plain string.
 If you need a static class, call the accessor once or combine it with static class names.
 
 ## Related APIs

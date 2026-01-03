@@ -16,12 +16,12 @@ function SubmitButton() {
 }
 ```
 
-`when` is an accessor that decides which branch renders. `fallback` renders when `when()` is falsey,
+`when` is an accessor that decides which branch renders. `fallback` renders when `when()` is falsy,
 so you can keep a loading or empty state close to the main content.
 
 ## Capture the condition value
 
-If you want to refer the `when()` value inside the branch, you have two options:
+If you want to refer to the `when()` value inside the branch, you have two options:
 read it from the original signal/store, or enable `capture`.
 
 With `capture`, the return value of `when()` is passed to the child function as an accessor 
@@ -49,7 +49,7 @@ function Header() {
 }
 ```
 
-NOTE Setting `capture` also changes the render condition.
+NOTE: Setting `capture` also changes the render condition.
 Without `capture`, `children` render when `when()` is truthy (i.e. `!!when() === true`).
 With `capture`, they render when `when()` is neither `false`, `null`, nor `undefined` (i.e. a more relaxed condition),
 so values like `0`, `""`, or `NaN` still render and are available in the child.

@@ -54,7 +54,7 @@ const [result, setResult] = createSignal<Error | null>(null);
 </Switch>;
 ```
 
-NOTE Setting `capture` also changes the render condition.
+NOTE: Setting `capture` also changes the render condition.
 Without `capture`, `children` render when `when()` is truthy.
 With `capture`, they render when `when()` is neither `false`, `null`, nor `undefined`, so `0`, `""`, or `NaN` still match.
 This is a behavior change, not just a typing aid, so treat `capture` as a semantic switch.
