@@ -24,13 +24,14 @@ Tell TypeScript to compile JSX against Kisspa's runtime. JSX is a syntax that le
 ```json
 {
   "compilerOptions": {
+    "target": "ES2020",
+    "moduleResolution": "bundler",
+    "lib": ["DOM", "ES2020"],
     "jsx": "react-jsx",
     "jsxImportSource": "kisspa"
   }
 }
 ```
-
-These options tell TypeScript to emit JSX using Kisspa's runtime functions.
 
 ## 3) Configure Vite
 
