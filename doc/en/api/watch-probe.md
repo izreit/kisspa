@@ -47,5 +47,6 @@ stop();
 ```
 
 ## Related
+
 - [`createEffect()`](./create-effect.md)
 - [`decimated()`](./decimated.md)
