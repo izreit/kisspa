@@ -65,7 +65,7 @@ The `capture` option also helps TypeScript: without `capture`, you often need an
 `when` should be a function, not a pre-evaluated boolean.
 If you pass `when={loading()}`, it only evaluates once and never updates.
 
-## Limitation: use <Show /> instead of if
+## Limitation: use \<Show /> instead of `if`
 
 Kisspa keeps components fast by assuming every component always returns the same JSX shape. Multiple `return`s in `if` or `switch` blocks violate that assumption because the tree differs between renders.
 
