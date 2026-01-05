@@ -14,11 +14,11 @@ None.
 
 ### Return value
 
-Object whose `.value` property tracks the latest assigned value.
+A `Ref<T>` value, object whose `.value` property, tracks the latest assigned value.
 
 ## Description
 
-`createRef()` produces a [`Ref`](./ref.md) initialized with `null`.
+`createRef()` produces a `Ref<T>` initialized with `null`.
 
 When you pass the ref to the `ref` attribute of an JSX element, Kisspa assigns the underlying value (DOM element) during mount to its `.value`.
 The `.value` property will be `null` on cleanup.
@@ -48,6 +48,5 @@ function Form() {
 
 ## Related
 
-- [`Ref`](./ref.md)
 - [`onMount()`](./on-mount.md)
 - [`attach()`](./attach.md)

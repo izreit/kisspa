@@ -43,9 +43,10 @@
 
 ## Less-used reactivity tools
 
+- [bindObserver()](./bind-observer.md) - Bind observer for asynchronous work.
 - [cancelEffect()](./cancel-effect.md) - Stop a running effect manually.
 - [createDecimatedEffect()](./create-decimated-effect.md) - Reactive side effects with throttling.
-- [decimated()](./decimated.md) - Helper to read whether a decimated effect ran on the current tick.
+- [decimated()](./decimated.md) - Utility to wrap a function to be throttled.
 - [requestFlush()](./request-flush.md) - Schedule a microtask flush of pending reactions.
 - [setWatchHandlers()](./set-watch-handlers.md) - Register handlers to react changes on stores.
 - [unwrap()](./unwrap.md) - Extract plain values out of nested signals/stores.

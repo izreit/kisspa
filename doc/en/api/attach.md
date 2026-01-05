@@ -53,5 +53,4 @@ root.detach();
 ## Related
 
 - [`createRoot()`](./create-root.md)
-- [`Root`](./root.md)
 - [`<Suspense />`](./suspense.md)
