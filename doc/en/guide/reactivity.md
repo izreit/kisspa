@@ -107,7 +107,7 @@ setMessage("Saved");
 
 It uses `createStore()` under the hood and so `message` can be passed to JSX to make the value reactive.
 
-## Gotcha: updates are explicit
+## Note: updates are explicit
 
 Reactive values only track dependencies when properties are read.
 If you destructure or read outside the JSX/effect context, the update will not be tracked.
@@ -129,6 +129,11 @@ function Counter_OK() {
   return <p>Count: {count}</p>;
 }
 ```
+
+## Note: effects are synchronous
+
+Effects are strictly synchronous.
+Reactive reads inside any asynchronous work started inside `fun()` (awaited promises, timers, callbacks, event handlers, etc.) can't be tracked and won't retrigger the effect.
 
 ## Comparison to Solid
 

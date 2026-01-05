@@ -35,6 +35,13 @@ If passed, the effect is cancelled when `owner` is collected by GC.
 Note that any value refered from `effect` will not be collected
 unless all reactive values refered from `effect` are collected.
 
+## Limitation: effects are synchronous
+
+Effects are strictly synchronous.
+Reactive reads inside any asynchronous work started inside `fun()` (awaited promises, timers, callbacks, event handlers, etc.) can't be tracked and won't retrigger the effect.
+
+When you have to pass logic to an async boundary, wrap the callback with [`bindObserver()`](./bind-observer.md) so it temporarily re-enters the originating observer when invoked, though this can't be used for awaited promises.
+
 ## Examples
 
 ```ts
