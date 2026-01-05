@@ -21,7 +21,7 @@ Evaluate a set of `<Match />` branches and render the first one that succeeds.
 |Name|Type|Description|
 |:---|:---|:---|
 |`when`|`() => boolean` or `() => T \| false \| null \| undefined`|Reactive predicate. Omit to create a fallback branch.|
-|`capture`|`true` (optional)|Capture the truthy value from `when` and pass it to `children`.|
+|`capture`|`true` (optional)|If true, capture the value from `when` and pass it to `children` (unless the value is neither `false`, `null` nor `undefined`).|
 |`children`|`PropChildren` or `(value: () => Exclude<T, boolean>) => PropChildren`|JSX to render when active. With `capture`, receives an accessor for the captured value.|
 
 ## Description
@@ -32,9 +32,16 @@ Whenever conditions change, the first truthy `<Match />` becomes active; previou
 This behavior mirrors `switch`/`case` logic in imperative code while keeping declarative rendering.
 
 You can include a fallback `<Match />` without a `when` prop to handle the default case.
-`<Switch />` works with both boolean conditions and captured values for type narrowing.
 
-Like `<Show />`, enabling `capture` passes the truthy payload to the child function so you can narrow types.
+Like `<Show />`, enabling `capture` passes the payload to the child function so you can narrow types.
+Without `capture`, TypeScript often cannot narrow the type inside `children`, so you may need an explicit `as` cast.
+
+IMPORTANT NOTE: Also like `<Show />`, enabling `capture` changes the condition of `<Switch />`.
+Without `capture`, `children` are shown if the `when()` value is truthy.
+With `capture`, they are shown if the `when()` value is neither `false`, `null` nor `undefined`.
+Other falsy values (such as `0`, `""`, and `NaN`) are considered "true"-ish if `capture`.
+This is a behavior change, not just a typing aid: `capture` can cause branches to match where they otherwise would not.
+The rationale is that `capture` is typically used to consume the returned value (including `0` or `""`) in `children`, so the condition is widened to keep those valid values.
 
 ## Examples
 

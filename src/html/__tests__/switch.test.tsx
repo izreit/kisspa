@@ -78,6 +78,8 @@ describe("Switch", () => {
     expect(elem.innerHTML).toBe("<div>str:103</div>");
     setStore(s => s.x = 100);
     expect(elem.innerHTML).toBe("");
+    setStore(s => s.x = 0);
+    expect(elem.innerHTML).toBe("<div>smallnum:0</div>"); // assert that 0 is true-ish with `capture` option.
   });
 
   it("fallbacks to the condition-less Match", async () => {

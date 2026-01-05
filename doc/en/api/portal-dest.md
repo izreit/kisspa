@@ -16,7 +16,7 @@ Declare a logical destination for [`<Portal />`](./portal.md) components that ta
 
 ## Description
 
-`<PortalDest />` creates and manages a backing location that portals can attach to. Multiple portals with the same key render sequentially inside the destination.
+`<PortalDest />` creates and manages a backing location that portals can attach to. Multiple portals with the same key render sequentially inside the destination (their order is not guaranteed).
 When the destination is unmounted (for example, hidden by [`<Show />`](./show.md)), connected portals automatically dispose their content until the destination reappears.
 
 Destinations live per key. You can render `<PortalDest />` in one part of the tree and use `<Portal to={key}>` in a distant branch, keeping layout concerns separate from component ownership.

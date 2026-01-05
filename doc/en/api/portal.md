@@ -19,7 +19,7 @@ Render children into another DOM location without leaving the current component 
 
 `<Portal />` splits rendering into two locations. The source component keeps its lifecycle and reactivity, while the children mount inside the destination chosen by `to`.
 
-- When `to` is a `Node`, Kisspa mounts directly into that node (creating a destination backing on first use).
+- When `to` is a `Node`, Kisspa mounts directly into that node.
 - When `to` is a `string` or `symbol`, pair the portal with a matching [`<PortalDest from={...} />`](./portal-dest.md) somewhere else in the JSX tree. The destination can appear or disappear dynamically; `<Portal />` shows and hides its children accordingly.
 
 `<Portal />` disposes its children when either the source subtree or the destination goes away, ensuring that [`onCleanup()`](./on-cleanup.md) handlers run.
