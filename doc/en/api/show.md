@@ -21,7 +21,7 @@ Conditionally render content with optional fallbacks and captured values.
 
 ## Description
 
-`<Show />` is a convenience wrapper around the [`<Match />`](./match.md) infrastructure. It evaluates the `when` accessor reactively and mounts the `children` branch when it is truthy. Optionally pass `fallback` to display alternative content when the condition is false.
+`<Show />` evaluates the `when` accessor reactively and mounts the `children` branch when it is truthy. Optionally pass `fallback` to display alternative content when the condition is false.
 
 Setting `capture` to `true` tells `<Show />` to treat the condition as a type guard. The truthy value returned from `when` is captured and provided to the child function as a getter, enabling refinements (for example, narrowing from `number | string` to `number`).
 This also helps TypeScript: without `capture`, you often need an explicit `as` cast inside `children` to access the narrowed type.
