@@ -35,14 +35,13 @@ function Counter() {
 attach(<Counter />, document.getElementById("root")!);
 ```
 
-## Zen of Kisspa (in comparison to other JSX-based libraries)
+## In comparison to other libraries
 
 ```text
-Stick to plain JavaScript.
 Don't rely on magic.
 ```
 
-Kisppa sticks to plain JavaScript sementics: avoid non-intuitive rules or behaviors unfeasible in ordinary JavaScript.
+Not only to avoid original file fromats with unique extensions Kisppa sticks to plain JavaScript sementics: refrain from non-intuitive rules or behaviors unfeasible in ordinary JavaScript.
 This belief has led to several characteristics in comparison to other JSX-based libraries.
 
 - **No re-rendering**.
@@ -54,11 +53,15 @@ This belief has led to several characteristics in comparison to other JSX-based 
   Your components can be `async` functions in anywhere.
   No special rules or limitationns around `Promise` in components.
   `Promise` can even appear inside JSX.
-- **No overridden functions**.
+- **No overridden globals**.
   Nothing are replaced by a framework implicitly.
 - **Focus to client-side rendering (CSR)**.
   In exchange for SEO, we obtain clear boundaries between client and server,
   cheaper server cost, simple setup while avoiding server-side vulnerability.
+
+Kisspa doesn't aim to be the fastest, the smallest, or the most scalable library.
+It focuses on making small to medium-sized SPAs easy to build with minimal dependencies - not only runtime, but also in build tooling.
+In short, Kisspa is built to last in a fast-changing ecosystem with sufficiently small footprint.
 
 ## Next
 

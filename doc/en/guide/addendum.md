@@ -62,7 +62,7 @@ createEffect(() => {
 ```
 
 In this cae, the effect is re-run `store.name` or `store.value` is changed
-but `valueIsPrimeMemoized()` is only re-run after `store.value` is changed.
+but `valueIsPrime()` wrapped by `memoize()` is only re-run after `store.value` is changed.
 
 ## presetColors
 

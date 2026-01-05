@@ -1,7 +1,6 @@
 # Kisspa Guide
 
 This guide introduces Kisspa from core concepts to a complete example app.
-Read it in order for a gradual ramp-up.
 
 1. [Overview: Why Kisspa](./why-kisspa.md)
 2. [Getting Started](./getting-started.md)
