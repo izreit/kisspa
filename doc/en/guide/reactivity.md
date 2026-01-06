@@ -135,14 +135,6 @@ function Counter_OK() {
 Effects are strictly synchronous.
 Reactive reads inside any asynchronous work started inside `fun()` (awaited promises, timers, callbacks, event handlers, etc.) can't be tracked and won't retrigger the effect.
 
-## Comparison to Solid
-
-The pattern of embedding functions in JSX is inspired by Solid, where accessors drive fine-grained updates.
-Kisspa follows the same idea of tracking reads at the point of use, but keeps the surface smaller and more explicit:
-no implicit code injected at build time. Updates are tied to functions you pass to JSX.
-
-Solid is a more sophisticated solution, but we prefer a simple, explicit rule and minimal build complexity.
-
 ## Related APIs
 
 - [createStore()](../api/create-store.md)
