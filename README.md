@@ -17,3 +17,8 @@ With roughly 9 KB of JavaScript (minified + gzip) you still get modern ergonomic
 ## Getting Started
 
 Read through [`doc/en/guide/README.md`](./doc/en/guide/README.md) for the tutorial path, and see [`doc/en/api/README.md`](./doc/en/api/README.md) for API reference.
+
+## License
+
+MIT. See the [LICENSE](./LICENSE).
+
