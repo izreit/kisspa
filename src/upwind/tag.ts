@@ -16,10 +16,10 @@ type Kebab<S extends string> =
       : S;
 
 export namespace Upwind {
-	export type ExtendedDOMCSSProperties = {
-		[key in Kebab<keyof Omit<JSXInternal.DOMCSSProperties, number>>]?: Prop<string | null | undefined>;
+  export type ExtendedDOMCSSProperties = {
+    [key in Kebab<keyof Omit<JSXInternal.DOMCSSProperties, number>>]?: Prop<string | null | undefined>;
   } | {
-		[key: string]: ExtendedDOMCSSProperties | Prop<string | null | undefined>;
+    [key: string]: ExtendedDOMCSSProperties | Prop<string | null | undefined>;
   };
 
   export type ColorStr = string;
