@@ -1,5 +1,5 @@
 import { createEffect, createSignal, watchProbe } from "../../reactive/index.js";
-import { type AssembleContext, assemble, callAll, createSpecial, createTransparentBacking } from "../core/assemble.js";
+import { type AssembleContext, assemble, createSpecial, createTransparentBacking, revCallAll } from "../core/assemble.js";
 import type { Backing, PropChildren } from "../core/types.js";
 import { mapCoerce } from "../core/util.js";
 
@@ -30,7 +30,7 @@ export function createSwitchContextValue(): SwitchContextValue {
       );
       return [() => activeIndex() === idx, capturedValue];
     },
-    dispose_() { callAll(disposers); }
+    dispose_() { revCallAll(disposers); }
   };
 }
 

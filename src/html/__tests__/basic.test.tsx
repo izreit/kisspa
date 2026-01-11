@@ -316,6 +316,70 @@ describe("basic", () => {
       ]);
     });
 
+    it("can be called in ref handlers", async () => {
+      const { log, reap } = createLogBuffer();
+
+      const onRef = async (el: HTMLElement | null) => {
+        if (!el) return;
+        const { onMount, onCleanup } = useComponentMethods();
+
+        onMount(() => log(`onmount1 ${el.tagName} (never called)`));
+        onCleanup(() => log("oncleanup1"));
+        await Promise.resolve();
+        onMount(() => log("onmount2 (never called)"));
+        onCleanup(() => log("oncleanup2"));
+      };
+
+      async function Comp(props: { x: () => number }): JSXNodeAsync {
+        await Promise.resolve();
+        return <p ref={onRef}>{ props.x }</p>;
+      }
+
+      const [store, _setStore] = createStore({ value: 8 });
+      const promiseAttach = root.attach(
+        <div><Comp x={() => store.value} /></div>
+      );
+
+      expect(elem.innerHTML).toBe("<div></div>");
+      await promiseAttach;
+      await root.flush();
+
+      expect(elem.innerHTML).toBe("<div><p>8</p></div>");
+      expect(reap()).toEqual([]); // since onMount() never called for ref
+
+      root.detach();
+      expect(reap()).toEqual([
+        "oncleanup2",
+        "oncleanup1",
+      ]);
+    });
+
+    it("can be called in ref handlers - nested elements (for coverage)", async () => {
+      const { log, reap } = createLogBuffer();
+
+      const onRef = (el: HTMLElement | null) => {
+        if (!el) return;
+        onMount(() => log(`onmount1 ${el.tagName} (never called)`));
+        onCleanup(() => log("oncleanup1"));
+      };
+
+      function Comp(props: { x: () => number }) {
+        return <p><span ref={onRef}>{ props.x }</span></p>;
+      }
+
+      const [store, _setStore] = createStore({ value: 8 });
+      const promiseAttach = root.attach(
+        <div><Comp x={() => store.value} /></div>
+      );
+
+      await promiseAttach;
+      await root.flush();
+      expect(elem.innerHTML).toBe("<div><p><span>8</span></p></div>");
+      expect(reap()).toEqual([]); // since onMount() for ref never called.
+      root.detach();
+      expect(reap()).toEqual(["oncleanup1"]);
+    });
+
     it("can be called after async context", async () => {
       const { log, reap } = createLogBuffer();
 

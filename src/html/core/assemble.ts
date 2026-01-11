@@ -46,6 +46,7 @@ export interface AssembleContext {
   suspenseContext_: SuspenseContext;
   rootSuspenseContext_: SuspenseContext;
   disposeContext_: (f: () => void) => void;
+  inRef_: 1 | 0; // Whether or not evaluating ref. lifecycleContext_ depends on this value.
   [key: symbol]: unknown;
 }
 
@@ -68,7 +69,7 @@ export function createBackingCommon(
     },
     tail: () => tailOfBackings(resolveChildren(), loc),
     dispose() {
-      callAll(disposers);
+      revCallAll(disposers);
       disposeBackings(resolveChildren());
     },
     addDisposer_: pushFuncOf(disposers),
@@ -193,10 +194,15 @@ function assembleImpl(actx: AssembleContext, jnode: JSXNode, loc?: MountLocation
         addDisposer(ch.dispose);
     }
 
-    mapCoerce(refVal, r => {
-      r(el);
-      addDisposer(() => r(null));
-    });
+    try {
+      assembleContextStack.push({ ...actx, inRef_: 1, lifecycleContext_: null });
+      mapCoerce(refVal, r => {
+        addDisposer(() => r(null));
+        r(el);
+      });
+    } finally {
+      assembleContextStack.pop();
+    }
 
     return createNodeBackingIfNeeded(el!, staticParent);
   }
@@ -276,8 +282,8 @@ export function useComponentMethods(): ComponentMethods {
     actx.lifecycleContext_ = {
       onMountFuncs_,
       onCleanupFuncs_,
-      onMount: pushFuncOf(onMountFuncs_),
-      onCleanup: pushFuncOf(onCleanupFuncs_),
+      onMount: pushFuncOf(onMountFuncs_), // actually ignored when inRef_.
+      onCleanup: actx.inRef_ ? actx.disposeContext_ : pushFuncOf(onCleanupFuncs_),
     } as LifecycleContext;
   }
   return actx.lifecycleContext_;
@@ -299,9 +305,7 @@ export function assemble(actx: AssembleContext, jnode: JSXNode): Backing {
     const disposers: (() => void)[] = [];
     const childActx = { ...actx, disposeContext_: pushFuncOf(disposers) };
     const b = assembleImpl(childActx, jnode);
-    return disposers.length ?
-      { ...b, dispose: () => (callAll(disposers), b.dispose()) } :
-      b;
+    return { ...b, dispose: () => (revCallAll(disposers), b.dispose()) };
   });
 }
 
@@ -344,7 +348,7 @@ export function disposeBackings(bs: Backing[] | null | undefined): void {
   }
 }
 
-export function callAll(fs: (() => unknown)[]): void {
-  for (const f of fs)
-    f();
+export function revCallAll(fs: (() => unknown)[]): void {
+  for (let i = fs.length - 1; i >= 0; --i)
+    fs[i]();
 }
