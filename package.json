@@ -10,7 +10,6 @@
     "lint": "biome check",
     "test": "tsc -p ./tsconfig.build.json --noEmit && vitest run",
     "cov": "vitest run --coverage",
-    "stat": "node ./scripts/build.mjs --stat-only && node ./scripts/stat.mjs --stat-only",
     "changeset": "changeset",
     "changeset-version": "changeset version",
     "changeset-publish": "changeset publish"

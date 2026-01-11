@@ -21,6 +21,7 @@ export function createRoot(parent: Element, prev?: Node | null): Root {
         suspenseContext_: waiter,
         rootSuspenseContext_: rootWaiter,
         disposeContext_: doNothing,
+        inRef_: 0,
       },
       jnode
     );
