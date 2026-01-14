@@ -1,5 +1,11 @@
 # kisspa
 
+## 0.18.0
+
+### Minor Changes
+
+- 12cc1e5: [html] feat: accept `onCleanup()` called in ref callback.
+
 ## 0.17.0
 
 ### Minor Changes
