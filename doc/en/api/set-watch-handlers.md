@@ -1,7 +1,8 @@
 # setWatchHandlers()
 
 Installs or removes low-level watch handlers to observe internal mutations.
-Internally used to implement HMR (Hot Module Replacement).
+
+**INTERNAL**: don't use. Use `addWatchHandlers()` instead.
 
 ## Syntax
 

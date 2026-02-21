@@ -1,5 +1,5 @@
-import { setWatchHandlers } from "../../reactive/index.js";
 import type { Key, Wrapped } from "../../reactive/types.js";
+import { addWatchHandlers } from "./handlers.js";
 import { createMapset, type Mapset } from "./internal/mapset.js";
 import { createTrie, type Trie } from "./internal/trie.js";
 
@@ -79,7 +79,7 @@ let nextWatcherId = 0;
 
 function watchImpl<T extends object>(target: T, opts: PropWatcherEntry): PropWatcherId {
   if (nextWatcherId === 0) {
-    setWatchHandlers({
+    addWatchHandlers({
       watches: hasPropWatcher,
       call: notifyCall,
       set: notifyChange,
