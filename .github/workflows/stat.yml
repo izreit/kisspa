@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: [22.x]
+        node: [24.x]
     steps:
       - name: Checkout HEAD
         uses: actions/checkout@v4
