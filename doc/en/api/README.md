@@ -48,7 +48,6 @@
 - [createDecimatedEffect()](./create-decimated-effect.md) - Reactive side effects with throttling.
 - [decimated()](./decimated.md) - Utility to wrap a function to be throttled.
 - [requestFlush()](./request-flush.md) - Schedule a microtask flush of pending reactions.
-- [setWatchHandlers()](./set-watch-handlers.md) - Register handlers to react changes on stores.
 - [unwrap()](./unwrap.md) - Extract plain values out of nested signals/stores.
 - [watchProbe()](./watch-probe.md) - Create an effect for aggregated values.
 - [withoutObserver()](./without-observer.md) - Run code without tracking reactive dependencies.
