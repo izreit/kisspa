@@ -1,5 +1,13 @@
 # kisspa
 
+## 0.18.0
+
+### Minor Changes
+
+- 12cc1e5: [html] feat: accept `onCleanup()` called in ref callback.
+- ecdee5f: [reactive] make internal `setWatchHandlers()` undocumented.
+- e965f22: [extra/watch] feat: add `addWatchHandlers()` and `removeWatchHandlers()`.
+
 ## 0.17.0
 
 ### Minor Changes
