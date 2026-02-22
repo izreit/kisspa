@@ -1,5 +1,12 @@
 # kisspa
 
+## 0.19.0
+
+### Minor Changes
+
+- 2b79f86: [reactive] feat: make `StoreSetter<T>()` return the value returned from the given argument function.
+- 2b79f86: [reactive] feat: add `StoreSetter<T>#asEffect(f)` for shorthand of `createEffect(() => setStore(f))`.
+
 ## 0.18.0
 
 ### Minor Changes
