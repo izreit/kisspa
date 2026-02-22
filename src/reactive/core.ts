@@ -8,7 +8,10 @@ export interface StoreSetterOptions {
   lazyFlush?: boolean;
 }
 
-export type StoreSetter<T> = (writer: (val: T) => void, opts?: StoreSetterOptions) => void;
+export type StoreSetter<T> = {
+  <U>(writer: (val: T) => U, opts?: StoreSetterOptions): U;
+  asEffect(writer: (val: T) => void, opts?: StoreSetterOptions): () => void;
+};
 
 const refTable = createRefTable();
 
@@ -141,16 +144,17 @@ function addRef(readProxy: Wrapped, prop: Key, val: unknown) {
 
 export function createStore<T extends object>(initial: T): [T, StoreSetter<T>] {
   const [readProxy, writeProxy] = wrap(initial);
-  const setter = (writer: (val: T) => void, opts: StoreSetterOptions = {}): void => {
+  const setter = (<U>(writer: (val: T) => U, opts: StoreSetterOptions = {}): U => {
     try {
-      writer(writeProxy);
+      return writer(writeProxy);
     } finally {
       if (!opts.lazyFlush) {
         while (writtens.length)
           requestFlush.immediate();
       }
     }
-  };
+  }) as StoreSetter<T>;
+  setter.asEffect = (writer, opts) => createEffect(() => setter(writer, opts));
   return [readProxy, setter];
 }
 
