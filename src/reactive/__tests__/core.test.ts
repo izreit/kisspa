@@ -8,6 +8,8 @@ describe("createStore", () => {
     expect(store.foo).toBe(4);
     setStore(s => { s.foo *= 2 });
     expect(store.foo).toBe(8);
+    expect(setStore(s => s.foo++)).toBe(8); // setStore() returns the returned value from the writer
+    expect(store.foo).toBe(9);
   });
 
   it("can watch a simple object", async () => {
@@ -34,11 +36,29 @@ describe("createStore", () => {
 
     setStore(s => { s.foo *= 2; });
     expect(store.foo).toBe(8);
-
     expect(squareFoo).toBe(64);
 
     setStore(s => { s.foo = 14; });
     expect(squareFoo).toBe(196);
+  });
+
+  it("provides asEffect()", async () => {
+    const [store, setStore] = createStore({ foo: 4, squareFoo: null as (number | null) });
+
+    expect(store.foo).toBe(4);
+    expect(store.squareFoo).toBe(null);
+
+    const cancel = setStore.asEffect((s) => { s.squareFoo = s.foo ** 2; });
+    expect(store.foo).toBe(4);
+    expect(store.squareFoo).toBe(16); // createEffect() (used in asEffect()) calls the observer func imidiately
+
+    setStore(s => { s.foo *= 2; });
+    expect(store.foo).toBe(8);
+    expect(store.squareFoo).toBe(64);
+
+    cancel();
+    setStore(s => { s.foo = 14; });
+    expect(store.squareFoo).toBe(64); // not updated since the effect was canceled
   });
 
   it("can watch array", async () => {
